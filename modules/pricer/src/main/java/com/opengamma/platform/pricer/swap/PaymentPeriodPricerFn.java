@@ -51,4 +51,19 @@ public interface PaymentPeriodPricerFn<T extends PaymentPeriod> {
       LocalDate valuationDate,
       T period);
 
+  /**
+   * Calculates the XXX
+   * <p>
+   * This returns XXX
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param period  the period to price
+   * @return XXX
+   */
+  public abstract double pvbpQuote(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      T period);
+
 }

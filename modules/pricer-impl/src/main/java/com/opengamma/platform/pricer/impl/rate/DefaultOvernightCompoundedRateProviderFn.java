@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
-import com.opengamma.analytics.financial.instrument.index.IndexONMaster;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.finance.rate.OvernightCompoundedRate;
@@ -42,7 +41,7 @@ public class DefaultOvernightCompoundedRateProviderFn
       LocalDate endDate) {
     // the time-series contains the value on the fixing date, not the publication date
     // TODO: is publication date properly handled?
-    if (rate.getRateCutoffDaysOffset() < 0) {
+    if (rate.getRateCutoffDaysOffset() < 0) { //Should this be > 0?
       // TODO: rate cutoff
       throw new IllegalArgumentException("Rate cutoff not supported");
     }
@@ -108,7 +107,7 @@ public class DefaultOvernightCompoundedRateProviderFn
         fixingAccrualFactorLeft += fixingAccrualFactorList.get(loopperiod);
       }
       double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
-          IndexONMaster.getInstance().getIndex("FED FUND"), fixingStart, fixingEnd, fixingAccrualFactorLeft);
+          env.convert(index), fixingStart, fixingEnd, fixingAccrualFactorLeft);
       double ratio = 1d + fixingAccrualFactorLeft * observedRate;
       return (accruedUnitNotional * ratio - 1d) / fixingAccrualfactor;
     }
@@ -128,7 +127,7 @@ public class DefaultOvernightCompoundedRateProviderFn
     double fixingEnd = env.relativeTime(valuationDate, endDate);
     double fixingAccrualfactor = index.getDayCount().yearFraction(startDate, endDate);
     double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
-        IndexONMaster.getInstance().getIndex("FED FUND"), fixingStart, fixingEnd, fixingAccrualfactor);
+        env.convert(index), fixingStart, fixingEnd, fixingAccrualfactor);
     return observedRate;
   }
 

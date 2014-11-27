@@ -29,14 +29,19 @@ import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 import com.google.common.collect.ImmutableMap;
 import com.opengamma.OpenGammaRuntimeException;
 import com.opengamma.analytics.financial.instrument.index.IndexIborMaster;
+import com.opengamma.analytics.financial.instrument.index.IndexON;
+import com.opengamma.analytics.financial.instrument.index.IndexONMaster;
 import com.opengamma.analytics.financial.provider.description.interestrate.MulticurveProviderInterface;
 import com.opengamma.basics.currency.Currency;
+import com.opengamma.basics.currency.CurrencyAmount;
 import com.opengamma.basics.currency.CurrencyPair;
+import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.basics.date.DayCount;
 import com.opengamma.basics.date.Tenor;
 import com.opengamma.basics.index.FxIndex;
-import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.Index;
+import com.opengamma.basics.index.OvernightIndex;
+import com.opengamma.basics.index.RateIndex;
 import com.opengamma.collect.ArgChecker;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.pricer.PricingEnvironment;
@@ -89,7 +94,7 @@ public class ImmutablePricingEnvironment
 
   @Override
   public double indexRate(
-      IborIndex index,
+      RateIndex index,
       LocalDate valuationDate,
       LocalDate fixingDate) {
     ArgChecker.notNull(index, "index");
@@ -115,13 +120,18 @@ public class ImmutablePricingEnvironment
         fixingYearFraction);
   }
 
-  private static com.opengamma.analytics.financial.instrument.index.IborIndex index(IborIndex index) {
-    com.opengamma.analytics.financial.instrument.index.IborIndex idx =
-        IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR1M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR1M);
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR3M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR6M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR6M);
+  private static com.opengamma.analytics.financial.instrument.index.IborIndex index(RateIndex index) {
+    com.opengamma.analytics.financial.instrument.index.IborIndex idx = USDLIBOR3M;
     if (index.getTenor().equals(Tenor.TENOR_6M)) {
-      idx = IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR6M);
+      idx = USDLIBOR6M;
     } else if (index.getTenor().equals(Tenor.TENOR_1M)) {
-      idx = IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR1M);
+      idx = USDLIBOR1M;
     }
     return idx;
   }
@@ -162,6 +172,24 @@ public class ImmutablePricingEnvironment
   // if the index is the inverse of the desired pair, then invert it
   private double fixFxRate(FxIndex index, CurrencyPair desiredPair, double fxRate) {
     return (desiredPair.isInverse(index.getCurrencyPair()) ? 1d / fxRate : fxRate);
+  }
+  
+  // convert a MultiCurrencyAmount with a conversion into a OG-Analytics MultipleCurrencyAmount
+  @Override
+  public CurrencyAmount convert(MultiCurrencyAmount mca, Currency ccy) {
+    double amountCcy = mca.stream().
+        mapToDouble(ca -> multicurve.getFxRate(com.opengamma.util.money.Currency.of(ca.getCurrency().toString()), 
+            com.opengamma.util.money.Currency.of(ccy.toString())) * ca.getAmount()).sum();
+    return CurrencyAmount.of(ccy, amountCcy);
+  }
+  
+  private static final IndexON USDFEDFUND = IndexONMaster.getInstance().getIndex("FED FUND");
+  @Override
+  public IndexON convert(OvernightIndex index) {
+    if(index.getCurrency().equals(Currency.USD)) {
+      return USDFEDFUND;
+    }
+    throw new OpenGammaRuntimeException("Could not get an overnight index for currency " + index.getCurrency());
   }
 
   @Override

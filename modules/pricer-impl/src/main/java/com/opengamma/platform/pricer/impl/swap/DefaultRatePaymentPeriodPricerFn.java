@@ -7,8 +7,11 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 
+import org.apache.commons.lang.NotImplementedException;
+
 import com.opengamma.basics.currency.CurrencyPair;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.platform.finance.rate.FixedRate;
 import com.opengamma.platform.finance.rate.Rate;
 import com.opengamma.platform.finance.swap.RateAccrualPeriod;
 import com.opengamma.platform.finance.swap.RatePaymentPeriod;
@@ -83,6 +86,37 @@ public class DefaultRatePaymentPeriodPricerFn
       unitAccrual = unitNotionalNoCompounding(env, valuationDate, period);
     }
     return notional * unitAccrual;
+  }
+
+  //-------------------------------------------------------------------------
+  @Override
+  public double pvbpQuote(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    // historic payments have zero pv
+    if (period.getPaymentDate().isBefore(valuationDate)) {
+      return 0;
+    }
+    // find FX rate, using 1 if no FX reset occurs
+    double fxRate = 1d;
+    if (period.getFxReset() != null) {
+      CurrencyPair pair = CurrencyPair.of(period.getFxReset().getReferenceCurrency(), period.getCurrency());
+      fxRate = env.fxRate(period.getFxReset().getIndex(), pair, valuationDate, period.getFxReset().getFixingDate());
+    }
+    double notional = period.getNotional() * fxRate;
+    // handle compounding
+    double unitAccrual; 
+    if (period.isCompounding()) {
+      throw new NotImplementedException("Compounding not handled yet for pvbp");
+    } else {
+      unitAccrual = period.getAccrualPeriods().stream()
+          .mapToDouble(accrualPeriod -> (accrualPeriod.getRate() instanceof FixedRate) ?
+              accrualPeriod.getGearing() * accrualPeriod.getYearFraction():
+              accrualPeriod.getYearFraction()).sum();
+    }
+    double df = env.discountFactor(period.getCurrency(), valuationDate, period.getPaymentDate());
+    return notional * unitAccrual * df;
   }
 
   //-------------------------------------------------------------------------

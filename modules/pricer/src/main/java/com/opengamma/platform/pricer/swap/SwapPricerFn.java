@@ -44,4 +44,31 @@ public interface SwapPricerFn {
       LocalDate valuationDate,
       Swap swap);
 
+  /**
+   * Calculates the par rate of the swap.
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param swap  the swap to price. The first leg of the swap should be a leg with only fixed rate coupons and gearing 1.
+   * @return the par rate
+   */
+  public abstract double parRate(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      Swap swap);
+
+  /**
+   * Calculates the par spread market quote of the swap. This is the spread to add to the quote of the first leg 
+   * to obtain a present value of 0.
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param swap  the swap to price.
+   * @return the par rate
+   */
+  public abstract double parSpread(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      Swap swap);
+
 }

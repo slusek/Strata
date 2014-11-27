@@ -13,7 +13,8 @@ import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
 
 /**
- * Rate provider implementation for an IBOR-like index.
+ * Rate provider implementation for rate based on the weighted average of the fixing 
+ * on a single date of two IBOR-like indices..
  * <p>
  * The rate provider examines the historic time-series of known rates and the
  * forward curve to determine the effective annualized rate.

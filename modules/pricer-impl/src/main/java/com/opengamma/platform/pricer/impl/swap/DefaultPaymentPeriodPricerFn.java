@@ -71,4 +71,17 @@ public class DefaultPaymentPeriodPricerFn
     }
   }
 
+  @Override
+  public double pvbpQuote(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.pvbpQuote(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
+
 }

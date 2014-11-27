@@ -7,12 +7,16 @@ package com.opengamma.platform.pricer;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.instrument.index.IndexON;
 import com.opengamma.analytics.financial.provider.description.interestrate.MulticurveProviderInterface;
 import com.opengamma.basics.currency.Currency;
+import com.opengamma.basics.currency.CurrencyAmount;
 import com.opengamma.basics.currency.CurrencyPair;
+import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.basics.index.FxIndex;
-import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.Index;
+import com.opengamma.basics.index.OvernightIndex;
+import com.opengamma.basics.index.RateIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 
 /**
@@ -56,7 +60,7 @@ public interface PricingEnvironment {
    * @param fixingDate  the fixing date to query the rate for
    * @return the rate of the index, either historic or forward
    */
-  public double indexRate(IborIndex index, LocalDate valuationDate, LocalDate fixingDate);
+  public double indexRate(RateIndex index, LocalDate valuationDate, LocalDate fixingDate);
 
   //-------------------------------------------------------------------------
   /**
@@ -81,6 +85,25 @@ public interface PricingEnvironment {
    * @return the rate of the index, either historic or forward
    */
   public double fxRate(FxIndex index, CurrencyPair currencyPair, LocalDate valuationDate, LocalDate fixingDate);
+
+  /**
+   * Converts in a given currency an multi-currency amount using the FX rates in the multi-curve provider.
+   * 
+   * @param mca The MultiCurrencyAmount.
+   * @param ccy The currency in which the multi-currency amount should be converted. 
+   * @return the rate of the index, either historic or forward
+   */
+  public CurrencyAmount convert(MultiCurrencyAmount mca, Currency ccy);
+  
+  /**
+   * Convert the Overnight index into a "IndexON" used in OG-Analytics.
+   * <p>
+   * FIXME: Code only to initial testing. The objects should be uniformised before 3.0.
+   * 
+   * @param index The overnight index.
+   * @return The index.
+   */
+  public IndexON convert(OvernightIndex index);
 
   //-------------------------------------------------------------------------
   /**
