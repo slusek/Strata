@@ -39,6 +39,7 @@ import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.basics.date.DayCount;
 import com.opengamma.basics.date.Tenor;
 import com.opengamma.basics.index.FxIndex;
+import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.Index;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.basics.index.RateIndex;
@@ -94,7 +95,7 @@ public class ImmutablePricingEnvironment
 
   @Override
   public double indexRate(
-      RateIndex index,
+      IborIndex index,
       LocalDate valuationDate,
       LocalDate fixingDate) {
     ArgChecker.notNull(index, "index");
