@@ -42,7 +42,6 @@ import com.opengamma.basics.index.FxIndex;
 import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.Index;
 import com.opengamma.basics.index.OvernightIndex;
-import com.opengamma.basics.index.RateIndex;
 import com.opengamma.collect.ArgChecker;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.pricer.PricingEnvironment;
@@ -127,7 +126,7 @@ public class ImmutablePricingEnvironment
       IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
   private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR6M =
       IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR6M);
-  private static com.opengamma.analytics.financial.instrument.index.IborIndex index(RateIndex index) {
+  private static com.opengamma.analytics.financial.instrument.index.IborIndex index(IborIndex index) {
     com.opengamma.analytics.financial.instrument.index.IborIndex idx = USDLIBOR3M;
     if (index.getTenor().equals(Tenor.TENOR_6M)) {
       idx = USDLIBOR6M;

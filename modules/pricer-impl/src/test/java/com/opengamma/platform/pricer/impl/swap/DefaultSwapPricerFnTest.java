@@ -8,7 +8,7 @@ import static com.opengamma.basics.date.BusinessDayConventions.PRECEDING;
 import static com.opengamma.basics.date.DayCounts.ACT_360;
 import static com.opengamma.basics.date.DayCounts.ACT_ACT_ISDA;
 import static com.opengamma.basics.date.DayCounts.THIRTY_U_360;
-import static com.opengamma.basics.index.RateIndices.USD_FED_FUND;
+import static com.opengamma.basics.index.OvernightIndices.USD_FED_FUND;
 import static com.opengamma.basics.schedule.Frequency.P3M;
 import static com.opengamma.basics.schedule.Frequency.P6M;
 import static org.testng.Assert.assertEquals;
@@ -26,7 +26,7 @@ import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.basics.date.BusinessDayAdjustment;
 import com.opengamma.basics.date.DaysAdjustment;
 import com.opengamma.basics.index.IborIndex;
-import com.opengamma.basics.index.RateIndices;
+import com.opengamma.basics.index.IborIndices;
 import com.opengamma.basics.schedule.Frequency;
 import com.opengamma.basics.schedule.PeriodicSchedule;
 import com.opengamma.basics.schedule.StubConvention;
@@ -55,9 +55,9 @@ public class DefaultSwapPricerFnTest {
 
   private static final LocalDate VALUATION_DATE = LocalDate.of(2014, 1, 22);
 
-  private static final IborIndex USD_LIBOR_1M = RateIndices.USD_LIBOR_1M;
-  private static final IborIndex USD_LIBOR_3M = RateIndices.USD_LIBOR_3M;
-  private static final IborIndex USD_LIBOR_6M = RateIndices.USD_LIBOR_6M;
+  private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
+  private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
+  private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
   public static final LocalDateDoubleTimeSeries TS_USDLIBOR3M_WITHOUTTODAY =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 1, 22), 0.00123)

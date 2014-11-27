@@ -6,7 +6,7 @@
 package com.opengamma.platform.pricer.impl.rate;
 
 import static com.opengamma.basics.date.DayCounts.ACT_ACT_ISDA;
-import static com.opengamma.basics.index.RateIndices.USD_FED_FUND;
+import static com.opengamma.basics.index.OvernightIndices.USD_FED_FUND;
 import static org.testng.Assert.assertEquals;
 
 import java.time.LocalDate;
@@ -19,7 +19,8 @@ import com.opengamma.analytics.financial.interestrate.datasets.StandardDataSetsM
 import com.opengamma.analytics.financial.provider.curve.CurveBuildingBlockBundle;
 import com.opengamma.analytics.financial.provider.description.interestrate.MulticurveProviderDiscount;
 import com.opengamma.basics.index.IborIndex;
-import com.opengamma.basics.index.RateIndices;
+import com.opengamma.basics.index.IborIndices;
+import com.opengamma.basics.index.OvernightIndices;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.finance.rate.IborInterpolatedRate;
 import com.opengamma.platform.finance.rate.Rate;
@@ -36,9 +37,9 @@ public class DefaultIborInterpolatedRateProviderFnTest {
 
   private static final LocalDate VALUATION_DATE = LocalDate.of(2014, 11, 25);
 
-  private static final IborIndex USD_LIBOR_1M = RateIndices.USD_LIBOR_1M;
-  private static final IborIndex USD_LIBOR_3M = RateIndices.USD_LIBOR_3M;
-  private static final IborIndex USD_LIBOR_6M = RateIndices.USD_LIBOR_6M;
+  private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
+  private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
+  private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
   private static final com.opengamma.analytics.financial.instrument.index.IborIndex USD_LIBOR_3M_OGA =
       IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
   public static final LocalDateDoubleTimeSeries TS_USDLIBOR3M_WITHOUTTODAY =
