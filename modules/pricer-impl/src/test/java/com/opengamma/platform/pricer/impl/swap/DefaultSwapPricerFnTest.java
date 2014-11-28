@@ -144,14 +144,14 @@ public class DefaultSwapPricerFnTest {
   }
   
 
-  @Test
+  @Test(enabled = false)
   public void performance() {
 
     long startTime, endTime;
     int nbTest = 100;
     int nbSwap = 100;
     int nbRep = 10;
-    
+
     for (int looprep = 0; looprep < nbRep; looprep++) {
       double pvTotal = 0.0;
       startTime = System.currentTimeMillis();
@@ -172,10 +172,10 @@ public class DefaultSwapPricerFnTest {
       endTime = System.currentTimeMillis();
       System.out.println("DefaultSwapPricerFn: " + nbTest + " x " + nbSwap + " swaps (5Y/Q) - construction " +
           (endTime - startTime) + " ms - " + pvTotal);
-      // Performance note: construction + pv: xx: On Mac Book Pro 2.6 GHz Intel i7: 569 ms for 100x100 swaps.
+      // Performance note: construction + pv: On Mac Book Pro 2.6 GHz Intel i7: 605 ms for 100x100 swaps.
       // Performance note: OG-Analytics: 434 ms
     }
-    
+
   }
 
   /**

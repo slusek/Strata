@@ -8,6 +8,7 @@ package com.opengamma.platform.pricer.impl.swap;
 import java.time.LocalDate;
 
 import com.opengamma.basics.currency.Currency;
+import com.opengamma.basics.currency.CurrencyAmount;
 import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.collect.ArgChecker;
 import com.opengamma.platform.finance.rate.FixedRate;
@@ -16,9 +17,11 @@ import com.opengamma.platform.finance.swap.PaymentEvent;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.finance.swap.RatePaymentPeriod;
 import com.opengamma.platform.finance.swap.Swap;
+import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.swap.PaymentEventPricerFn;
 import com.opengamma.platform.pricer.swap.PaymentPeriodPricerFn;
+import com.opengamma.platform.pricer.swap.SwapLegPricerFn;
 import com.opengamma.platform.pricer.swap.SwapPricerFn;
 import com.opengamma.util.ArgumentChecker;
 
@@ -32,7 +35,8 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
    */
   public static final DefaultSwapPricerFn DEFAULT = new DefaultSwapPricerFn(
       DefaultPaymentPeriodPricerFn.DEFAULT,
-      DefaultPaymentEventPricerFn.DEFAULT);
+      DefaultPaymentEventPricerFn.DEFAULT,
+      DefaultSwapLegPricerFn.DEFAULT);
 
   /**
    * Payment period pricer.
@@ -42,6 +46,10 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
    * Payment event pricer.
    */
   private final PaymentEventPricerFn<PaymentEvent> paymentEventPricerFn;
+  /**
+  * Payment period pricer.
+  */
+  private final SwapLegPricerFn<SwapLeg> swapLegPricerFn;
 
   /**
    * Creates an instance.
@@ -50,44 +58,26 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
    */
   public DefaultSwapPricerFn(
       PaymentPeriodPricerFn<PaymentPeriod> paymentPeriodPricerFn,
-      PaymentEventPricerFn<PaymentEvent> paymentEventPricerFn) {
+      PaymentEventPricerFn<PaymentEvent> paymentEventPricerFn,
+      SwapLegPricerFn<SwapLeg> swapLegPricerFn) {
     this.paymentPeriodPricerFn = ArgChecker.notNull(paymentPeriodPricerFn, "paymentPeriodPricerFn");
     this.paymentEventPricerFn = ArgChecker.notNull(paymentEventPricerFn, "paymentEventPricerFn");
+    this.swapLegPricerFn = ArgChecker.notNull(swapLegPricerFn, "swapLegPricerFn");
   }
 
   //-------------------------------------------------------------------------
   @Override
   public MultiCurrencyAmount presentValue(PricingEnvironment env, LocalDate valuationDate, Swap swap) {
-    int nbLeg = swap.getLegs().size();
-    MultiCurrencyAmount pvSwap = MultiCurrencyAmount.of();
-    for (int i = 0; i < nbLeg; i++) {
-      ExpandedSwapLeg expandedLeg = swap.getLeg(i).toExpanded();
-      double pvPeriods = expandedLeg.getPaymentPeriods().stream()
-          .mapToDouble(p -> paymentPeriodPricerFn.presentValue(env, valuationDate, p))
-          .sum();
-      double pvEvent = expandedLeg.getPaymentEvents().stream()
-          .mapToDouble(p -> paymentEventPricerFn.presentValue(env, valuationDate, p))
-          .sum();
-      pvSwap = pvSwap.plus(MultiCurrencyAmount.of(expandedLeg.getCurrency(), pvPeriods + pvEvent));
-    }
-    return pvSwap;
+    return swap.getLegs().stream()
+        .map(leg -> CurrencyAmount.of(leg.getCurrency(), swapLegPricerFn.presentValue(env, valuationDate, leg)))
+        .reduce(MultiCurrencyAmount.of(), MultiCurrencyAmount::plus, MultiCurrencyAmount::plus);
   }
 
   @Override
   public MultiCurrencyAmount futureValue(PricingEnvironment env, LocalDate valuationDate, Swap swap) {
-    int nbLeg = swap.getLegs().size();
-    MultiCurrencyAmount fvSwap = MultiCurrencyAmount.of();
-    for (int i = 0; i < nbLeg; i++) {
-      ExpandedSwapLeg expandedLeg = swap.getLeg(i).toExpanded();
-      double fvPeriods = expandedLeg.getPaymentPeriods().stream()
-          .mapToDouble(p -> paymentPeriodPricerFn.futureValue(env, valuationDate, p))
-          .sum();
-      double fvEvent = expandedLeg.getPaymentEvents().stream()
-          .mapToDouble(p -> paymentEventPricerFn.futureValue(env, valuationDate, p))
-          .sum();
-      fvSwap = fvSwap.plus(MultiCurrencyAmount.of(expandedLeg.getCurrency(), fvPeriods + fvEvent));
-    }
-    return fvSwap;
+    return swap.getLegs().stream()
+        .map(leg -> CurrencyAmount.of(leg.getCurrency(), swapLegPricerFn.futureValue(env, valuationDate, leg)))
+        .reduce(MultiCurrencyAmount.of(), MultiCurrencyAmount::plus, MultiCurrencyAmount::plus);
   }
 
   @Override
@@ -103,8 +93,7 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
     double pvOtherLegs = 0.0;
     for (int i = 1; i < swap.getLegs().size(); i++) {
       ArgumentChecker.isTrue(swap.getLeg(i).getCurrency().equals(ccy), "all legs should be in the same currency");
-      pvOtherLegs += swap.getLeg(i).toExpanded().getPaymentPeriods().stream()
-          .mapToDouble(p -> paymentPeriodPricerFn.presentValue(env, valuationDate, p)).sum();
+      pvOtherLegs += swapLegPricerFn.presentValue(env, valuationDate, swap.getLeg(i));
     }
     return -(pvPayment0 + pvOtherLegs) / pvbp;
   }
