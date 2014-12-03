@@ -25,7 +25,7 @@ import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
 /**
- * A single fixing of an index is observed by {@code AveragedIborRate}.
+ * A single fixing of an index is observed by {@code IborAveragedRate}.
  * <p>
  * The interest rate is determined for each reset period, with the weight used
  * to create a weighted average.

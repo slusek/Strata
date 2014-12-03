@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
+import com.opengamma.basics.date.BusinessDayConvention;
+import com.opengamma.basics.date.BusinessDayConventions;
+import com.opengamma.basics.date.HolidayCalendar;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.finance.rate.OvernightAveragedRate;
@@ -23,13 +26,16 @@ import com.opengamma.platform.pricer.rate.RateProviderFn;
  * The rate provider examines the historic time-series of known rates and the
  * forward curve to determine the effective annualized rate.
  */
-public class DefaultOvernightAveragedRateProviderFn
+public class ApproximatedDiscountingOvernightAveragedRateProviderFn
     implements RateProviderFn<OvernightAveragedRate> {
 
   /**
    * Default implementation.
    */
-  public static final DefaultOvernightAveragedRateProviderFn DEFAULT = new DefaultOvernightAveragedRateProviderFn();
+  public static final ApproximatedDiscountingOvernightAveragedRateProviderFn APPROXIMATED_DISCOUNTING = 
+      new ApproximatedDiscountingOvernightAveragedRateProviderFn();
+  
+  public static final BusinessDayConvention FOLLOWING = BusinessDayConventions.FOLLOWING;
 
   //-------------------------------------------------------------------------
   @Override
@@ -42,6 +48,46 @@ public class DefaultOvernightAveragedRateProviderFn
     // ?? is endDate a good business day in index.getFixingCalendar() ?
     // the time-series contains the value on the fixing date, not the publication date
     OvernightIndex index = rate.getIndex();
+    HolidayCalendar calendar = index.getFixingCalendar();
+    int effectiveOffset = index.getEffectiveDateOffset();
+    int cutoffOffset = rate.getRateCutoffDaysOffset();
+    if(valuationDate.isBefore(effectiveOffset == 0 ? startDate : index.getFixingCalendar().previous(startDate))) {
+      // No fixing to be analyzed. Go directly to approximation and cut-off.
+      // Cut-off part.
+      LocalDate ratePeriodEndDate = FOLLOWING.adjust(endDate, calendar);
+      double accrualFactorTotal = index.getDayCount().yearFraction(startDate, ratePeriodEndDate);
+      final List<LocalDate> ratePeriodStartDates = new ArrayList<>(); // Dates related to the underlying rate start periods.
+      final List<LocalDate> ratePeriodEndDates = new ArrayList<>(); // Dates related to the underlying rate end periods.
+      final List<Double> noCutOffAccrualFactorList = new ArrayList<>();
+      LocalDate currentEnd = ratePeriodEndDate;
+      LocalDate currentStart = startDate;
+      for (int i = 0; i < cutoffOffset; i++) {
+        ratePeriodEndDates.add(currentEnd);
+        currentStart = calendar.previous(currentEnd);
+        ratePeriodStartDates.add(currentStart);
+        double accrualFactor = index.getDayCount().yearFraction(currentStart, currentEnd);
+        noCutOffAccrualFactorList.add(accrualFactor);
+        currentEnd = currentStart;
+      }
+      // Approximated part
+      LocalDate rateNoCutoffPeriodEndDate = ratePeriodEndDates.get(cutoffOffset - 1);
+      double ratePeriodStartTime = env.relativeTime(valuationDate, startDate);
+      double ratePeriodendTime = env.relativeTime(valuationDate, rateNoCutoffPeriodEndDate);
+      double remainingFixingAccrualFactor = index.getDayCount().yearFraction(startDate, rateNoCutoffPeriodEndDate);
+      double forwardRate = env.getMulticurve().getSimplyCompoundForwardRate(
+          env.convert(index), ratePeriodStartTime, ratePeriodendTime, remainingFixingAccrualFactor);
+      double accruedUnitNotional = Math.log(1.0 + forwardRate * remainingFixingAccrualFactor);
+      // Cut-off part
+      double ratePeriodStartTimeCutoff = env.relativeTime(valuationDate, ratePeriodStartDates.get(cutoffOffset - 1));
+      double ratePeriodendTimeCutoff = env.relativeTime(valuationDate, ratePeriodEndDates.get(cutoffOffset - 1));
+      double forwardRateCutoff = env.getMulticurve().getSimplyCompoundForwardRate(env.convert(index), 
+          ratePeriodStartTimeCutoff, ratePeriodendTimeCutoff, noCutOffAccrualFactorList.get(cutoffOffset - 1));
+      for (int i = 0; i < cutoffOffset - 1; i++) {
+        accruedUnitNotional += noCutOffAccrualFactorList.get(i) * forwardRateCutoff;
+      }
+      // final rate
+      return accruedUnitNotional / accrualFactorTotal;
+    }
     // fixing periods, based on business days of the index
     final List<LocalDate> fixingDateList = new ArrayList<>(); // Dates on which the fixing take place
     final List<LocalDate> publicationDates = new ArrayList<>(); // Dates on which the fixing is published
@@ -49,14 +95,13 @@ public class DefaultOvernightAveragedRateProviderFn
     final List<LocalDate> ratePeriodEndDates = new ArrayList<>(); // Dates related to the underlying rate end periods.
     final List<Double> noCutOffAccrualFactorList = new ArrayList<>();
     int publicationOffset = index.getPublicationDateOffset(); //TODO: is there a check it is 0 or 1?
-    int effectiveOffset = index.getEffectiveDateOffset();
     LocalDate currentStart = startDate;
     double accrualFactorTotal = 0.0d;
     while (currentStart.isBefore(endDate)) {
-      LocalDate currentEnd = index.getFixingCalendar().next(currentStart);
-      LocalDate fixingDate = effectiveOffset == 0 ? currentStart : index.getFixingCalendar().previous(currentStart);
+      LocalDate currentEnd = calendar.next(currentStart);
+      LocalDate fixingDate = effectiveOffset == 0 ? currentStart : calendar.previous(currentStart);
       fixingDateList.add(fixingDate);
-      publicationDates.add(publicationOffset == 0 ? fixingDate : index.getFixingCalendar().next(fixingDate));
+      publicationDates.add(publicationOffset == 0 ? fixingDate : calendar.next(fixingDate));
       ratePeriodStartDates.add(currentStart);
       ratePeriodEndDates.add(currentEnd);
       double accrualFactor = index.getDayCount().yearFraction(currentStart, currentEnd);
@@ -66,7 +111,6 @@ public class DefaultOvernightAveragedRateProviderFn
     }
     // dealing with Rate cutoff
     int nbPeriods = noCutOffAccrualFactorList.size();
-    int cutoffOffset = rate.getRateCutoffDaysOffset();
     // hypothesis: c means c dates with the same rate
     final List<Double> cutOffAccrualFactorList = new ArrayList<>();
     cutOffAccrualFactorList.addAll(noCutOffAccrualFactorList);
@@ -109,8 +153,21 @@ public class DefaultOvernightAveragedRateProviderFn
         fixedPeriod++;
       }
     }
-    // forward rates
-    for (int i = fixedPeriod; i < nbPeriods; i++) {
+    // forward rates if not all fixed and not part of cut-off
+    int nbPeriodNotCutOff = nbPeriods - (cutoffOffset - 1);
+    if (fixedPeriod < nbPeriodNotCutOff) {
+      double ratePeriodStartTime = env.relativeTime(valuationDate, ratePeriodStartDates.get(fixedPeriod));
+      double ratePeriodendTime = env.relativeTime(valuationDate, ratePeriodEndDates.get(nbPeriodNotCutOff - 1));
+      double remainingFixingAccrualFactor = 0.0d;
+      for (int i = fixedPeriod; i < nbPeriodNotCutOff; i++) {
+        remainingFixingAccrualFactor += noCutOffAccrualFactorList.get(i);
+      }
+      double forwardRate = env.getMulticurve().getSimplyCompoundForwardRate(
+          env.convert(index), ratePeriodStartTime, ratePeriodendTime, remainingFixingAccrualFactor);
+      accruedUnitNotional += Math.log(1.0 + forwardRate * remainingFixingAccrualFactor);
+    }
+    // Cut-off part if not fixed
+    for (int i = Math.max(fixedPeriod, nbPeriodNotCutOff); i < nbPeriods; i++) {
       double ratePeriodStartTime = env.relativeTime(valuationDate, ratePeriodStartDates.get(i));
       double ratePeriodendTime = env.relativeTime(valuationDate, ratePeriodEndDates.get(i));
       double forwardRate = env.getMulticurve().getSimplyCompoundForwardRate(
