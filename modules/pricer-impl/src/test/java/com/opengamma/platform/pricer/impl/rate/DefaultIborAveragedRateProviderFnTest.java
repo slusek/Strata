@@ -163,7 +163,6 @@ public class DefaultIborAveragedRateProviderFnTest {
         "DefaultIborAveragedRateProviderFn: rate forward");
   }
 
-
   @Test
   public void rateAllFixings() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 17);
@@ -187,7 +186,6 @@ public class DefaultIborAveragedRateProviderFnTest {
       "DefaultIborAveragedRateProviderFn: rate forward");
   }
 
-  
   /**
    * Create a pricing environment from the existing MulticurveProvider and Ibor fixing time series.
    * @param ts The time series for the USDLIBOR3M.
