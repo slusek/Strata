@@ -40,14 +40,14 @@ public class DefaultOvernightCompoundedRateProviderFn
       LocalDate startDate,
       LocalDate endDate) {
     // the time-series contains the value on the fixing date, not the publication date
-    // TODO: is publication date properly handled?
     if (rate.getRateCutoffDaysOffset() < 0) { //Should this be > 0?
       // TODO: rate cutoff
       throw new IllegalArgumentException("Rate cutoff not supported");
     }
     // if no fixings apply, then only use forward rate
     OvernightIndex index = rate.getIndex();
-    final LocalDate firstPublicationDate = index.calculatePublicationFromFixing(startDate);
+    final LocalDate firstFixingDate = index.calculateFixingFromEffective(startDate);
+    final LocalDate firstPublicationDate = index.calculatePublicationFromFixing(firstFixingDate);
     if (valuationDate.isBefore(firstPublicationDate)) {
       return rateFromForwardCurve(env, valuationDate, index, startDate, endDate);
     }
@@ -55,10 +55,11 @@ public class DefaultOvernightCompoundedRateProviderFn
     final List<LocalDate> fixingDateList = new ArrayList<>();
     final List<Double> fixingAccrualFactorList = new ArrayList<>();
     LocalDate currentStart = startDate;
-    fixingDateList.add(currentStart);
+    fixingDateList.add(firstFixingDate);
     while (currentStart.isBefore(endDate)) {
       LocalDate currentEnd = index.getFixingCalendar().next(currentStart);
-      fixingDateList.add(currentEnd);
+      LocalDate nextFixingDate = index.calculateFixingFromEffective(currentEnd);
+      fixingDateList.add(nextFixingDate);
       fixingAccrualFactorList.add(index.getDayCount().yearFraction(currentStart, currentEnd));
       currentStart = currentEnd;
     }
@@ -100,14 +101,15 @@ public class DefaultOvernightCompoundedRateProviderFn
     double fixingAccrualfactor = index.getDayCount().yearFraction(startDate, endDate);
     if (fixedPeriod < fixingDateList.size() - 1) {
       // fixing period is the remaining time of the period
-      final double fixingStart = env.relativeTime(valuationDate, fixingDateList.get(fixedPeriod));
-      final double fixingEnd = env.relativeTime(valuationDate, fixingDateList.get(fixingDateList.size() - 1));
+      LocalDate remainingStartDate = index.calculateEffectiveFromFixing(fixingDateList.get(fixedPeriod));
+      double start = env.relativeTime(valuationDate, remainingStartDate);
+      double end = env.relativeTime(valuationDate, endDate);
       double fixingAccrualFactorLeft = 0.0;
       for (int loopperiod = fixedPeriod; loopperiod < fixingAccrualFactorList.size(); loopperiod++) {
         fixingAccrualFactorLeft += fixingAccrualFactorList.get(loopperiod);
       }
       double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
-          env.convert(index), fixingStart, fixingEnd, fixingAccrualFactorLeft);
+          env.convert(index), start, end, fixingAccrualFactorLeft);
       double ratio = 1d + fixingAccrualFactorLeft * observedRate;
       return (accruedUnitNotional * ratio - 1d) / fixingAccrualfactor;
     }

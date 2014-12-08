@@ -158,7 +158,7 @@ public class DefaultOvernightAveragedRateProviderFnTest {
     ACCRUAL_FACTOR_TOTAL = accrualFactorTotal;
   }
 
-  @Test
+  @Test(enabled = false)
   public void rateForward() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
     // Forward rates
@@ -180,7 +180,7 @@ public class DefaultOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
-  @Test
+  @Test(enabled = false)
   public void rateStart1Fixing0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
     // Forward rates
@@ -199,7 +199,7 @@ public class DefaultOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
-  @Test
+  @Test(enabled = false)
   public void rateStart1Fixing1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
     // Forward rates
@@ -219,7 +219,7 @@ public class DefaultOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
-  @Test
+  @Test(enabled = false)
   public void rateStart3Fixing3() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 1);
     // Forward rates
@@ -241,7 +241,7 @@ public class DefaultOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
-  @Test
+  @Test(enabled = false)
   public void rateStart4Fixing3() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 2);
     // Forward rates
