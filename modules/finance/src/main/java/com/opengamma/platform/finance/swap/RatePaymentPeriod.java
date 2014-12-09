@@ -98,40 +98,6 @@ public final class RatePaymentPeriod
   private final CompoundingMethod compoundingMethod;
 
   //-------------------------------------------------------------------------
-  /**
-   * Obtains an instance of the payment period from a single accrual period.
-   * <p>
-   * No compounding will apply.
-   * 
-   * @param paymentDate  the actual payment date, adjusted for business days
-   * @param accrualPeriod  the single accrual period forming the payment period
-   * @return the payment period
-   */
-  public static RatePaymentPeriod of(LocalDate paymentDate, RateAccrualPeriod accrualPeriod) {
-    return RatePaymentPeriod.builder()
-        .paymentDate(paymentDate)
-        .accrualPeriods(ImmutableList.of(accrualPeriod))
-        .build();
-  }
-
-  /**
-   * Obtains an instance of the payment period with no compounding.
-   * 
-   * @param paymentDate  the actual payment date, adjusted for business days
-   * @param accrualPeriods  the accrual periods forming the payment period
-   * @param compoundingMethod  the compounding method
-   * @return the payment period
-   */
-  public static RatePaymentPeriod of(
-      LocalDate paymentDate, List<RateAccrualPeriod> accrualPeriods, CompoundingMethod compoundingMethod) {
-    return RatePaymentPeriod.builder()
-        .paymentDate(paymentDate)
-        .accrualPeriods(accrualPeriods)
-        .compoundingMethod(compoundingMethod)
-        .build();
-  }
-
-  //-------------------------------------------------------------------------
   @ImmutableDefaults
   private static void applyDefaults(Builder builder) {
     builder.compoundingMethod(CompoundingMethod.NONE);

@@ -17,7 +17,6 @@ import com.opengamma.basics.index.FxIndex;
 import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.Index;
 import com.opengamma.basics.index.OvernightIndex;
-import com.opengamma.basics.index.RateIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 
 /**
@@ -99,12 +98,32 @@ public interface PricingEnvironment {
   /**
    * Convert the Overnight index into a "IndexON" used in OG-Analytics.
    * <p>
-   * FIXME: Code only to initial testing. The objects should be uniformised before 3.0.
+   * FIXME: Code only to initial testing. The objects should be uniformed before 3.0.
    * 
    * @param index The overnight index.
    * @return The index.
    */
   public IndexON convert(OvernightIndex index);
+  
+  /**
+   * Convert the Overnight index into a "IndexIbor" used in OG-Analytics.
+   * <p>
+   * FIXME: Code only to initial testing. The objects should be uniformed before 3.0.
+   * 
+   * @param index The Ibor index.
+   * @return The index.
+   */
+  public com.opengamma.analytics.financial.instrument.index.IborIndex convert(IborIndex index);
+  
+  /**
+   * Convert the Currency into a "Currency" used in OG-Analytics.
+   * <p>
+   * FIXME: Code only to initial testing. The objects should be uniformed before 3.0.
+   * 
+   * @param ccy The currency.
+   * @return The currency.
+   */
+  public com.opengamma.util.money.Currency currency(Currency ccy);
 
   //-------------------------------------------------------------------------
   /**

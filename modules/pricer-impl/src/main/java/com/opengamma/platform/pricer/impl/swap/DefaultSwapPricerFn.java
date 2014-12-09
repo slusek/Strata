@@ -7,10 +7,13 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MultipleCurrencyMulticurveSensitivity;
 import com.opengamma.basics.currency.Currency;
 import com.opengamma.basics.currency.CurrencyAmount;
 import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.FixedRate;
 import com.opengamma.platform.finance.swap.ExpandedSwapLeg;
 import com.opengamma.platform.finance.swap.PaymentEvent;
@@ -78,6 +81,19 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
     return swap.getLegs().stream()
         .map(leg -> CurrencyAmount.of(leg.getCurrency(), swapLegPricerFn.futureValue(env, valuationDate, leg)))
         .reduce(MultiCurrencyAmount.of(), MultiCurrencyAmount::plus, MultiCurrencyAmount::plus);
+  }
+
+  @Override
+  public Pair<MultiCurrencyAmount, MultipleCurrencyMulticurveSensitivity> presentValueCurveSensitivity(PricingEnvironment env, LocalDate valuationDate, Swap swap) {
+    MultipleCurrencyMulticurveSensitivity sensi = new MultipleCurrencyMulticurveSensitivity();
+    MultiCurrencyAmount pv = MultiCurrencyAmount.of();
+    for(SwapLeg leg: swap.getLegs()) {
+      Pair<Double, MulticurveSensitivity> pair = 
+          swapLegPricerFn.presentValueCurveSensitivity(env, valuationDate, leg);
+      pv = pv.plus(leg.getCurrency(), pair.getFirst());
+      sensi = sensi.plus(env.currency(leg.getCurrency()), pair.getSecond());      
+    }
+    return Pair.of(pv, sensi);
   }
 
   @Override

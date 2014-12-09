@@ -7,7 +7,9 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.ExpandedSwapLeg;
 import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.PricingEnvironment;
@@ -57,6 +59,14 @@ public class DefaultSwapLegPricerFn
       LocalDate valuationDate,
       SwapLeg swapLeg) {
     return expandedSwapLegPricerFn.futureValue(env, valuationDate, swapLeg.toExpanded());
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      SwapLeg swapLeg) {
+    return expandedSwapLegPricerFn.presentValueCurveSensitivity(env, valuationDate, swapLeg.toExpanded());
   }
 
 }

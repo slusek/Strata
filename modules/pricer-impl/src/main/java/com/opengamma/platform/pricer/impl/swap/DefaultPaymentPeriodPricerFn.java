@@ -7,7 +7,9 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.finance.swap.RatePaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
@@ -79,6 +81,19 @@ public class DefaultPaymentPeriodPricerFn
     // dispatch by runtime type
     if (period instanceof RatePaymentPeriod) {
       return ratePaymentPeriodFn.pvbpQuote(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.presentValueCurveSensitivity(env, valuationDate, (RatePaymentPeriod) period);
     } else {
       throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
     }

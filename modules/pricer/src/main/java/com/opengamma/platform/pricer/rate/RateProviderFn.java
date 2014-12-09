@@ -7,6 +7,8 @@ package com.opengamma.platform.pricer.rate;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.Rate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 
@@ -34,6 +36,25 @@ public interface RateProviderFn<T extends Rate> {
    * @return the applicable rate
    */
   public abstract double rate(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      T rate,
+      LocalDate startDate,
+      LocalDate endDate);
+
+  /**
+   * Determines the sensitivity of the rate to the multicurve in teh PricingEnvironment.
+   * <p>
+   * Each type of rate has specific rules, encapsulated in {@code Rate}.
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param rate  the rate to provide
+   * @param startDate  the start date of the period that the rate is applicable for
+   * @param endDate  the end date of the period that the rate is applicable for
+   * @return The sensitivity.
+   */
+  public abstract Pair<Double,MulticurveSensitivity> rateMulticurveSensitivity(
       PricingEnvironment env,
       LocalDate valuationDate,
       T rate,

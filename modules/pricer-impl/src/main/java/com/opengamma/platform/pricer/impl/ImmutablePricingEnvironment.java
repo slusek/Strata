@@ -88,7 +88,8 @@ public class ImmutablePricingEnvironment
     return multicurve.getDiscountFactor(currency(currency), relativeTime(valuationDate, date));
   }
 
-  private static com.opengamma.util.money.Currency currency(Currency currency) {
+  @Override
+  public com.opengamma.util.money.Currency currency(Currency currency) {
     return com.opengamma.util.money.Currency.of(currency.getCode());
   }
 
@@ -114,26 +115,10 @@ public class ImmutablePricingEnvironment
     LocalDate fixingEndDate = index.calculateMaturityFromEffective(fixingStartDate);
     double fixingYearFraction = index.getDayCount().yearFraction(fixingStartDate, fixingEndDate);
     return getMulticurve().getSimplyCompoundForwardRate(
-        index(index),
+        convert(index),
         relativeTime(valuationDate, fixingStartDate),
         relativeTime(valuationDate, fixingEndDate),
         fixingYearFraction);
-  }
-
-  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR1M =
-      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR1M);
-  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR3M =
-      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
-  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR6M =
-      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR6M);
-  private static com.opengamma.analytics.financial.instrument.index.IborIndex index(IborIndex index) {
-    com.opengamma.analytics.financial.instrument.index.IborIndex idx = USDLIBOR3M;
-    if (index.getTenor().equals(Tenor.TENOR_6M)) {
-      idx = USDLIBOR6M;
-    } else if (index.getTenor().equals(Tenor.TENOR_1M)) {
-      idx = USDLIBOR1M;
-    }
-    return idx;
   }
 
   @Override
@@ -190,6 +175,23 @@ public class ImmutablePricingEnvironment
       return USDFEDFUND;
     }
     throw new OpenGammaRuntimeException("Could not get an overnight index for currency " + index.getCurrency());
+  }
+
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR1M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR1M);
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR3M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR6M =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR6M);
+  @Override
+  public com.opengamma.analytics.financial.instrument.index.IborIndex convert(IborIndex index) {
+    com.opengamma.analytics.financial.instrument.index.IborIndex idx = USDLIBOR3M;
+    if (index.getTenor().equals(Tenor.TENOR_6M)) {
+      idx = USDLIBOR6M;
+    } else if (index.getTenor().equals(Tenor.TENOR_1M)) {
+      idx = USDLIBOR1M;
+    }
+    return idx;
   }
 
   @Override

@@ -7,6 +7,8 @@ package com.opengamma.platform.pricer.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.PaymentEvent;
 import com.opengamma.platform.pricer.PricingEnvironment;
 
@@ -47,6 +49,20 @@ public interface PaymentEventPricerFn<T extends PaymentEvent> {
    * @return the present value of the event
    */
   public abstract double futureValue(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      T event);
+
+  /**
+   * Calculates the present value curve sensitivity of a single payment event. 
+   * The sensitivity is in the currency of the payment.
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param event  the swap leg to price
+   * @return the present value curve sensitivity
+   */
+  public abstract Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(
       PricingEnvironment env,
       LocalDate valuationDate,
       T event);

@@ -7,7 +7,9 @@ package com.opengamma.platform.pricer.impl.rate;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.FixedRate;
 import com.opengamma.platform.finance.rate.IborAveragedRate;
 import com.opengamma.platform.finance.rate.IborInterpolatedRate;
@@ -102,6 +104,22 @@ public class DefaultRateProviderFn
       return overnightCompoundedRateFn.rate(env, valuationDate, (OvernightCompoundedRate) rate, startDate, endDate);
     } else if (rate instanceof OvernightAveragedRate) {
       return overnightAveragedRateFn.rate(env, valuationDate, (OvernightAveragedRate) rate, startDate, endDate);
+    } else {
+      throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double,MulticurveSensitivity> rateMulticurveSensitivity(
+      PricingEnvironment env, 
+      LocalDate valuationDate, Rate rate, 
+      LocalDate startDate, 
+      LocalDate endDate) {
+    // dispatch by runtime type
+    if (rate instanceof FixedRate) {
+      return Pair.of(((FixedRate) rate).getRate(), new MulticurveSensitivity());
+    } else if (rate instanceof IborRate) {
+      return iborRateFn.rateMulticurveSensitivity(env, valuationDate, (IborRate) rate, startDate, endDate);
     } else {
       throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
     }

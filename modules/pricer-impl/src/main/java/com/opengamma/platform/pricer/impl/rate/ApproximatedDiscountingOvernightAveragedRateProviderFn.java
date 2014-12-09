@@ -11,11 +11,13 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.basics.date.BusinessDayConvention;
 import com.opengamma.basics.date.BusinessDayConventions;
 import com.opengamma.basics.date.HolidayCalendar;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.OvernightAveragedRate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
@@ -176,6 +178,12 @@ public class ApproximatedDiscountingOvernightAveragedRateProviderFn
     }
     // final rate
     return accruedUnitNotional / accrualFactorTotal;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
+      PricingEnvironment env, LocalDate valuationDate, OvernightAveragedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
   }
 
 }

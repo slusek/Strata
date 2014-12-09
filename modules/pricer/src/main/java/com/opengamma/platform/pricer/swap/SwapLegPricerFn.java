@@ -7,6 +7,8 @@ package com.opengamma.platform.pricer.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.PricingEnvironment;
 
@@ -20,7 +22,7 @@ import com.opengamma.platform.pricer.PricingEnvironment;
 public interface SwapLegPricerFn<T extends SwapLeg> {
 
   /**
-   * Calculates the present value of the swap.
+   * Calculates the present value of the swap leg.
    * 
    * @param env  the pricing environment
    * @param valuationDate  the valuation date
@@ -33,7 +35,7 @@ public interface SwapLegPricerFn<T extends SwapLeg> {
       T swapLeg);
 
   /**
-   * Calculates the future value of the swap.
+   * Calculates the future value of the swap leg.
    * 
    * @param env  the pricing environment
    * @param valuationDate  the valuation date
@@ -41,6 +43,19 @@ public interface SwapLegPricerFn<T extends SwapLeg> {
    * @return the future value of the swap
    */
   public abstract double futureValue(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      T swapLeg);
+
+  /**
+   * Calculates the present value curve sensitivity of the swap leg.
+   * 
+   * @param env  the pricing environment
+   * @param valuationDate  the valuation date
+   * @param swapLeg  the swap leg to price
+   * @return the present value curve sensitivity
+   */
+  public abstract Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(
       PricingEnvironment env,
       LocalDate valuationDate,
       T swapLeg);

@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.OvernightCompoundedRate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
@@ -131,6 +133,12 @@ public class DefaultOvernightCompoundedRateProviderFn
     double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
         env.convert(index), fixingStart, fixingEnd, fixingAccrualfactor);
     return observedRate;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
+      PricingEnvironment env, LocalDate valuationDate, OvernightCompoundedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
   }
 
 }

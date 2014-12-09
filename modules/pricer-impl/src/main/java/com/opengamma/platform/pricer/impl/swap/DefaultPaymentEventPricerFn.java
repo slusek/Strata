@@ -7,7 +7,9 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
 import com.opengamma.collect.ArgChecker;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.NotionalExchange;
 import com.opengamma.platform.finance.swap.PaymentEvent;
 import com.opengamma.platform.pricer.PricingEnvironment;
@@ -66,6 +68,19 @@ public class DefaultPaymentEventPricerFn
     // dispatch by runtime type
     if (event instanceof NotionalExchange) {
       return notionalExchangeFn.futureValue(env, valuationDate, (NotionalExchange) event);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentEvent type: " + event.getClass().getSimpleName());
+    }
+  }
+  
+  @Override
+  public Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      PaymentEvent event) {
+    // dispatch by runtime type
+    if (event instanceof NotionalExchange) {
+      return notionalExchangeFn.presentValueCurveSensitivity(env, valuationDate, (NotionalExchange) event);
     } else {
       throw new IllegalArgumentException("Unknown PaymentEvent type: " + event.getClass().getSimpleName());
     }

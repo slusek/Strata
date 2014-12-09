@@ -7,6 +7,8 @@ package com.opengamma.platform.pricer.swap;
 
 import java.time.LocalDate;
 
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
 
@@ -50,6 +52,8 @@ public interface PaymentPeriodPricerFn<T extends PaymentPeriod> {
       PricingEnvironment env,
       LocalDate valuationDate,
       T period);
+
+  Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(PricingEnvironment env, LocalDate valuationDate, T period);
 
   /**
    * Calculates the XXX
