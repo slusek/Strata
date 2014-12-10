@@ -39,27 +39,29 @@ import com.opengamma.util.tuple.Pair;
  */
 @Test
 public class DefaultOvernightCompoundedRateProviderFnTest {
+  // TODO Tests for 0, -1 publication lags should be done with e.g., GBP, CHF.
+  // Currently these cases are tested by modifying FedFund in order to make use of the setup in Platform 2.x
 
   private static final LocalDate VALUATION_DATE = LocalDate.of(2014, 11, 25);
 
   private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
   private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
   private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
-  public static final double FIXING_YEST = 0.00123;
-  public static final double FIXING_TODAY = 0.00234;
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDATA =
+  private static final double FIXING_YEST = 0.00123;
+  private static final double FIXING_TODAY = 0.00234;
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDATA =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 11, 18), 0.00119)
       .put(LocalDate.of(2014, 11, 20), 0.00121)
       .put(LocalDate.of(2014, 11, 21), 0.00122)
       .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDBY =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDBY =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 11, 18), 0.00119)
       .put(LocalDate.of(2014, 11, 19), 0.00120)
       .put(LocalDate.of(2014, 11, 20), 0.00121)
       .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTYEST =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTYEST =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 11, 18), 0.00119)
       .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -67,7 +69,7 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
       .put(LocalDate.of(2014, 11, 21), 0.00122)
       .build();
   /* today is set to be 2014/11/24 when using this set */
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTYEST_1M =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTYEST_1M =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 10, 23), 0.00119)
       .put(LocalDate.of(2014, 10, 24), 0.00122)
@@ -90,7 +92,7 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
       .put(LocalDate.of(2014, 11, 19), 0.00119)
       .put(LocalDate.of(2014, 11, 20), 0.00119)
       .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTTODAY =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTTODAY =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 17), 0.00117)
       .put(LocalDate.of(2014, 11, 18), 0.00119)
@@ -100,7 +102,7 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
       .put(LocalDate.of(2014, 11, 24), FIXING_YEST)
       .build();
   /* today is set to be 2014/11/24 when using this set */
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTTODAY_1M =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHOUTTODAY_1M =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 10, 23), 0.00119)
       .put(LocalDate.of(2014, 10, 24), 0.00122)
@@ -124,7 +126,7 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
       .put(LocalDate.of(2014, 11, 20), 0.00119)
       .put(LocalDate.of(2014, 11, 21), 0.00122)
       .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHTODAY =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_WITHTODAY =
       LocalDateDoubleTimeSeries.builder()
       .put(LocalDate.of(2014, 11, 17), 0.00117)
       .put(LocalDate.of(2014, 11, 18), 0.00119)
@@ -138,8 +140,8 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
       StandardDataSetsMulticurveUSD.getCurvesUSDOisL1L3L6();
   private static final MulticurveProviderDiscount MULTICURVE_OIS = MULTICURVE_OIS_PAIR.getFirst();
 
-  /**
-   * Tests for publication lag = +1
+  /*
+   * Tests for publication lag = +1.
    */
   private static final ImmutablePricingEnvironment ENV_MISSINGDATA = env(TS_USDFEDFUND_MISSINGDATA, USD_FED_FUND);
   private static final ImmutablePricingEnvironment ENV_MISSINGDBY = env(TS_USDFEDFUND_MISSINGDBY, USD_FED_FUND);
@@ -246,6 +248,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");    
   }
   
+  /**
+   * Period starts before yesterday and ends today with fixing up to yesterday. 
+   */
   @Test
   public void rateStartPastEndTodayFixingPubLag1() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
@@ -279,6 +284,26 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  @Test
+  public void rateForward() {
+    for (int i = 0; i < NB_TESTS; i++) {
+      LocalDate fixingStartDate = USD_LIBOR_3M.calculateEffectiveFromFixing(FIXING_DATES_TESTED[i]);
+      LocalDate fixingEndDate = USD_LIBOR_3M.calculateMaturityFromEffective(fixingStartDate);
+      double fixingYearFraction = USD_FED_FUND.getDayCount().yearFraction(fixingStartDate, fixingEndDate);
+      double rateExpected = MULTICURVE_OIS.getSimplyCompoundForwardRate(USD_FED_FUND_OGA,
+          ENV_WITHTODAY.relativeTime(VALUATION_DATE, fixingStartDate),
+          ENV_WITHTODAY.relativeTime(VALUATION_DATE, fixingEndDate), fixingYearFraction);
+      double rateOnFixingComputed =
+          ON_CMP_RATE_PROVIDER.rate(ENV_WITHTODAY, VALUATION_DATE, ON_CMP_RATE, fixingStartDate, fixingEndDate);
+      assertEquals(rateExpected, rateOnFixingComputed, TOLERANCE_RATE,
+          "DefaultIborRateProviderFn: rate forward");
+      double rateGenFixingComputed =
+          RATE_PROVIDER.rate(ENV_WITHTODAY, VALUATION_DATE, ON_CMP_RATE, fixingStartDate, fixingEndDate);
+      assertEquals(rateGenFixingComputed, rateOnFixingComputed, TOLERANCE_RATE,
+          "DefaultIborRateProviderFn: rate forward");
+    }
+  }
+
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartPastMissingFixingDFYPubLag1() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(7);
@@ -293,10 +318,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_MISSINGDATA, VALUATION_DATE, ON_CMP_RATE, fixingStartDate, fixingEndDate);
   }
 
-  /**
-   * Tests for publication lag = 0
-   */
-  /* 
+  /*
+   * Tests for publication lag = 0. 
+   * 
    * Modify the index s.t. publication lag = 0. 
    * ImmutablePricingEnvironment and OvernightCompoundedRate should be also modified. 
    * Note that we continue to use "USD-FED-FUND" to pick up the curve in the multicurve. 
@@ -314,6 +338,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
   private static final ImmutablePricingEnvironment ENV_WITHOUTTODAY_ZERO_1M = env(TS_USDFEDFUND_WITHOUTTODAY_1M,
       INDEX_PUB_LAG_ZERO);
 
+  /**
+   * Period starts today, with fixing up to yesterday. 
+   */
   @Test
   public void rateStartTodayWithFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE;
@@ -329,6 +356,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts today, with fixing up to yesterday. 
+   */
   @Test
   public void rateStartTodayWithFixingTodayPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE;
@@ -350,8 +380,10 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
-  /* The input time series is not complete - missing index fixed yesterday, 
-   * but an error is not returned because the period starts today. */
+  /** 
+   * Period starts today, without fixing yesterday, thus the input time series is not complete. 
+   * However, an error is not returned because the rate fixed yesterday is not used. 
+   */
   @Test
   public void rateStartTodayWithoutFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE;
@@ -367,6 +399,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartYestWithFixingTodayPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(1);
@@ -390,6 +425,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartYestWithFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(1);
@@ -411,6 +449,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts yesterday without fixing yesterday. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartYestWithoutFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(1);
@@ -418,6 +459,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, fixingStartDate, fixingEndDate);
   }
 
+  /**
+   * Period starts before yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartPastWitFixingTodayPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(7);
@@ -439,6 +483,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts before yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartPastWitFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(7);
@@ -460,6 +507,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts before yesterday without fixing yesterday. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartPastWithoutFixingYestPubLag0() {
     LocalDate fixingStartDate = VALUATION_DATE.minusDays(7);
@@ -467,6 +517,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, fixingStartDate, fixingEndDate);
   }
 
+  /**
+   * Period starts before yesterday and ends today with fixing up to yesterday. Thus all the rates are fixed. 
+   */
   @Test
   public void rateStartPastEndTodayFixingPubLag0() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
@@ -475,13 +528,15 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     double fixingYearFraction = INDEX_PUB_LAG_ZERO.getDayCount().yearFraction(fixingStartDate, fixingEndDate);
     double rateWithFixingExpected = (Math.pow((1.0 + 0.00119 / 360.0), 14) * (1.0 + 0.00121 * 2.0 / 360.0) *
         Math.pow((1.0 + 0.00122 * 3.0 / 360.0), 5) - 1.0) / fixingYearFraction;
-    double rateWithFixingComputed =
-        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO, fixingStartDate,
-            fixingEndDate);
+    double rateWithFixingComputed = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate,
+        ON_CMP_RATE_ZERO, fixingStartDate, fixingEndDate);
     assertEquals(rateWithFixingExpected, rateWithFixingComputed, TOLERANCE_RATE,
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts before yesterday and ends today without fixing yesterday. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartPastEndTodayWithoutFixingYestPubLag0() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
@@ -490,10 +545,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO, fixingStartDate, fixingEndDate);
   }
   
-  /**
-   * Tests for publication lag -1
-   */
-  /* 
+  /*
+   * Tests for publication lag = -1.
+   * 
    * Modify the index s.t. publication lag = -1. 
    * ImmutablePricingEnvironment and OvernightCompoundedRate should be also modified. 
    * Note that we continue to use "USD-FED-FUND" to pick up the curve in the multicurve. 
@@ -512,6 +566,31 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
   private static final ImmutablePricingEnvironment ENV_WITHOUTTODAY_MINUS_1M = env(TS_USDFEDFUND_WITHOUTTODAY_1M,
       INDEX_PUB_LAG_MINUS);
 
+  /**
+   * Period starts today with fixing up to today. 
+   */
+  @Test
+  public void rateStartTodayWithFixingTodayPubLagM1() {
+    LocalDate startDate = VALUATION_DATE;
+    LocalDate remainingStartDate = VALUATION_DATE.plusDays(3); // US holiday on 27th
+    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
+    double yearFraction = INDEX_PUB_LAG_MINUS.getDayCount().yearFraction(startDate, endDate);
+    double remainingYearFraction = INDEX_PUB_LAG_MINUS.getDayCount().yearFraction(remainingStartDate, endDate);
+
+    double rateFwdExpectedWithFixing = MULTICURVE_OIS.getSimplyCompoundForwardRate(USD_FED_FUND_OGA,
+        ENV_WITHTODAY_MINUS.relativeTime(VALUATION_DATE, remainingStartDate),
+        ENV_WITHTODAY_MINUS.relativeTime(VALUATION_DATE, endDate), remainingYearFraction);
+    double rateWithFixingExpected = ((1.0d + FIXING_YEST / 360.0) * (1.0d + FIXING_TODAY / 180.0) *
+        (1.0d + remainingYearFraction * rateFwdExpectedWithFixing) - 1.0d) / yearFraction;
+    double rateWithFixingComputed = ON_CMP_RATE_PROVIDER
+        .rate(ENV_WITHTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, endDate);
+    assertEquals(rateWithFixingExpected, rateWithFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts today with fixing up to yesterday. 
+   */
   @Test
   public void rateStartTodayWithFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE;
@@ -532,26 +611,10 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
-  @Test
-  public void rateStartTodayWithFixingTodayPubLagM1() {
-    LocalDate startDate = VALUATION_DATE;
-    LocalDate remainingStartDate = VALUATION_DATE.plusDays(3); // US holiday on 27th
-    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
-    double yearFraction = INDEX_PUB_LAG_MINUS.getDayCount().yearFraction(startDate, endDate);
-    double remainingYearFraction = INDEX_PUB_LAG_MINUS.getDayCount().yearFraction(remainingStartDate, endDate);
-
-    double rateFwdExpectedWithFixing = MULTICURVE_OIS.getSimplyCompoundForwardRate(USD_FED_FUND_OGA,
-        ENV_WITHTODAY_MINUS.relativeTime(VALUATION_DATE, remainingStartDate),
-        ENV_WITHTODAY_MINUS.relativeTime(VALUATION_DATE, endDate), remainingYearFraction);
-    double rateWithFixingExpected = ((1.0d + FIXING_YEST / 360.0) * (1.0d + FIXING_TODAY / 180.0) *
-        (1.0d + remainingYearFraction * rateFwdExpectedWithFixing) - 1.0d) / yearFraction;
-    double rateWithFixingComputed = ON_CMP_RATE_PROVIDER
-        .rate(ENV_WITHTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, endDate);
-    assertEquals(rateWithFixingExpected, rateWithFixingComputed, TOLERANCE_RATE,
-        "DefaultIborRateProviderFn: rate forward");
-  }
-
-  /* Rate fixed yesterday is used for the first sub-period, then exception is thrown. */
+  /** 
+   * Period starts today without fixing today. 
+   * Rate fixed yesterday is used for the first sub-period, then exception is thrown. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartTodayWithoutFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE;
@@ -559,6 +622,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, endDate);
   }
 
+  /**
+   * Period starts yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartYestWithFixingTodayPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(1);
@@ -579,6 +645,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartYestWithFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(1);
@@ -598,6 +667,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts yesterday without fixing yesterday. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartYestWithoutFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(1);
@@ -605,6 +677,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, endDate);
   }
 
+  /**
+   * Period starts before yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartPastWitFixingTodayPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(7);
@@ -626,6 +701,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts before yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartPastWitFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(7);
@@ -646,6 +724,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /**
+   * Period starts before yesterday without fixing yesterday. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartPastWithoutFixingYestPubLagM1() {
     LocalDate startDate = VALUATION_DATE.minusDays(7);
@@ -653,6 +734,9 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
     ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTYEST_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, endDate);
   }
 
+  /**
+   * Period starts before yesterday and ends today with fixing up to yesterday. 
+   */
   @Test
   public void rateStartPastEndTodayFixingPubLagM1() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
@@ -668,8 +752,10 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
-  /* Time series is not complete - missing yesterday's fixing. 
-     But error is not thrown because the period ends today. */
+  /**
+   * Period starts before yesterday and ends today without fixing yesterday, thus the time series is not complete. 
+   * However, the exception is not thrown because the last accrual is fixed one day before yesterday. 
+   */
   @Test
   public void rateStartPastEndTodayWithoutFixingYestPubLagM1() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
@@ -685,29 +771,10 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
-  @Test
-  public void rateForward() {
-    for(int i = 0; i < NB_TESTS ; i++) {
-      LocalDate fixingStartDate = USD_LIBOR_3M.calculateEffectiveFromFixing(FIXING_DATES_TESTED[i]);
-      LocalDate fixingEndDate = USD_LIBOR_3M.calculateMaturityFromEffective(fixingStartDate);
-      double fixingYearFraction = USD_FED_FUND.getDayCount().yearFraction(fixingStartDate, fixingEndDate);
-      double rateExpected = MULTICURVE_OIS.getSimplyCompoundForwardRate(USD_FED_FUND_OGA,
-          ENV_WITHTODAY.relativeTime(VALUATION_DATE, fixingStartDate),
-          ENV_WITHTODAY.relativeTime(VALUATION_DATE, fixingEndDate), fixingYearFraction);
-      double rateOnFixingComputed = 
-          ON_CMP_RATE_PROVIDER.rate(ENV_WITHTODAY, VALUATION_DATE, ON_CMP_RATE, fixingStartDate, fixingEndDate);
-      assertEquals(rateExpected, rateOnFixingComputed, TOLERANCE_RATE,
-          "DefaultIborRateProviderFn: rate forward");
-      double rateGenFixingComputed = 
-          RATE_PROVIDER.rate(ENV_WITHTODAY, VALUATION_DATE, ON_CMP_RATE, fixingStartDate, fixingEndDate);
-      assertEquals(rateGenFixingComputed, rateOnFixingComputed, TOLERANCE_RATE,
-          "DefaultIborRateProviderFn: rate forward");
-    }
-  }
-
   /**
    * Create a pricing environment from the existing MulticurveProvider and Ibor fixing time series.
    * @param ts The time series for the USDLIBOR3M.
+   * @param index The overnight index. 
    * @return The pricing environment.
    */
   private static ImmutablePricingEnvironment env(LocalDateDoubleTimeSeries ts, OvernightIndex ois) {

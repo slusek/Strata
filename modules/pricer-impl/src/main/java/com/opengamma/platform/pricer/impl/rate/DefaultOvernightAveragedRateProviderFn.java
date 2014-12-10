@@ -103,7 +103,7 @@ public class DefaultOvernightAveragedRateProviderFn
       fixedPeriod++;
     }
     // accrue notional for publication on valuation
-    if (fixedPeriod < nbPeriods) {
+    if (fixedPeriod < nbPeriods && valuationDate.isEqual(publicationDates.get(fixedPeriod))) {
       // Check to see if a fixing is available on current date
       OptionalDouble fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));
       if (fixedRate.isPresent()) {
