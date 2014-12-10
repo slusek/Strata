@@ -47,19 +47,21 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   // TODO Tests for 0, -1 publication lags should be done with e.g., GBP, CHF.
   // Currently these cases are tested by modifying FedFund in order to make use of the setup in Platform 2.x
 
+  // TODO approximated case is not fully tested.
+
   private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
   private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
   private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
   private static final OvernightIndex USD_FED_FUND = OvernightIndices.USD_FED_FUND;
   private static final BusinessDayConvention MOD_FOL = BusinessDayConventions.MODIFIED_FOLLOWING;
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_21 =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_21 =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
           .put(LocalDate.of(2014, 11, 20), 0.00121)
           .put(LocalDate.of(2014, 11, 21), 0.00122)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_24 =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_24 =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -67,7 +69,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 11, 21), 0.00122)
           .put(LocalDate.of(2014, 11, 24), 0.00123)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_25 =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_25 =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -76,7 +78,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 11, 24), 0.00123)
           .put(LocalDate.of(2014, 11, 25), 0.00124)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_26 =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_26 =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -86,7 +88,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 11, 25), 0.00124)
           .put(LocalDate.of(2014, 11, 26), 0.00125)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_28 =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_28 =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -97,7 +99,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 11, 26), 0.00125) // 27 holiday
           .put(LocalDate.of(2014, 11, 28), 0.00126)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -114,7 +116,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 12, 5), 0.00131)
           .put(LocalDate.of(2014, 12, 8), 0.00132)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL_TODAY =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL_TODAY =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -132,7 +134,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 12, 8), 0.00132)
           .put(LocalDate.of(2014, 12, 9), 0.00133)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL_MISSING_YEST =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_ALL_MISSING_YEST =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -148,7 +150,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
           .put(LocalDate.of(2014, 12, 4), 0.00130)
           .put(LocalDate.of(2014, 12, 5), 0.00131)
           .build();
-  public static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDATA =
+  private static final LocalDateDoubleTimeSeries TS_USDFEDFUND_MISSINGDATA =
       LocalDateDoubleTimeSeries.builder()
           .put(LocalDate.of(2014, 11, 18), 0.00119)
           .put(LocalDate.of(2014, 11, 19), 0.00120)
@@ -225,6 +227,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   private static final ImmutablePricingEnvironment ENV_MISSINGDATA = env(TS_USDFEDFUND_MISSINGDATA, USD_FED_FUND);
   private static final OvernightAveragedRate ON_AA_RATE = OvernightAveragedRate.of(USD_FED_FUND, 2);
 
+  /**
+   * Period starts tomorrow, totally not fixed.
+   */
   @Test
   public void rateForwardPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -247,6 +252,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Test approximated rate for future start.
+   */
   @Test
   public void rateForwardApproxVDetailedPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -258,6 +266,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts tomorrow, totally not fixed.
+   */
   @Test
   public void rateStart1Fixing0PubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -273,10 +284,16 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant time series is not used */
+    double rateComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
+    assertEquals(rateComputed, rateComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts yesterday with fixing yesterday. 
+   */
   @Test
   public void rateStart1Fixing1PubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
@@ -295,8 +312,15 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_25, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
     assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
         "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant time series is not used */
+    double rateComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
+    assertEquals(rateComputed, rateComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts before yesterday with fixing up to yesterday.
+   */
   @Test
   public void rateStart3Fixing3PubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 1);
@@ -319,6 +343,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Test approximated rate for past start.  
+   */
   @Test
   public void rateStart3Fixing3ApproxVDetailedPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 1);
@@ -328,6 +355,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts before yesterday with fixing up to the day before yesterday
+   */
   @Test
   public void rateStart4Fixing3PubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 2);
@@ -350,6 +380,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * All fixed.
+   */
   @Test
   public void rateAllFixedPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 9);
@@ -396,24 +429,36 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * The latest fixing is missing
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStart2Missing0PubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 27);
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
   }
 
+  /**
+   * The latest fixing is missing
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateMissingDataPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 5);
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_MISSINGDATA, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
   }
 
+  /**
+   * Fixing in the past is missing for the approximated rate. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStart2Missing0ApproxPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 27);
     ON_AA_RATE_APPROX_PROVIDER.rate(ENV_24, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
   }
 
+  /**
+   * Fixing in the past is missing for the approximated rate. 
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateMissingDataApproxPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 12, 5);
@@ -441,6 +486,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   private static final ImmutablePricingEnvironment ENV_ALL_MISSING_YEST_ZERO = env(TS_USDFEDFUND_ALL_MISSING_YEST,
       INDEX_PUB_LAG_ZERO);
 
+  /**
+   * Period starts tomorrow. 
+   */
   @Test
   public void rateStartTomoPubLag0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -469,6 +517,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts today with fixing today. 
+   */
   @Test
   public void rateStartTodyWithFixingTodayPubLag0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 25);
@@ -497,6 +548,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts today with fixing yesterday. 
+   */
   @Test
   public void rateStartTodyWithFixingYestPubLag0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 25);
@@ -519,8 +573,8 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   }
 
   /**
-   * Time series is not complete - missing fixing yesterday, 
-   * but an error is not returned because the period start today. 
+   * Period starts today without fixing yesterday, that is, the time series is not complete. 
+   * However, an error is not returned because the the first sub-period uses the rate today. 
    */
   @Test
   public void rateStartTodyWithoutFixingYestPubLag0() {
@@ -543,6 +597,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartYestWithFixingTodayPubLag0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
@@ -572,6 +629,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartYestWithFixingYestPubLag0() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
@@ -595,7 +655,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   }
 
   /**
-   * Error expected
+   * Period starts yesterday without fixing yesterday.
    */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartYestWithoutFixingYestPubLag0() {
@@ -603,8 +663,11 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
   }
 
+  /**
+   * Period starts before yesterday and ends today with fixing up to yesterday.
+   */
   @Test
-  public void rateStartPastEndTodayWithFixingTodayPubLag0() {
+  public void rateStartPastEndTodayWithFixingYestPubLag0() {
     LocalDate valuationDate = END_DATE;
     // Forward rates
     double accruedUnitNotional = 0d;
@@ -623,6 +686,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts before yesterday and ends today without fixing yesterday.  
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartPastEndTodayWithoutFixingYestPubLag0() {
     LocalDate valuationDate = END_DATE;
@@ -650,6 +716,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   private static final ImmutablePricingEnvironment ENV_ALL_MISSING_YEST_MINUS = env(TS_USDFEDFUND_ALL_MISSING_YEST,
       INDEX_PUB_LAG_MINUS);
 
+  /**
+   * Period starts tomorrow with fixing up to today. 
+   */
   @Test
   public void rateStartTomoWithFixingTodayPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -672,8 +741,16 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateGenComputed = RATE_PROVIDER.rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
     assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE,
         "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateGenComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS,
+        START_DATE, END_DATE);
+    assertEquals(rateExpected, rateGenComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts tomorrow with fixing up to yesterday. 
+   */
   @Test
   public void rateStartTomoWithFixingYestPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
@@ -688,12 +765,14 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     }
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
-    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
-        .rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts today with fixing up to today. 
+   */
   @Test
   public void rateStartTodyWithFixingTodayPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 25);
@@ -710,12 +789,19 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     }
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
-    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
-        .rate(ENV_25_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_25_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateGenComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS,
+        START_DATE, END_DATE);
+    assertEquals(rateExpected, rateGenComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts today with fixing up to yesterday.
+   */
   @Test
   public void rateStartTodyWithFixingYestPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 25);
@@ -737,12 +823,19 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts today without fixing yesterday, that is the time series is not complete. 
+   * Because the first sub-period uses the rate fixed yesterday, the exception is thrown.
+   */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartTodyWithoutFixingYestPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 25);
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
   }
 
+  /**
+   * Period starts yesterday with fixing up to today. 
+   */
   @Test
   public void rateStartYestWithFixingTodayPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
@@ -764,8 +857,16 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         .rate(ENV_26_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
     assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
         "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateGenComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS,
+        START_DATE, END_DATE);
+    assertEquals(rateExpected, rateGenComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Period starts yesterday with fixing up to yesterday. 
+   */
   @Test
   public void rateStartYestWithFixingYestPubLagM1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 26);
@@ -789,7 +890,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   }
 
   /**
-   * exception expected
+   * Period starts yesterday without fixing yesterday. 
    */
   @Test(expectedExceptions = OpenGammaRuntimeException.class)
   public void rateStartYestWithoutFixingYestPubLagM1() {
@@ -797,6 +898,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
   }
 
+  /**
+   * Period starts before yesterday and ends today with fixing up to today.
+   */
   @Test
   public void rateStartPastEndTodayWithFixingTodayPubLagM1() {
     LocalDate valuationDate = END_DATE;
@@ -816,8 +920,8 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   }
 
   /**
-   * Incomplete time series - missing yesterday's fix, 
-   * but error is not returned because the period ends today. 
+   * Period starts before yesterday and ends today without fixing yesterday, incomplete time series. 
+   * However, the exception is not thrown because the last sub-period is fixed one day before yesterday. 
    */
   @Test
   public void rateStartPastEndTodayWithoutFixingYestPubLagM1() {
@@ -834,6 +938,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
+  /**
+   * Performance test, to be turned off when pushed. 
+   */
   @Test(enabled = false)
   public void performance() {
 
@@ -889,6 +996,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   /**
    * Create a pricing environment from the existing MulticurveProvider and Ibor fixing time series.
    * @param ts The time series for the USDLIBOR3M.
+   * @param index The overnight index
    * @return The pricing environment.
    */
   private static ImmutablePricingEnvironment env(LocalDateDoubleTimeSeries ts, OvernightIndex index) {
