@@ -794,6 +794,240 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
         "DefaultIborRateProviderFn: rate forward");
   }
 
+  /*
+   * cutoff test
+   */
+  private static final OvernightCompoundedRate ON_CMP_RATE_CUT1 = OvernightCompoundedRate.of(USD_FED_FUND, 1);
+  private static final OvernightCompoundedRate ON_CMP_RATE_ZERO_CUT1 = OvernightCompoundedRate
+      .of(INDEX_PUB_LAG_ZERO, 1);
+  private static final OvernightCompoundedRate ON_CMP_RATE_MINUS_CUT1 = OvernightCompoundedRate.of(INDEX_PUB_LAG_MINUS,
+      1);
+  private static final OvernightCompoundedRate ON_CMP_RATE_CUT2 = OvernightCompoundedRate.of(USD_FED_FUND, 2);
+  private static final OvernightCompoundedRate ON_CMP_RATE_ZERO_CUT2 = OvernightCompoundedRate
+      .of(INDEX_PUB_LAG_ZERO, 2);
+  private static final OvernightCompoundedRate ON_CMP_RATE_MINUS_CUT2 = OvernightCompoundedRate.of(INDEX_PUB_LAG_MINUS,
+      2);
+  private static final OvernightCompoundedRate ON_CMP_RATE_CUT3 = OvernightCompoundedRate.of(USD_FED_FUND, 3);
+  private static final OvernightCompoundedRate ON_CMP_RATE_ZERO_CUT3 = OvernightCompoundedRate
+      .of(INDEX_PUB_LAG_ZERO, 3);
+  private static final OvernightCompoundedRate ON_CMP_RATE_MINUS_CUT3 = OvernightCompoundedRate.of(INDEX_PUB_LAG_MINUS,
+      3);
+
+  /**
+   * Period starts tomorrow, rates unfixed, cutoff = 0, 1.
+   */
+  @Test
+  public void rateStartTomorrow() {
+    LocalDate startDate = VALUATION_DATE.plusDays(1);
+    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
+    /* payment lag = 1*/
+    double rateWithoutFixingComputed0 =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, startDate, endDate);
+    double rateWithoutFixingComputed1 =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE_CUT1, startDate, endDate);
+    assertEquals(rateWithoutFixingComputed0, rateWithoutFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithoutFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO,
+        startDate, endDate);
+    rateWithoutFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE,
+        ON_CMP_RATE_ZERO_CUT1, startDate, endDate);
+    assertEquals(rateWithoutFixingComputed0, rateWithoutFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithoutFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS,
+        startDate, endDate);
+    rateWithoutFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE,
+        ON_CMP_RATE_MINUS_CUT1, startDate, endDate);
+    assertEquals(rateWithoutFixingComputed0, rateWithoutFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts before yesterday, rates partially fixed, cutoff = 0, 1. 
+   */
+  @Test
+  public void rateStartPast() {
+    LocalDate startDate = VALUATION_DATE.minusDays(7);
+    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
+    /* payment lag = 1*/
+    double rateWithFixingComputed0 =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, startDate, endDate);
+    double rateWithFixingComputed1 =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE_CUT1, startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO,
+        startDate, endDate);
+    rateWithFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO_CUT1,
+        startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS,
+        startDate, endDate);
+    rateWithFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS_CUT1,
+        startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period ends today, all rates fixed, cutoff = 0, 1. 
+   */
+  @Test
+  public void rateEndToday() {
+    LocalDate valuationDate = VALUATION_DATE.minusDays(1);
+    LocalDate startDate = valuationDate.minusMonths(1);
+    LocalDate endDate = USD_LIBOR_1M.calculateMaturityFromEffective(startDate);
+    /* payment lag = 1*/
+    double rateWithFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_1M, valuationDate, ON_CMP_RATE,
+        startDate, endDate);
+    double rateWithFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_1M, valuationDate, ON_CMP_RATE_CUT1,
+        startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO,
+        startDate, endDate);
+    rateWithFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO_CUT1,
+        startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithFixingComputed0 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS_1M, valuationDate, ON_CMP_RATE_MINUS,
+        startDate, endDate);
+    rateWithFixingComputed1 = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS_1M, valuationDate,
+        ON_CMP_RATE_MINUS_CUT1, startDate, endDate);
+    assertEquals(rateWithFixingComputed0, rateWithFixingComputed1, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts tomorrow, rates unfixed, cutoff = 2
+   */
+  @Test
+  public void rateStartTomorrowCutoff2() {
+    LocalDate startDate = VALUATION_DATE.plusDays(1);
+    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
+    double factorTotal = USD_FED_FUND.getDayCount().yearFraction(startDate, endDate);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(endDate);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double factorToRefEnd = USD_FED_FUND.getDayCount().yearFraction(startDate, refEndDate);
+    double factorLast = USD_FED_FUND.getDayCount().yearFraction(refEndDate, endDate);
+    /* payment lag = 1*/
+    double rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE_CUT2, startDate, endDate);
+    double rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, startDate, refEndDate);
+    double refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, refStartDate, refEndDate);
+    double rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+            "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, startDate, refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts before yesterday, rates partially fixed, cutoff = 2. 
+   */
+  @Test
+  public void rateStartPastCutoff2() {
+    LocalDate startDate = VALUATION_DATE.minusDays(7);
+    LocalDate endDate = USD_LIBOR_3M.calculateMaturityFromEffective(startDate);
+    double factorTotal = USD_FED_FUND.getDayCount().yearFraction(startDate, endDate);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(endDate);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double factorToRefEnd = USD_FED_FUND.getDayCount().yearFraction(startDate, refEndDate);
+    double factorLast = USD_FED_FUND.getDayCount().yearFraction(refEndDate, endDate);
+    /* payment lag = 1*/
+    double rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE_CUT2, startDate, endDate);
+    double rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, startDate, refEndDate);
+    double refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ON_CMP_RATE, refStartDate, refEndDate);
+    double rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, startDate, refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO, VALUATION_DATE, ON_CMP_RATE_ZERO, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, startDate, refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS, VALUATION_DATE, ON_CMP_RATE_MINUS, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period ends today, all rates fixed, cutoff = 2. 
+   */
+  @Test
+  public void rateEndTodayCutoff2() {
+    LocalDate valuationDate = VALUATION_DATE.minusDays(1);
+    LocalDate startDate = valuationDate.minusMonths(1);
+    LocalDate endDate = USD_LIBOR_1M.calculateMaturityFromEffective(startDate);
+    double factorTotal = USD_FED_FUND.getDayCount().yearFraction(startDate, endDate);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(endDate);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double factorToRefEnd = USD_FED_FUND.getDayCount().yearFraction(startDate, refEndDate);
+    double factorLast = USD_FED_FUND.getDayCount().yearFraction(refEndDate, endDate);
+    /* payment lag = 1*/
+    double rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_1M, valuationDate, ON_CMP_RATE_CUT2, startDate, endDate);
+    double rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_1M, valuationDate, ON_CMP_RATE, startDate, refEndDate);
+    double refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_1M, valuationDate, ON_CMP_RATE, refStartDate,
+        refEndDate);
+    double rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO, startDate, refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_ZERO_1M, valuationDate, ON_CMP_RATE_ZERO, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateWithoutFixingComputed =
+        ON_CMP_RATE_PROVIDER
+            .rate(ENV_WITHOUTTODAY_MINUS_1M, valuationDate, ON_CMP_RATE_MINUS_CUT2, startDate, endDate);
+    rate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS_1M, valuationDate, ON_CMP_RATE_MINUS, startDate,
+        refEndDate);
+    refRate = ON_CMP_RATE_PROVIDER.rate(ENV_WITHOUTTODAY_MINUS_1M, valuationDate, ON_CMP_RATE_MINUS, refStartDate,
+        refEndDate);
+    rateWithoutFixingExpected = ((1. + rate * factorToRefEnd) * (1. + refRate * factorLast) - 1.) / factorTotal;
+    assertEquals(rateWithoutFixingExpected, rateWithoutFixingComputed, TOLERANCE_RATE,
+        "DefaultIborRateProviderFn: rate forward");
+  }
+
   /**
    * Create a pricing environment from the existing MulticurveProvider and Ibor fixing time series.
    * @param ts The time series for the USDLIBOR3M.

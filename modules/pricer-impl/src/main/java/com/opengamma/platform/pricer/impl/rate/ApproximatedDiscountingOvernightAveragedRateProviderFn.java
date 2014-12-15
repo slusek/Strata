@@ -52,7 +52,7 @@ public class ApproximatedDiscountingOvernightAveragedRateProviderFn
     OvernightIndex index = rate.getIndex();
     HolidayCalendar calendar = index.getFixingCalendar();
     int effectiveOffset = index.getEffectiveDateOffset();
-    int cutoffOffset = rate.getRateCutoffDaysOffset();
+    int cutoffOffset = rate.getRateCutoffDaysOffset() > 1 ? rate.getRateCutoffDaysOffset() : 1;
     if(valuationDate.isBefore(effectiveOffset == 0 ? startDate : index.getFixingCalendar().previous(startDate))) {
       // No fixing to be analyzed. Go directly to approximation and cut-off.
       // Cut-off part.
@@ -147,7 +147,7 @@ public class ApproximatedDiscountingOvernightAveragedRateProviderFn
       fixedPeriod++;
     }
     // accrue notional for publication on valuation
-    if (fixedPeriod < nbPeriods) {
+    if (fixedPeriod < nbPeriods) { // TODO check this logic with redundant fixings
       // Check to see if a fixing is available on current date
       OptionalDouble fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));
       if (fixedRate.isPresent()) {

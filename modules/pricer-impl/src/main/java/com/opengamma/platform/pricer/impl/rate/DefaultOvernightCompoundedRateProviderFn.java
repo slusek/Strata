@@ -42,40 +42,50 @@ public class DefaultOvernightCompoundedRateProviderFn
       LocalDate startDate,
       LocalDate endDate) {
     // the time-series contains the value on the fixing date, not the publication date
-    if (rate.getRateCutoffDaysOffset() < 0) { //Should this be > 0?
-      // TODO: rate cutoff
+    if (rate.getRateCutoffDaysOffset() < 0) {
       throw new IllegalArgumentException("Rate cutoff not supported");
     }
+    int cutoffOffset = rate.getRateCutoffDaysOffset() > 1 ? rate.getRateCutoffDaysOffset() : 1;
     // if no fixings apply, then only use forward rate
     OvernightIndex index = rate.getIndex();
     final LocalDate firstFixingDate = index.calculateFixingFromEffective(startDate);
     final LocalDate firstPublicationDate = index.calculatePublicationFromFixing(firstFixingDate);
-    if (valuationDate.isBefore(firstPublicationDate)) {
+    if (valuationDate.isBefore(firstPublicationDate) && cutoffOffset == 1) {
       return rateFromForwardCurve(env, valuationDate, index, startDate, endDate);
     }
     // fixing periods, based on business days of the index
     final List<LocalDate> fixingDateList = new ArrayList<>();
-    final List<Double> fixingAccrualFactorList = new ArrayList<>();
+    final List<Double> noCutOffAccrualFactorList = new ArrayList<>();
+    final List<LocalDate> ratePeriodStartDates = new ArrayList<>();
+    final List<LocalDate> ratePeriodEndDates = new ArrayList<>();
     LocalDate currentStart = startDate;
+    ratePeriodStartDates.add(currentStart);
     fixingDateList.add(firstFixingDate);
     while (currentStart.isBefore(endDate)) {
       LocalDate currentEnd = index.getFixingCalendar().next(currentStart);
+      ratePeriodEndDates.add(currentEnd);
       LocalDate nextFixingDate = index.calculateFixingFromEffective(currentEnd);
       fixingDateList.add(nextFixingDate);
-      fixingAccrualFactorList.add(index.getDayCount().yearFraction(currentStart, currentEnd));
+      noCutOffAccrualFactorList.add(index.getDayCount().yearFraction(currentStart, currentEnd));
       currentStart = currentEnd;
+      ratePeriodStartDates.add(currentStart);
     }
+    ratePeriodEndDates.add(currentStart);
+
     // try accessing fixing time-series
     LocalDateDoubleTimeSeries indexFixingDateSeries = env.getTimeSeries(index);
     int fixedPeriod = 0;
     int publicationLag = index.getPublicationDateOffset();
     double accruedUnitNotional = 1d;
+    OptionalDouble fixedRate = OptionalDouble.empty();
     // accrue notional for fixings before today, up to and including yesterday
     while ((fixedPeriod < fixingDateList.size() - 1) &&
         ((fixedPeriod + publicationLag) < fixingDateList.size()) &&
         valuationDate.isAfter(fixingDateList.get(fixedPeriod + publicationLag))) {
       LocalDate currentDate1 = fixingDateList.get(fixedPeriod);
-      OptionalDouble fixedRate = indexFixingDateSeries.get(currentDate1);
+      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
+        fixedRate = indexFixingDateSeries.get(currentDate1); // renew unless cutoff
+      }
       if (!fixedRate.isPresent()) {
         LocalDate latestDate = indexFixingDateSeries.getLatestDate();
         if (currentDate1.isAfter(latestDate)) {
@@ -87,32 +97,48 @@ public class DefaultOvernightCompoundedRateProviderFn
               " for date " + currentDate1);
         }
       }
-      accruedUnitNotional *= 1 + fixingAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
+      accruedUnitNotional *= 1 + noCutOffAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
       fixedPeriod++;
     }
     // accrue notional for fixings for today
     if (fixedPeriod < fixingDateList.size() - 1) {
+      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
+        fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));  // renew unless cutoff
+      }
       // Check to see if a fixing is available on current date
-      OptionalDouble fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));
       if (fixedRate.isPresent()) {
-        accruedUnitNotional *= 1 + fixingAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
+        accruedUnitNotional *= 1 + noCutOffAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
         fixedPeriod++;
       }
     }
     // use forward curve for remainder
     double fixingAccrualfactor = index.getDayCount().yearFraction(startDate, endDate);
+    int nbPeriods = noCutOffAccrualFactorList.size();
+    int refPeriod = nbPeriods - cutoffOffset;
     if (fixedPeriod < fixingDateList.size() - 1) {
       // fixing period is the remaining time of the period
       LocalDate remainingStartDate = index.calculateEffectiveFromFixing(fixingDateList.get(fixedPeriod));
       double start = env.relativeTime(valuationDate, remainingStartDate);
-      double end = env.relativeTime(valuationDate, endDate);
+      double end = env.relativeTime(valuationDate, ratePeriodEndDates.get(refPeriod));
       double fixingAccrualFactorLeft = 0.0;
-      for (int loopperiod = fixedPeriod; loopperiod < fixingAccrualFactorList.size(); loopperiod++) {
-        fixingAccrualFactorLeft += fixingAccrualFactorList.get(loopperiod);
+      int loopMax = refPeriod + 1;
+      for (int loopperiod = fixedPeriod; loopperiod < loopMax; loopperiod++) {
+        fixingAccrualFactorLeft += noCutOffAccrualFactorList.get(loopperiod);
       }
       double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
           env.convert(index), start, end, fixingAccrualFactorLeft);
       double ratio = 1d + fixingAccrualFactorLeft * observedRate;
+      // cutoff part
+      double rateCutoff = env.getMulticurve().getSimplyCompoundForwardRate(env.convert(index),
+            env.relativeTime(valuationDate, ratePeriodStartDates.get(refPeriod)),
+            env.relativeTime(valuationDate, ratePeriodEndDates.get(refPeriod)),
+            noCutOffAccrualFactorList.get(refPeriod));
+      for (int i = 0; i < cutoffOffset - 1; i++) {
+        double accFactorCutoff = noCutOffAccrualFactorList.get(nbPeriods - cutoffOffset + i + 1);
+        double ratioCutoff = 1d + accFactorCutoff * rateCutoff;
+        ratio *= ratioCutoff;
+      }
+
       return (accruedUnitNotional * ratio - 1d) / fixingAccrualfactor;
     }
     // all fixed

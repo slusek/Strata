@@ -47,8 +47,6 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   // TODO Tests for 0, -1 publication lags should be done with e.g., GBP, CHF.
   // Currently these cases are tested by modifying FedFund in order to make use of the setup in Platform 2.x
 
-  // TODO approximated case is not fully tested.
-
   private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
   private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
   private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
@@ -518,6 +516,20 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   }
 
   /**
+   * Test approximated rate for future start.
+   */
+  @Test
+  public void rateForwardApproxVDetailedPubLag0() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    double rateComputedDetailed =
+        ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
+    double rateComputedApproxim =
+        ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
+    assertEquals(rateComputedDetailed, rateComputedApproxim, TOLERANCE_RATE_APPROX,
+        "DefaultOvernightAveragedRateProviderFn: rate");
+  }
+
+  /**
    * Period starts today with fixing today. 
    */
   @Test
@@ -695,6 +707,34 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL_MISSING_YEST_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
   }
 
+  /**
+   * Test approximated rate for past start.  
+   */
+  @Test
+  public void rateStart3Fixing3ApproxVDetailedPubLag0() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 1);
+    double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX,
+        "DefaultOvernightAveragedRateProviderFn: rate");
+  }
+
+  /**
+   * Test approximated rate for all fixed.
+   */
+  @Test
+  public void rateAllFixedPubLag0() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 9);
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    double rateComputedApprox = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO,
+        START_DATE, END_DATE);
+    assertEquals(rateComputed, rateComputedApprox, TOLERANCE_RATE,
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+  }
+
   /*
    * Tests for publication lag = -1
    * 
@@ -768,6 +808,20 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
         END_DATE);
     assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
+  }
+
+  /**
+   * Test approximated rate for future start.
+   */
+  @Test
+  public void rateForwardApproxVDetailedPubLagM1() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    double rateComputedDetailed =
+        ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
+    double rateComputedApproxim =
+        ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
+    assertEquals(rateComputedDetailed, rateComputedApproxim, TOLERANCE_RATE_APPROX,
+        "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -936,6 +990,34 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL_MISSING_YEST_MINUS, valuationDate, ON_AA_RATE_MINUS,
         START_DATE, END_DATE);
     assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
+  }
+
+  /**
+   * Test approximated rate for past start.  
+   */
+  @Test
+  public void rateStart3Fixing3ApproxVDetailedPubLagM1() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 1);
+    double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX,
+        "DefaultOvernightAveragedRateProviderFn: rate");
+  }
+
+  /**
+   * Test approximated rate for all fixed.
+   */
+  @Test
+  public void rateAllFixedPubLagM1() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 9);
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    double rateComputedApprox = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS,
+        START_DATE, END_DATE);
+    assertEquals(rateComputed, rateComputedApprox, TOLERANCE_RATE,
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
