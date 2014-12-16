@@ -70,7 +70,12 @@ public class DefaultOvernightCompoundedRateProviderFn
       currentStart = currentEnd;
       ratePeriodStartDates.add(currentStart);
     }
-    ratePeriodEndDates.add(currentStart);
+//    ratePeriodEndDates.add(currentStart);
+
+    int nbPeriods = noCutOffAccrualFactorList.size();
+    for (int i = 0; i < cutoffOffset - 1; i++) {
+      fixingDateList.set(nbPeriods - 1 - i, fixingDateList.get(nbPeriods - cutoffOffset));
+    }
 
     // try accessing fixing time-series
     LocalDateDoubleTimeSeries indexFixingDateSeries = env.getTimeSeries(index);
@@ -83,9 +88,9 @@ public class DefaultOvernightCompoundedRateProviderFn
         ((fixedPeriod + publicationLag) < fixingDateList.size()) &&
         valuationDate.isAfter(fixingDateList.get(fixedPeriod + publicationLag))) {
       LocalDate currentDate1 = fixingDateList.get(fixedPeriod);
-      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
+      //      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
         fixedRate = indexFixingDateSeries.get(currentDate1); // renew unless cutoff
-      }
+      //      }
       if (!fixedRate.isPresent()) {
         LocalDate latestDate = indexFixingDateSeries.getLatestDate();
         if (currentDate1.isAfter(latestDate)) {
@@ -102,9 +107,9 @@ public class DefaultOvernightCompoundedRateProviderFn
     }
     // accrue notional for fixings for today
     if (fixedPeriod < fixingDateList.size() - 1) {
-      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
+      //      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
         fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));  // renew unless cutoff
-      }
+      //      }
       // Check to see if a fixing is available on current date
       if (fixedRate.isPresent()) {
         accruedUnitNotional *= 1 + noCutOffAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
@@ -113,7 +118,6 @@ public class DefaultOvernightCompoundedRateProviderFn
     }
     // use forward curve for remainder
     double fixingAccrualfactor = index.getDayCount().yearFraction(startDate, endDate);
-    int nbPeriods = noCutOffAccrualFactorList.size();
     int refPeriod = nbPeriods - cutoffOffset;
     if (fixedPeriod < fixingDateList.size() - 1) {
       // fixing period is the remaining time of the period
