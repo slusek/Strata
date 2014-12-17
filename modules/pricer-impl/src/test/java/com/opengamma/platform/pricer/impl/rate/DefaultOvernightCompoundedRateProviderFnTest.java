@@ -1123,10 +1123,10 @@ public class DefaultOvernightCompoundedRateProviderFnTest {
 
   /**
    * Period ends in the future, all rates fixed except last interval, cut off = 2.
-   * However, the rate for the second last period is fixed, thus the forward curve is not used. 
+   * However, the forward curve is not used as the rate for the second last period is fixed. 
    */
   @Test
-  public void SecondLastRateFixedCutoffTest() {
+  public void secondLastRateFixedCutoffTest() {
     LocalDate valuationDate = VALUATION_DATE.minusDays(1);
     LocalDate startDate = valuationDate.minusMonths(1);
     LocalDate endDate = USD_LIBOR_1M.calculateMaturityFromEffective(startDate);

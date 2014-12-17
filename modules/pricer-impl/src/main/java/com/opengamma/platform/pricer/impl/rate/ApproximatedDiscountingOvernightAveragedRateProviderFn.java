@@ -121,6 +121,7 @@ public class ApproximatedDiscountingOvernightAveragedRateProviderFn
       ratePeriodStartDates.set(nbPeriods - 1 - i, ratePeriodStartDates.get(nbPeriods - cutoffOffset));
       ratePeriodEndDates.set(nbPeriods - 1 - i, ratePeriodEndDates.get(nbPeriods - cutoffOffset));
       cutOffAccrualFactorList.set(nbPeriods - 1 - i, noCutOffAccrualFactorList.get(nbPeriods - cutoffOffset));
+      publicationDates.set(nbPeriods - 1 - i, publicationDates.get(nbPeriods - cutoffOffset));
     }
 
     // try accessing fixing time-series
@@ -147,16 +148,19 @@ public class ApproximatedDiscountingOvernightAveragedRateProviderFn
       fixedPeriod++;
     }
     // accrue notional for publication on valuation
-    if (fixedPeriod < nbPeriods) { // TODO check this logic with redundant fixings
+    boolean ratePresent = true;
+    while (ratePresent && fixedPeriod < nbPeriods && valuationDate.isEqual(publicationDates.get(fixedPeriod))) {
       // Check to see if a fixing is available on current date
       OptionalDouble fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));
       if (fixedRate.isPresent()) {
         accruedUnitNotional += noCutOffAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();
         fixedPeriod++;
+      } else {
+        ratePresent = false;
       }
     }
     // forward rates if not all fixed and not part of cut-off
-    int nbPeriodNotCutOff = nbPeriods - (cutoffOffset - 1);
+    int nbPeriodNotCutOff = nbPeriods - cutoffOffset + 1;
     if (fixedPeriod < nbPeriodNotCutOff) {
       double ratePeriodStartTime = env.relativeTime(valuationDate, ratePeriodStartDates.get(fixedPeriod));
       double ratePeriodendTime = env.relativeTime(valuationDate, ratePeriodEndDates.get(nbPeriodNotCutOff - 1));

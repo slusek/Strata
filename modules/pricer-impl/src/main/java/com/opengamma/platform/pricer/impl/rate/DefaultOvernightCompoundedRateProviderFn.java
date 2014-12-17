@@ -70,7 +70,6 @@ public class DefaultOvernightCompoundedRateProviderFn
       currentStart = currentEnd;
       ratePeriodStartDates.add(currentStart);
     }
-//    ratePeriodEndDates.add(currentStart);
 
     int nbPeriods = noCutOffAccrualFactorList.size();
     for (int i = 0; i < cutoffOffset - 1; i++) {
@@ -88,9 +87,7 @@ public class DefaultOvernightCompoundedRateProviderFn
         ((fixedPeriod + publicationLag) < fixingDateList.size()) &&
         valuationDate.isAfter(fixingDateList.get(fixedPeriod + publicationLag))) {
       LocalDate currentDate1 = fixingDateList.get(fixedPeriod);
-      //      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
-        fixedRate = indexFixingDateSeries.get(currentDate1); // renew unless cutoff
-      //      }
+      fixedRate = indexFixingDateSeries.get(currentDate1);
       if (!fixedRate.isPresent()) {
         LocalDate latestDate = indexFixingDateSeries.getLatestDate();
         if (currentDate1.isAfter(latestDate)) {
@@ -107,9 +104,7 @@ public class DefaultOvernightCompoundedRateProviderFn
     }
     // accrue notional for fixings for today
     if (fixedPeriod < fixingDateList.size() - 1) {
-      //      if (fixedPeriod < fixingDateList.size() - cutoffOffset) {
-        fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));  // renew unless cutoff
-      //      }
+      fixedRate = indexFixingDateSeries.get(fixingDateList.get(fixedPeriod));
       // Check to see if a fixing is available on current date
       if (fixedRate.isPresent()) {
         accruedUnitNotional *= 1 + noCutOffAccrualFactorList.get(fixedPeriod) * fixedRate.getAsDouble();

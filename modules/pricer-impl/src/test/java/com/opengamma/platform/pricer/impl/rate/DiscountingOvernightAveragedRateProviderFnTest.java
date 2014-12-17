@@ -243,11 +243,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateGenComputed = RATE_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -256,12 +254,14 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
   @Test
   public void rateForwardApproxVDetailedPubLag1() {
     LocalDate valuationDate = LocalDate.of(2014, 11, 24);
-    double rateComputedDetailed =
-        ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    double rateComputedApproxim =
-        ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateComputedDetailed, rateComputedApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
+    double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
+    assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX, "DefaultOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateApproximRed =
+        ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
+    assertEquals(rateApproxim, rateApproximRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -350,7 +350,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
     double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
     assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -374,8 +374,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -393,11 +392,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateGenComputed = RATE_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateComputedApprox = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE, START_DATE, END_DATE);
     assertEquals(rateExpected, rateComputedApprox, TOLERANCE_RATE,
         "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
@@ -423,8 +420,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputedApprox = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24, valuationDate, ON_AA_RATE, START_DATE,
         END_DATE);
-    assertEquals(rateExpected, rateComputedApprox, TOLERANCE_RATE,
-        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputedApprox, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -501,18 +497,15 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     }
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
-    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
-        .rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateGenComputed = RATE_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
 
     /* Test redundant time series is not used*/
     double rateGenComputedRed = RATE_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateGenComputed, rateGenComputedRed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateGenComputed, rateGenComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -526,7 +519,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateComputedApproxim =
         ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
     assertEquals(rateComputedDetailed, rateComputedApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -550,14 +543,12 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_25_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
 
     /* Test redundant time series is not used*/
     double rateComputedWithRed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateComputed, rateComputedWithRed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateComputed, rateComputedWithRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -580,8 +571,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_24_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -605,8 +595,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -631,14 +620,12 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_26_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
 
     /* Test redundant time series is not used*/
     double rateComputedRed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateComputed, rateComputedRed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateComputed, rateComputedRed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -662,8 +649,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_25_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -690,12 +676,10 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_ALL_TODAY_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateComputedYest = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE, END_DATE);
-    assertEquals(rateComputed, rateComputedYest, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateComputed, rateComputedYest, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -712,13 +696,19 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
    */
   @Test
   public void rateStart3Fixing3ApproxVDetailedPubLag0() {
-    LocalDate valuationDate = LocalDate.of(2014, 12, 1);
+    LocalDate valuationDate = LocalDate.of(2014, 11, 28);
     double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
         END_DATE);
     double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
         END_DATE);
     assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateApproximRed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    assertEquals(rateApproxim, rateApproximRed, TOLERANCE_RATE,
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -729,9 +719,9 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     LocalDate valuationDate = LocalDate.of(2014, 12, 9);
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
         END_DATE);
-    double rateComputedApprox = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO,
-        START_DATE, END_DATE);
-    assertEquals(rateComputed, rateComputedApprox, TOLERANCE_RATE,
+    double rateApprox = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO, START_DATE,
+        END_DATE);
+    assertEquals(rateComputed, rateApprox, TOLERANCE_RATE,
         "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
@@ -774,13 +764,11 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     }
     // final rate
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
-    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
-        .rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
     double rateGenComputed = RATE_PROVIDER.rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateGenComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
 
     /* Test redundant date is not used */
     double rateGenComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS,
@@ -815,13 +803,19 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
    */
   @Test
   public void rateForwardApproxVDetailedPubLagM1() {
-    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    LocalDate valuationDate = LocalDate.of(2014, 11, 21);
     double rateComputedDetailed =
         ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
     double rateComputedApproxim =
         ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
     assertEquals(rateComputedDetailed, rateComputedApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateComputedApproximRed =
+        ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
+    assertEquals(rateComputedApproxim, rateComputedApproximRed, TOLERANCE_RATE,
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -873,8 +867,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_24_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -909,8 +902,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_26_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
 
     /* Test redundant date is not used */
     double rateGenComputedRed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS,
@@ -939,8 +931,7 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
     double rateExpected = accruedUnitNotional / ACCRUAL_FACTOR_TOTAL;
     double rateComputed = ON_AA_RATE_DEFAULT_PROVIDER
         .rate(ENV_25_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE, END_DATE);
-    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+    assertEquals(rateExpected, rateComputed, TOLERANCE_RATE, "DefaultOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -997,13 +988,19 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
    */
   @Test
   public void rateStart3Fixing3ApproxVDetailedPubLagM1() {
-    LocalDate valuationDate = LocalDate.of(2014, 12, 1);
+    LocalDate valuationDate = LocalDate.of(2014, 11, 28);
     double rateDetailed = ON_AA_RATE_DEFAULT_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
         END_DATE);
     double rateApproxim = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS, START_DATE,
         END_DATE);
     assertEquals(rateDetailed, rateApproxim, TOLERANCE_RATE_APPROX,
-        "DefaultOvernightAveragedRateProviderFn: rate");
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+
+    /* Test redundant date is not used */
+    double rateApproximRed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS,
+        START_DATE, END_DATE);
+    assertEquals(rateApproxim, rateApproximRed, TOLERANCE_RATE,
+        "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
   }
 
   /**
@@ -1018,6 +1015,326 @@ public class DiscountingOvernightAveragedRateProviderFnTest {
         START_DATE, END_DATE);
     assertEquals(rateComputed, rateComputedApprox, TOLERANCE_RATE,
         "ApproximatedDiscountingOvernightAveragedRateProviderFn: rate");
+  }
+
+  /*
+   * cutoff test
+   */
+  private static final OvernightAveragedRate ON_AA_RATE_CUT0 = OvernightAveragedRate.of(USD_FED_FUND, 0);
+  private static final OvernightAveragedRate ON_AA_RATE_CUT1 = OvernightAveragedRate.of(USD_FED_FUND, 1);
+  private static final OvernightAveragedRate ON_AA_RATE_ZERO_CUT1 = OvernightAveragedRate.of(INDEX_PUB_LAG_ZERO, 1);
+  private static final OvernightAveragedRate ON_AA_RATE_MINUS_CUT1 = OvernightAveragedRate.of(INDEX_PUB_LAG_MINUS, 1);
+  private static final OvernightAveragedRate ON_AA_RATE_CUT2 = OvernightAveragedRate.of(USD_FED_FUND, 2);
+  private static final OvernightAveragedRate ON_AA_RATE_ZERO_CUT2 = OvernightAveragedRate.of(INDEX_PUB_LAG_ZERO, 2);
+  private static final OvernightAveragedRate ON_AA_RATE_MINUS_CUT2 = OvernightAveragedRate.of(INDEX_PUB_LAG_MINUS, 2);
+  private static final OvernightAveragedRate ON_AA_RATE_CUT3 = OvernightAveragedRate.of(USD_FED_FUND, 3);
+  private static final OvernightAveragedRate ON_AA_RATE_ZERO_CUT3 = OvernightAveragedRate.of(INDEX_PUB_LAG_ZERO, 3);
+  private static final OvernightAveragedRate ON_AA_RATE_MINUS_CUT3 = OvernightAveragedRate.of(INDEX_PUB_LAG_MINUS, 3);
+  private static final ImmutablePricingEnvironment ENV_ALL_MISSING_YEST = env(TS_USDFEDFUND_ALL_MISSING_YEST,
+      USD_FED_FUND);
+
+  /**
+   * Period starts tomorrow, rates unfixed, cutoff = 0, 1.
+   */
+  @Test
+  public void rateStartTomorrow() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    /* payment lag = 1*/
+    compareOvernightAveragedRates(ENV_21, ON_AA_RATE_CUT0, ON_AA_RATE_CUT1, valuationDate);
+    /* payment lag = 0*/
+    compareOvernightAveragedRates(ENV_21_ZERO, ON_AA_RATE_ZERO, ON_AA_RATE_ZERO_CUT1, valuationDate);
+    /* payment lag = -1*/
+    compareOvernightAveragedRates(ENV_21_MINUS, ON_AA_RATE_MINUS, ON_AA_RATE_MINUS_CUT1, valuationDate);
+  }
+
+  /**
+   * Period starts in the past, rates partially fixed, cutoff = 0, 1. 
+   */
+  @Test
+  public void rateStartPast() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 28);
+    /* payment lag = 1*/
+    compareOvernightAveragedRates(ENV_28, ON_AA_RATE_CUT0, ON_AA_RATE_CUT1, valuationDate);
+    /* payment lag = 0*/
+    compareOvernightAveragedRates(ENV_28_ZERO, ON_AA_RATE_ZERO, ON_AA_RATE_ZERO_CUT1, valuationDate);
+    /* payment lag = -1*/
+    compareOvernightAveragedRates(ENV_28_MINUS, ON_AA_RATE_MINUS, ON_AA_RATE_MINUS_CUT1, valuationDate);
+  }
+
+  /**
+   * Period ends today, all rates fixed, cutoff = 0, 1. 
+   */
+  @Test
+  public void rateEndToday() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 10);
+    /* payment lag = 1*/
+    compareOvernightAveragedRates(ENV_ALL, ON_AA_RATE_CUT0, ON_AA_RATE_CUT1, valuationDate);
+    /* payment lag = 0*/
+    compareOvernightAveragedRates(ENV_ALL_ZERO, ON_AA_RATE_ZERO, ON_AA_RATE_ZERO_CUT1, valuationDate);
+    /* payment lag = -1*/
+    compareOvernightAveragedRates(ENV_ALL_MINUS, ON_AA_RATE_MINUS, ON_AA_RATE_MINUS_CUT1, valuationDate);
+  }
+
+  private void compareOvernightAveragedRates(ImmutablePricingEnvironment env, OvernightAveragedRate onRate1,
+      OvernightAveragedRate onRate2, LocalDate valuationDate) {
+    double rateComputed0 = RATE_PROVIDER.rate(env, valuationDate, onRate1, START_DATE, END_DATE);
+    double rateComputed1 = RATE_PROVIDER.rate(env, valuationDate, onRate2, START_DATE, END_DATE);
+    assertEquals(rateComputed0, rateComputed1, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed0 = ON_AA_RATE_APPROX_PROVIDER.rate(env, valuationDate, onRate1, START_DATE, END_DATE);
+    rateComputed1 = ON_AA_RATE_APPROX_PROVIDER.rate(env, valuationDate, onRate2, START_DATE, END_DATE);
+    assertEquals(rateComputed0, rateComputed1, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts tomorrow, rates unfixed, cutoff = 2
+   */
+  @Test
+  public void rateStartTomorrowCutoff2() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(END_DATE);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_21, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_21_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_21_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts in the past, rates partially fixed, cutoff = 2. 
+   */
+  @Test
+  public void rateStartPastCutoff2() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 28);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(END_DATE);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_28, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_28_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_28_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period ends today, all rates fixed, cutoff = 2. 
+   */
+  @Test
+  public void rateEndTodayCutoff2() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 10);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(END_DATE);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_ALL, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_ALL_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_ALL_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts tomorrow, rates unfixed, cutoff = 3
+   */
+  @Test
+  public void rateStartTomorrowCutoff3() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 24);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar()
+        .previous(USD_FED_FUND.getFixingCalendar().previous(END_DATE));
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_21, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_21_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_21_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_21_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period starts in the past, rates partially fixed, cutoff = 3. 
+   */
+  @Test
+  public void rateStartPastCutoff3() {
+    LocalDate valuationDate = LocalDate.of(2014, 11, 28);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar()
+        .previous(USD_FED_FUND.getFixingCalendar().previous(END_DATE));
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_28, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_28_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_28_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_28_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period ends today, all rates fixed, cutoff = 3. 
+   */
+  @Test
+  public void rateEndTodayCutoff3() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 10);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar()
+        .previous(USD_FED_FUND.getFixingCalendar().previous(END_DATE));
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_ALL, ON_AA_RATE_CUT0, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL, valuationDate, ON_AA_RATE_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    rateExpected = computeRateCutoff(ENV_ALL_ZERO, ON_AA_RATE_ZERO, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate, ON_AA_RATE_ZERO_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    rateExpected = computeRateCutoff(ENV_ALL_MINUS, ON_AA_RATE_MINUS, valuationDate, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MINUS, valuationDate, ON_AA_RATE_MINUS_CUT3, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Period ends in the future, all rates fixed except last interval, cut off = 2.
+   * However, the forward curve is not used as the rate for the second last period is fixed. 
+   */
+  @Test
+  public void secondLastRateFixedCutoffTest() {
+    LocalDate valuationDate = LocalDate.of(2014, 12, 8);
+    LocalDate refEndDate = USD_FED_FUND.getFixingCalendar().previous(END_DATE);
+    LocalDate refStartDate = USD_FED_FUND.getFixingCalendar().previous(refEndDate);
+    double rateComputed = 0.0;
+    /* payment lag = 1*/
+    double[] rateExpected = computeRateCutoff(ENV_ALL_MISSING_YEST, ON_AA_RATE_CUT0, valuationDate, refStartDate,
+        refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_MISSING_YEST, valuationDate, ON_AA_RATE_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MISSING_YEST, valuationDate, ON_AA_RATE_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = 0*/
+    LocalDate valuationDate0 = USD_FED_FUND.getFixingCalendar().previous(valuationDate);
+    rateExpected = computeRateCutoff(ENV_ALL_ZERO, ON_AA_RATE_ZERO, valuationDate0, refStartDate, refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_ZERO, valuationDate0, ON_AA_RATE_ZERO_CUT2, START_DATE, END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_ZERO, valuationDate0, ON_AA_RATE_ZERO_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+    /* payment lag = -1*/
+    LocalDate valuationDate1 = USD_FED_FUND.getFixingCalendar().previous(valuationDate0);
+    rateExpected = computeRateCutoff(ENV_ALL_MISSING_YEST_MINUS, ON_AA_RATE_MINUS, valuationDate1, refStartDate,
+        refEndDate);
+    rateComputed = RATE_PROVIDER.rate(ENV_ALL_MISSING_YEST_MINUS, valuationDate1, ON_AA_RATE_MINUS_CUT2, START_DATE,
+        END_DATE);
+    assertEquals(rateExpected[0], rateComputed, TOLERANCE_RATE, "DefaultIborRateProviderFn: rate forward");
+    rateComputed = ON_AA_RATE_APPROX_PROVIDER.rate(ENV_ALL_MISSING_YEST_MINUS, valuationDate1, ON_AA_RATE_MINUS_CUT2,
+        START_DATE, END_DATE);
+    assertEquals(rateExpected[1], rateComputed, TOLERANCE_RATE * 1.0E1, "DefaultIborRateProviderFn: rate forward");
+  }
+
+  /**
+   * Compute rate with reset cutoff from zero-cutoff OvernightAveragedRate
+   * @param env ImmutablePricingEnvironment
+   * @param onRate OvernightAveragedRate with cutoff = 0
+   * @param valuationDate Valuation date
+   * @param refStartDate Start date of reference interval
+   * @param refEndDate End date of reference interval
+   * @return rates computed with the detail [0] and the approximation [1] 
+   */
+  private double[] computeRateCutoff(ImmutablePricingEnvironment env, OvernightAveragedRate onRate,
+      LocalDate valuationDate, LocalDate refStartDate, LocalDate refEndDate) {
+    double[] res = new double[2];
+    double factorTotal = USD_FED_FUND.getDayCount().yearFraction(START_DATE, END_DATE);
+    double factorToRefEnd = USD_FED_FUND.getDayCount().yearFraction(START_DATE, refEndDate);
+    double factorLast = USD_FED_FUND.getDayCount().yearFraction(refEndDate, END_DATE);
+    double rate = RATE_PROVIDER.rate(env, valuationDate, onRate, START_DATE, refEndDate);
+    double refRate = RATE_PROVIDER.rate(env, valuationDate, onRate, refStartDate,
+        refEndDate);
+    res[0] = ((rate * factorToRefEnd) + (refRate * factorLast)) / factorTotal;
+    rate = ON_AA_RATE_APPROX_PROVIDER.rate(env, valuationDate, onRate, START_DATE, refEndDate);
+    refRate = ON_AA_RATE_APPROX_PROVIDER.rate(env, valuationDate, onRate, refStartDate, refEndDate);
+    res[1] = ((rate * factorToRefEnd) + (refRate * factorLast)) / factorTotal;
+    return res;
   }
 
   /**
