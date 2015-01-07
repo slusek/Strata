@@ -37,6 +37,11 @@ public interface PaymentEventPricerFn<T extends PaymentEvent> {
       PricingEnvironment env,
       LocalDate valuationDate,
       T event);
+  
+  public abstract double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      T event);
 
   /**
    * Calculates the future value of a single payment event. The amount is in the currency of the payment.

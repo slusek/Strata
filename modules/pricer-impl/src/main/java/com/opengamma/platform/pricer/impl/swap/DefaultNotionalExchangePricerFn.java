@@ -41,6 +41,21 @@ public class DefaultNotionalExchangePricerFn
   }
   
   @Override
+  public double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      NotionalExchange event) {
+    int nbEnv = env.length;
+    double time = env[0].relativeTime(valuationDate, event.getPaymentDate()); // Should it be recomputed for each env?
+    double[] pv = new double[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      double df = env[i].getMulticurve().getDiscountFactor(env[i].currency(event.getPaymentAmount().getCurrency()), time);
+      pv[i] = event.getPaymentAmount().getAmount() * df;
+    }
+    return pv;
+  }
+  
+  @Override
   public double futureValue(
       PricingEnvironment env,
       LocalDate valuationDate,

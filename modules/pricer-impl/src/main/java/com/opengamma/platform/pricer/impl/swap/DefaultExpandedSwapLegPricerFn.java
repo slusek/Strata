@@ -14,6 +14,8 @@ import com.opengamma.platform.finance.swap.ExpandedSwapLeg;
 import com.opengamma.platform.finance.swap.PaymentEvent;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 import com.opengamma.platform.pricer.swap.PaymentEventPricerFn;
 import com.opengamma.platform.pricer.swap.PaymentPeriodPricerFn;
 import com.opengamma.platform.pricer.swap.SwapLegPricerFn;
@@ -62,6 +64,25 @@ public class DefaultExpandedSwapLegPricerFn implements SwapLegPricerFn<ExpandedS
       .sum();
      return pvPayments + pvEvents;
   }
+  
+  @Override
+  public double[] presentValue(PricingEnvironment[] env, LocalDate valuationDate, ExpandedSwapLeg swapLeg) {
+    int nbEnv = env.length;
+    double[] pv = new double[nbEnv];
+    for(PaymentPeriod p: swapLeg.getPaymentPeriods()) {
+      double[] ppv = paymentPeriodPricerFn.presentValue(env, valuationDate, p);
+      for(int i = 0; i<nbEnv; i++) {
+        pv[i] += ppv[i];
+      }
+    }
+    for(PaymentEvent p: swapLeg.getPaymentEvents()) {
+      double[] ppv = paymentEventPricerFn.presentValue(env, valuationDate, p);
+      for(int i = 0; i<nbEnv; i++) {
+        pv[i] += ppv[i];
+      }
+    }
+     return pv;
+  }
 
   @Override
   public double futureValue(PricingEnvironment env, LocalDate valuationDate, ExpandedSwapLeg swapLeg) {
@@ -84,6 +105,34 @@ public class DefaultExpandedSwapLegPricerFn implements SwapLegPricerFn<ExpandedS
           paymentPeriodPricerFn.presentValueCurveSensitivity(env, valuationDate, payment);
       pv += pair.getFirst();
       sensi = sensi.plus(pair.getSecond());      
+    }
+    return Pair.of(pv, sensi);
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env, LocalDate valuationDate, ExpandedSwapLeg swapLeg) {
+    MulticurveSensitivity3 sensi = new MulticurveSensitivity3();
+    double pv = 0.0;
+    for(PaymentPeriod payment: swapLeg.getPaymentPeriods()) {
+      Pair<Double, MulticurveSensitivity3> pair = 
+          paymentPeriodPricerFn.presentValueCurveSensitivity3(env, valuationDate, payment);
+      pv += pair.getFirst();
+      sensi.add(pair.getSecond());      
+    }
+    return Pair.of(pv, sensi);
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
+      PricingEnvironment env, LocalDate valuationDate, ExpandedSwapLeg swapLeg) {
+    MulticurveSensitivity3LD sensi = new MulticurveSensitivity3LD();
+    double pv = 0.0;
+    for(PaymentPeriod payment: swapLeg.getPaymentPeriods()) {
+      Pair<Double, MulticurveSensitivity3LD> pair = 
+          paymentPeriodPricerFn.presentValueCurveSensitivity3LD(env, valuationDate, payment);
+      pv += pair.getFirst();
+      sensi.add(pair.getSecond());      
     }
     return Pair.of(pv, sensi);
   }

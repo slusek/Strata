@@ -8,7 +8,9 @@ package com.opengamma.platform.pricer.impl.swap;
 import org.testng.annotations.Test;
 
 public class DefaultExpandedSwapLegPricerFnTest {
+  
   @Test
   public void f() {
   }
+  
 }

@@ -59,6 +59,19 @@ public class DefaultPaymentEventPricerFn
       throw new IllegalArgumentException("Unknown PaymentEvent type: " + event.getClass().getSimpleName());
     }
   }
+  
+  @Override
+  public double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      PaymentEvent event) {
+    // dispatch by runtime type
+    if (event instanceof NotionalExchange) {
+      return notionalExchangeFn.presentValue(env, valuationDate, (NotionalExchange) event);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentEvent type: " + event.getClass().getSimpleName());
+    }
+  }
 
   @Override
   public double futureValue(

@@ -23,6 +23,7 @@ import com.opengamma.basics.index.IborIndices;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.platform.finance.rate.IborRate;
 import com.opengamma.platform.finance.rate.Rate;
+import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.SwapInstrumentsDataSet;
 import com.opengamma.platform.pricer.impl.ImmutablePricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
@@ -124,6 +125,26 @@ public class DefaultIborRateProviderFnTest {
       assertEquals(rateGenWithFixingComputed, rateIborWithFixingComputed, TOLERANCE_RATE,
           "DefaultIborRateProviderFn: rate forward");
     }    
+  }
+
+  @Test
+  public void rateForwardArray() {
+    int nbEnv = 3;
+    PricingEnvironment[] pe = new ImmutablePricingEnvironment[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      pe[i] = ENV_WITHOUTTODAY;
+    }
+    for(int i = 0; i < NB_TESTS ; i++) {
+      IborRate ibor = IborRate.of(USD_LIBOR_3M, FIXING_DATES_TESTED[i]);
+      double[] rateIborWithoutFixingComputed = 
+          IBOR_RATE_PROVIDER.rate(pe, VALUATION_DATE, ibor, VALUATION_DATE, VALUATION_DATE);
+      double rateExpected = 
+          IBOR_RATE_PROVIDER.rate(ENV_WITHOUTTODAY, VALUATION_DATE, ibor, VALUATION_DATE, VALUATION_DATE);
+      for (int j = 0; j < nbEnv; j++) {
+      assertEquals(rateExpected, rateIborWithoutFixingComputed[j], TOLERANCE_RATE,
+          "DefaultIborRateProviderFn: rate forward");
+      }
+    }
   }
   
   /**

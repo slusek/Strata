@@ -13,6 +13,8 @@ import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.ExpandedSwapLeg;
 import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 import com.opengamma.platform.pricer.swap.SwapLegPricerFn;
 
 /**
@@ -52,6 +54,14 @@ public class DefaultSwapLegPricerFn
       SwapLeg swapLeg) {
     return expandedSwapLegPricerFn.presentValue(env, valuationDate, swapLeg.toExpanded());
   }
+  
+  @Override
+  public double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      SwapLeg swapLeg) {
+    return expandedSwapLegPricerFn.presentValue(env, valuationDate, swapLeg.toExpanded());
+  }
 
   @Override
   public double futureValue(
@@ -67,6 +77,22 @@ public class DefaultSwapLegPricerFn
       LocalDate valuationDate, 
       SwapLeg swapLeg) {
     return expandedSwapLegPricerFn.presentValueCurveSensitivity(env, valuationDate, swapLeg.toExpanded());
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      SwapLeg swapLeg) {
+    return expandedSwapLegPricerFn.presentValueCurveSensitivity3(env, valuationDate, swapLeg.toExpanded());
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      SwapLeg swapLeg) {
+    return expandedSwapLegPricerFn.presentValueCurveSensitivity3LD(env, valuationDate, swapLeg.toExpanded());
   }
 
 }

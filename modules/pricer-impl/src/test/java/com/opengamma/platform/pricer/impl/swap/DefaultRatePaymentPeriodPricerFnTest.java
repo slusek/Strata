@@ -234,7 +234,7 @@ public class DefaultRatePaymentPeriodPricerFnTest {
     presentValueTest(PAYMENT_PERIOD_3IBOR_SPREAD_STRAIGHT);
   }
   
-  /* FX reset, no composition. */
+  /* FX reset, no composition. */ // TODO
   
   // -------------------------------------------------------
   

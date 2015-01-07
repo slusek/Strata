@@ -6,8 +6,10 @@
 package com.opengamma.platform.pricer.impl.rate;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.basics.currency.Currency;
 import com.opengamma.collect.ArgChecker;
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.FixedRate;
@@ -19,6 +21,8 @@ import com.opengamma.platform.finance.rate.OvernightCompoundedRate;
 import com.opengamma.platform.finance.rate.Rate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Multiple dispatch for {@code RateProviderFn}.
@@ -110,7 +114,35 @@ public class DefaultRateProviderFn
   }
 
   @Override
-  public Pair<Double,MulticurveSensitivity> rateMulticurveSensitivity(
+  public double[] rate(
+      PricingEnvironment[] env, 
+      LocalDate valuationDate, 
+      Rate rate, 
+      LocalDate startDate, 
+      LocalDate endDate) {
+    // dispatch by runtime type
+    if (rate instanceof FixedRate) {
+      double fixedRate = ((FixedRate) rate).getRate();
+      double[] fixedRateArray = new double[env.length];
+      Arrays.fill(fixedRateArray, fixedRate); 
+      return fixedRateArray;
+    } else if (rate instanceof IborRate) {
+      return iborRateFn.rate(env, valuationDate, (IborRate) rate, startDate, endDate);
+    } else if (rate instanceof IborInterpolatedRate) {
+      return iborInterpolatedRateFn.rate(env, valuationDate, (IborInterpolatedRate) rate, startDate, endDate);
+    } else if (rate instanceof IborAveragedRate) {
+      return iborAveragedRateFn.rate(env, valuationDate, (IborAveragedRate) rate, startDate, endDate);
+    } else if (rate instanceof OvernightCompoundedRate) {
+      return overnightCompoundedRateFn.rate(env, valuationDate, (OvernightCompoundedRate) rate, startDate, endDate);
+    } else if (rate instanceof OvernightAveragedRate) {
+      return overnightAveragedRateFn.rate(env, valuationDate, (OvernightAveragedRate) rate, startDate, endDate);
+    } else {
+      throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
       PricingEnvironment env, 
       LocalDate valuationDate, Rate rate, 
       LocalDate startDate, 
@@ -120,6 +152,40 @@ public class DefaultRateProviderFn
       return Pair.of(((FixedRate) rate).getRate(), new MulticurveSensitivity());
     } else if (rate instanceof IborRate) {
       return iborRateFn.rateMulticurveSensitivity(env, valuationDate, (IborRate) rate, startDate, endDate);
+    } else {
+      throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> rateMulticurveSensitivity3(
+      PricingEnvironment env, 
+      LocalDate valuationDate, Rate rate, 
+      LocalDate startDate, 
+      LocalDate endDate, 
+      Currency currency) {
+    // dispatch by runtime type
+    if (rate instanceof FixedRate) {
+      return Pair.of(((FixedRate) rate).getRate(), new MulticurveSensitivity3());
+    } else if (rate instanceof IborRate) {
+      return iborRateFn.rateMulticurveSensitivity3(env, valuationDate, (IborRate) rate, startDate, endDate, currency);
+    } else {
+      throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> rateMulticurveSensitivity3LD(
+      PricingEnvironment env, 
+      LocalDate valuationDate, Rate rate, 
+      LocalDate startDate, 
+      LocalDate endDate, 
+      Currency currency) {
+    // dispatch by runtime type
+    if (rate instanceof FixedRate) {
+      return Pair.of(((FixedRate) rate).getRate(), new MulticurveSensitivity3LD());
+    } else if (rate instanceof IborRate) {
+      return iborRateFn.rateMulticurveSensitivity3LD(env, valuationDate, (IborRate) rate, startDate, endDate, currency);
     } else {
       throw new IllegalArgumentException("Unknown Rate type: " + rate.getClass().getSimpleName());
     }

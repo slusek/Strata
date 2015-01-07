@@ -12,6 +12,8 @@ import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.Swap;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Pricer for swaps.
@@ -32,6 +34,11 @@ public interface SwapPricerFn {
       PricingEnvironment env,
       LocalDate valuationDate,
       Swap swap);
+  
+  public abstract MultiCurrencyAmount[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      Swap swap);
 
   /**
    * Calculates the future value of the swap.
@@ -47,6 +54,16 @@ public interface SwapPricerFn {
       Swap swap);
   
   public abstract Pair<MultiCurrencyAmount, MultipleCurrencyMulticurveSensitivity> presentValueCurveSensitivity(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      Swap swap);
+  
+  public abstract Pair<MultiCurrencyAmount, MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      Swap swap);
+  
+  public abstract Pair<MultiCurrencyAmount, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
       PricingEnvironment env,
       LocalDate valuationDate,
       Swap swap);

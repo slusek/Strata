@@ -11,6 +11,8 @@ import com.opengamma.analytics.financial.provider.sensitivity.multicurve.Multicu
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Pricer for a single rate payment period.
@@ -52,8 +54,22 @@ public interface PaymentPeriodPricerFn<T extends PaymentPeriod> {
       PricingEnvironment env,
       LocalDate valuationDate,
       T period);
+  
+  public abstract double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      T period);
+  
+  public abstract double[] futureValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      T period);
 
   Pair<Double, MulticurveSensitivity> presentValueCurveSensitivity(PricingEnvironment env, LocalDate valuationDate, T period);
+
+  Pair<Double, MulticurveSensitivity3> presentValueCurveSensitivity3(PricingEnvironment env, LocalDate valuationDate, T period);
+
+  Pair<Double, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(PricingEnvironment env, LocalDate valuationDate, T period);
 
   /**
    * Calculates the XXX

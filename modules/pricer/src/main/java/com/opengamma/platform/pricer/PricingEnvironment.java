@@ -25,6 +25,8 @@ import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
  * All implementations of this interface must be immutable and thread-safe.
  */
 public interface PricingEnvironment {
+  
+  // TODO: Should the valuation date be a feature of the PricingEnvironment and not a argument of all methods?
 
   /**
    * Gets the multicurve data.
@@ -32,6 +34,11 @@ public interface PricingEnvironment {
    * @return the multicurve data
    */
   public MulticurveProviderInterface getMulticurve();
+  /** FIXME: there are two ways to get discount factors: through the method or through the multicurve.
+   *   Should it be restricted to only one? How to make sure that both are identical.
+   *   Probably both should be accessible to have at the same time easy and efficient access to data. 
+   *   But the multicurve version should come with a warning: use at you own risk.
+   */
 
   /**
    * Gets the time series of an index.
@@ -136,5 +143,12 @@ public interface PricingEnvironment {
    * @return the relative time
    */
   public double relativeTime(LocalDate baseDate, LocalDate date);
+  // FIXME: Need one relative time for each Currency/Index. To be able to use ACT or BUS in the same PE.
+  
+  public double relativeTime(Currency currency, LocalDate baseDate, LocalDate date);
+  
+  public double relativeTime(IborIndex index, LocalDate baseDate, LocalDate date);
+  
+  public double relativeTime(OvernightIndex index, LocalDate baseDate, LocalDate date);
 
 }

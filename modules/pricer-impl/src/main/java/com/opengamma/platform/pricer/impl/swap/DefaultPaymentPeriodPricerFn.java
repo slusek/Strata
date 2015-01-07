@@ -13,6 +13,8 @@ import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.swap.PaymentPeriod;
 import com.opengamma.platform.finance.swap.RatePaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 import com.opengamma.platform.pricer.swap.PaymentPeriodPricerFn;
 
 /**
@@ -59,10 +61,36 @@ public class DefaultPaymentPeriodPricerFn
       throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
     }
   }
+  
+  @Override
+  public double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.presentValue(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
 
   @Override
   public double futureValue(
       PricingEnvironment env,
+      LocalDate valuationDate,
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.futureValue(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public double[] futureValue(
+      PricingEnvironment[] env,
       LocalDate valuationDate,
       PaymentPeriod period) {
     // dispatch by runtime type
@@ -94,6 +122,32 @@ public class DefaultPaymentPeriodPricerFn
     // dispatch by runtime type
     if (period instanceof RatePaymentPeriod) {
       return ratePaymentPeriodFn.presentValueCurveSensitivity(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.presentValueCurveSensitivity3(env, valuationDate, (RatePaymentPeriod) period);
+    } else {
+      throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
+    }
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
+      PricingEnvironment env, 
+      LocalDate valuationDate, 
+      PaymentPeriod period) {
+    // dispatch by runtime type
+    if (period instanceof RatePaymentPeriod) {
+      return ratePaymentPeriodFn.presentValueCurveSensitivity3LD(env, valuationDate, (RatePaymentPeriod) period);
     } else {
       throw new IllegalArgumentException("Unknown PaymentPeriod type: " + period.getClass().getSimpleName());
     }

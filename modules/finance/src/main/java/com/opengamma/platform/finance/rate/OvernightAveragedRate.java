@@ -174,7 +174,7 @@ public final class OvernightAveragedRate
    * A value of zero or one will have no effect on the standard calculation.
    * The fixing holiday calendar of the index is used to determine business days.
    * <p>
-   * For example, a value of {@code -3} means that the rate observed on
+   * For example, a value of {@code 3} means that the rate observed on
    * {@code (periodEndDate - 3 business days)} is also to be used on
    * {@code (periodEndDate - 2 business days)} and {@code (periodEndDate - 1 business day)}.
    * <p>
@@ -427,7 +427,7 @@ public final class OvernightAveragedRate
      * @return this, for chaining, not null
      */
     public Builder rateCutoffDaysOffset(int rateCutoffDaysOffset) {
-      ArgChecker.notNegative(rateCutoffDaysOffset, "rateCutoffDaysOffset"); // FIXME
+      ArgChecker.notNegative(rateCutoffDaysOffset, "rateCutoffDaysOffset");
       this.rateCutoffDaysOffset = rateCutoffDaysOffset;
       return this;
     }

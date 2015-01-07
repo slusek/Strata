@@ -8,11 +8,14 @@ package com.opengamma.platform.pricer.impl.rate;
 import java.time.LocalDate;
 
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.basics.currency.Currency;
 import com.opengamma.basics.index.IborIndex;
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.IborInterpolatedRate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Rate provider implementation for rate based on the weighted average of the fixing 
@@ -59,6 +62,23 @@ public class DefaultIborInterpolatedRateProviderFn
   @Override
   public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
       PricingEnvironment env, LocalDate valuationDate, IborInterpolatedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> rateMulticurveSensitivity3(PricingEnvironment env, LocalDate valuationDate, IborInterpolatedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> rateMulticurveSensitivity3LD(PricingEnvironment env, LocalDate valuationDate, IborInterpolatedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
+    return null;
+  }
+
+  @Override
+  public double[] rate(PricingEnvironment[] env, LocalDate valuationDate, IborInterpolatedRate rate, LocalDate startDate, LocalDate endDate) {
     return null;
   }
 

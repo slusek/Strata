@@ -11,6 +11,8 @@ import org.testng.annotations.Test;
 
 import com.opengamma.platform.finance.rate.FixedRate;
 import com.opengamma.platform.finance.rate.Rate;
+import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.impl.ImmutablePricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
 
 /**
@@ -29,9 +31,20 @@ public class DefaultRateProviderFnTest {
   
   @Test
   public void rate() {
-    double rateComputed = RATE_PROVIDER.rate(null, null, FIXED_RATE, null, null);
+    double rateComputed = RATE_PROVIDER.rate((PricingEnvironment) null, null, FIXED_RATE, null, null);
     assertEquals(RATE, rateComputed, TOLERANCE_RATE,
         "DefaultRateProviderFn: fixed rate");
+  }
+  
+  @Test
+  public void rateVector() {
+    int nbEnv = 3;
+    PricingEnvironment[] pe = new ImmutablePricingEnvironment[nbEnv];
+    double[] rateComputed = RATE_PROVIDER.rate(pe, null, FIXED_RATE, null, null);
+    for (int i = 0; i < nbEnv; i++) {
+      assertEquals(RATE, rateComputed[i], TOLERANCE_RATE,
+          "DefaultRateProviderFn: fixed rate");
+    }
   }
   
 }

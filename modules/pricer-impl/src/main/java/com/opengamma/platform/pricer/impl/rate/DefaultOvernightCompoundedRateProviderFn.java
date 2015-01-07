@@ -12,12 +12,15 @@ import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.basics.currency.Currency;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.OvernightCompoundedRate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Rate provider implementation for a rate based on a single overnight index that is compounded.
@@ -144,6 +147,11 @@ public class DefaultOvernightCompoundedRateProviderFn
     return (accruedUnitNotional - 1d) / fixingAccrualfactor;
   }
 
+  @Override
+  public double[] rate(PricingEnvironment[] env, LocalDate valuationDate, OvernightCompoundedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
+  }
+
   // dates entirely in the future
   private double rateFromForwardCurve(
       PricingEnvironment env,
@@ -151,9 +159,8 @@ public class DefaultOvernightCompoundedRateProviderFn
       OvernightIndex index,
       LocalDate startDate,
       LocalDate endDate) {
-    
-    double fixingStart = env.relativeTime(valuationDate, startDate);
-    double fixingEnd = env.relativeTime(valuationDate, endDate);
+    double fixingStart = env.relativeTime(index, valuationDate, startDate);
+    double fixingEnd = env.relativeTime(index, valuationDate, endDate);
     double fixingAccrualfactor = index.getDayCount().yearFraction(startDate, endDate);
     double observedRate = env.getMulticurve().getSimplyCompoundForwardRate(
         env.convert(index), fixingStart, fixingEnd, fixingAccrualfactor);
@@ -163,6 +170,18 @@ public class DefaultOvernightCompoundedRateProviderFn
   @Override
   public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
       PricingEnvironment env, LocalDate valuationDate, OvernightCompoundedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> rateMulticurveSensitivity3(PricingEnvironment env, LocalDate valuationDate, OvernightCompoundedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> rateMulticurveSensitivity3LD(PricingEnvironment env, LocalDate valuationDate, OvernightCompoundedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
     return null;
   }
 

@@ -12,12 +12,15 @@ import java.util.OptionalDouble;
 
 import com.opengamma.OpenGammaRuntimeException;
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.basics.currency.Currency;
 import com.opengamma.basics.index.OvernightIndex;
 import com.opengamma.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.collect.tuple.Pair;
 import com.opengamma.platform.finance.rate.OvernightAveragedRate;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 
 /**
  * Rate provider implementation for a rate based on a single overnight index that is averaged.
@@ -130,6 +133,23 @@ public class DefaultOvernightAveragedRateProviderFn
   @Override
   public Pair<Double, MulticurveSensitivity> rateMulticurveSensitivity(
       PricingEnvironment env, LocalDate valuationDate, OvernightAveragedRate rate, LocalDate startDate, LocalDate endDate) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3> rateMulticurveSensitivity3(PricingEnvironment env, LocalDate valuationDate, OvernightAveragedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
+    return null;
+  }
+
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> rateMulticurveSensitivity3LD(PricingEnvironment env, LocalDate valuationDate, OvernightAveragedRate rate, LocalDate startDate, LocalDate endDate,
+      Currency currency) {
+    return null;
+  }
+
+  @Override
+  public double[] rate(PricingEnvironment[] env, LocalDate valuationDate, OvernightAveragedRate rate, LocalDate startDate, LocalDate endDate) {
     return null;
   }
 

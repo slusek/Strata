@@ -11,7 +11,6 @@ import static com.opengamma.basics.currency.Currency.USD;
 import static com.opengamma.basics.date.BusinessDayConventions.MODIFIED_FOLLOWING;
 import static com.opengamma.basics.date.BusinessDayConventions.PRECEDING;
 import static com.opengamma.basics.date.DayCounts.ACT_360;
-import static com.opengamma.basics.date.DayCounts.ACT_ACT_ISDA;
 import static com.opengamma.basics.date.DayCounts.THIRTY_U_360;
 import static com.opengamma.basics.index.OvernightIndices.USD_FED_FUND;
 import static com.opengamma.basics.schedule.Frequency.P3M;
@@ -19,18 +18,31 @@ import static com.opengamma.basics.schedule.Frequency.P6M;
 import static org.testng.Assert.assertEquals;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.OptionalDouble;
 
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
+import com.opengamma.analytics.financial.instrument.index.IndexIborMaster;
 import com.opengamma.analytics.financial.interestrate.datasets.StandardDataSetsMulticurveUSD;
+import com.opengamma.analytics.financial.provider.calculator.discounting.PresentValueCurveSensitivityDiscountingCalculator;
+import com.opengamma.analytics.financial.provider.calculator.generic.MarketQuoteSensitivityBlockCalculator;
 import com.opengamma.analytics.financial.provider.curve.CurveBuildingBlockBundle;
 import com.opengamma.analytics.financial.provider.description.interestrate.MulticurveProviderDiscount;
+import com.opengamma.analytics.financial.provider.description.interestrate.ParameterProviderInterface;
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MultipleCurrencyMulticurveSensitivity;
+import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MultipleCurrencyParameterSensitivity;
+import com.opengamma.analytics.financial.provider.sensitivity.parameter.ParameterSensitivityParameterCalculator;
+import com.opengamma.analytics.financial.util.AssertSensitivityObjects;
 import com.opengamma.basics.PayReceive;
 import com.opengamma.basics.currency.MultiCurrencyAmount;
 import com.opengamma.basics.date.BusinessDayAdjustment;
+import com.opengamma.basics.date.DayCount;
+import com.opengamma.basics.date.DayCounts;
 import com.opengamma.basics.date.DaysAdjustment;
+import com.opengamma.basics.date.HolidayCalendars;
 import com.opengamma.basics.index.IborIndex;
 import com.opengamma.basics.index.IborIndices;
 import com.opengamma.basics.schedule.Frequency;
@@ -50,7 +62,12 @@ import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.finance.swap.SwapTrade;
 import com.opengamma.platform.pricer.CalendarUSD;
 import com.opengamma.platform.pricer.SwapInstrumentsDataSet;
+import com.opengamma.platform.pricer.impl.ImmutableStoredPricingEnvironment;
 import com.opengamma.platform.pricer.impl.ImmutablePricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
+import com.opengamma.platform.pricer.results.ParameterSensitivityParameterCalculator3;
+import com.opengamma.platform.pricer.results.ParameterSensitivityParameterCalculator3LD;
 import com.opengamma.platform.pricer.swap.SwapLegPricerFn;
 import com.opengamma.platform.pricer.swap.SwapPricerFn;
 import com.opengamma.platform.source.id.StandardId;
@@ -62,30 +79,35 @@ import com.opengamma.platform.source.id.StandardId;
 public class DefaultSwapPricerFnTest {
 
   private static final LocalDate VALUATION_DATE = LocalDate.of(2014, 1, 22);
+  
+  private static final DayCount DC = DayCounts.ACT_365F; // DayCounts.ACT_ACT_ISDA;
 
   private static final IborIndex USD_LIBOR_1M = IborIndices.USD_LIBOR_1M;
   private static final IborIndex USD_LIBOR_3M = IborIndices.USD_LIBOR_3M;
   private static final IborIndex USD_LIBOR_6M = IborIndices.USD_LIBOR_6M;
+  private static final com.opengamma.analytics.financial.instrument.index.IborIndex USDLIBOR3M_OGA =
+      IndexIborMaster.getInstance().getIndex(IndexIborMaster.USDLIBOR3M);
   public static final LocalDateDoubleTimeSeries TS_USDLIBOR3M_WITHOUTTODAY =
       LocalDateDoubleTimeSeries.builder()
-      .put(LocalDate.of(2014, 1, 21), 0.00123)
-      .build();
+          .put(LocalDate.of(2014, 1, 21), 0.00123)
+          .build();
   public static final double FIXING_TODAY = 0.00234;
   public static final LocalDateDoubleTimeSeries TS_USDLIBOR3M_WITHTODAY =
       LocalDateDoubleTimeSeries.builder()
-      .put(LocalDate.of(2014, 1, 21), 0.00123)
-      .put(LocalDate.of(2014, 1, 22), FIXING_TODAY)
-      .build();
-  private static final com.opengamma.util.tuple.Pair<MulticurveProviderDiscount, CurveBuildingBlockBundle> MULTICURVE_OIS_PAIR = 
-      StandardDataSetsMulticurveUSD.getCurvesUSDOisL1L3L6();
+          .put(LocalDate.of(2014, 1, 21), 0.00123)
+          .put(LocalDate.of(2014, 1, 22), FIXING_TODAY)
+          .build();
+  private static final com.opengamma.util.tuple.Pair<MulticurveProviderDiscount, CurveBuildingBlockBundle> 
+      MULTICURVE_OIS_PAIR = StandardDataSetsMulticurveUSD.getCurvesUSDOisL1L3L6();
   private static final MulticurveProviderDiscount MULTICURVE_OIS = MULTICURVE_OIS_PAIR.getFirst();
+  private static final CurveBuildingBlockBundle BLOCK_OIS = MULTICURVE_OIS_PAIR.getSecond();
   private static final ImmutablePricingEnvironment ENV_WITHOUTTODAY = env(TS_USDLIBOR3M_WITHOUTTODAY);
   private static final ImmutablePricingEnvironment ENV_WITHTODAY = env(TS_USDLIBOR3M_WITHTODAY);
-  
+  private static final ImmutableStoredPricingEnvironment ENV_FAST_WITHOUTTODAY = envStored(TS_USDLIBOR3M_WITHOUTTODAY);
 
   private static final SwapPricerFn SWAP_PRICER = DefaultSwapPricerFn.DEFAULT;
   private static final SwapLegPricerFn<ExpandedSwapLeg> LEG_PRICER = DefaultExpandedSwapLegPricerFn.DEFAULT;
-  
+
   /* Instrument */
   private static final BusinessDayAdjustment BDA_MF = BusinessDayAdjustment.of(MODIFIED_FOLLOWING, CalendarUSD.NYC);
   private static final BusinessDayAdjustment BDA_P = BusinessDayAdjustment.of(PRECEDING, CalendarUSD.NYC);
@@ -98,39 +120,80 @@ public class DefaultSwapPricerFnTest {
       START_DATE_1, END_DATE_1, P6M, PAY, NOTIONAL, FIXED_RATE, null);
   private static final RateSwapLeg IBOR_LEG = iborLeg(
       START_DATE_1, END_DATE_1, P3M, RECEIVE, NOTIONAL, USD_LIBOR_3M, null);
-        
+
+  private static final PresentValueCurveSensitivityDiscountingCalculator PVCSDC =
+      PresentValueCurveSensitivityDiscountingCalculator.getInstance();
+  private static final ParameterSensitivityParameterCalculator<ParameterProviderInterface> PSC =
+      new ParameterSensitivityParameterCalculator<>(PVCSDC);
+  private static final MarketQuoteSensitivityBlockCalculator<ParameterProviderInterface> MQSBC = 
+      new MarketQuoteSensitivityBlockCalculator<>(PSC);
+
+
   private static final SwapTrade SWAP_TRADE = SwapTrade.builder()
       .standardId(StandardId.of("OG-Trade", "1"))
       .tradeDate(LocalDate.of(2014, 9, 10))
       .swap(Swap.of(FIXED_LEG, IBOR_LEG))
       .build();
-  
+
   /* Constants */
   private static final double TOLERANCE_PV = 1.0E-2;
-  private static final double BP1 = 1.0E-4;
-  
+  private static final double TOLERANCE_PV_DELTA = 1.0E+0;
+
   @SuppressWarnings("unused")
   @Test
   public void presentValue() {
     Swap swap = SWAP_TRADE.getSwap();
     double pvExpected = 0.0d;
-    for(SwapLeg leg: swap.getLegs()) {
+    for (SwapLeg leg : swap.getLegs()) {
       pvExpected += LEG_PRICER.presentValue(ENV_WITHOUTTODAY, VALUATION_DATE, leg.toExpanded());
     } // Single currency swap, no need for a currency dimension.
     MultiCurrencyAmount pvComputed = SWAP_PRICER.presentValue(ENV_WITHOUTTODAY, VALUATION_DATE, swap);
     assertEquals(pvExpected, pvComputed.getAmount(USD).getAmount(), TOLERANCE_PV,
         "DefaultSwapPricerFn: Present Value");
+    MultiCurrencyAmount pvComputedFast = SWAP_PRICER.presentValue(ENV_FAST_WITHOUTTODAY, VALUATION_DATE, swap);
+    assertEquals(pvExpected, pvComputedFast.getAmount(USD).getAmount(), TOLERANCE_PV,
+        "DefaultSwapPricerFn: Present Value");
   }
-  
+
   @Test
   public void presentValueCurveSensitivity() {
-    Pair<MultiCurrencyAmount, MultipleCurrencyMulticurveSensitivity> pvcs = 
+    Pair<MultiCurrencyAmount, MultipleCurrencyMulticurveSensitivity> pvcsPair =
         SWAP_PRICER.presentValueCurveSensitivity(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
+    Pair<MultiCurrencyAmount, MulticurveSensitivity3> pvcsPair3 =
+        SWAP_PRICER.presentValueCurveSensitivity3(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
+    Pair<MultiCurrencyAmount, MulticurveSensitivity3LD> pvcsPair3LD =
+        SWAP_PRICER.presentValueCurveSensitivity3LD(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
+    MulticurveSensitivity3LD pvcs3LD = pvcsPair3LD.getSecond();
+    pvcs3LD.cleaned();
+    pvcsPair3LD.getSecond().cleaned();
     MultiCurrencyAmount pv = SWAP_PRICER.presentValue(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
-    assertEquals(pv.getAmount(USD).getAmount(), pvcs.getFirst().getAmount(USD).getAmount(), TOLERANCE_PV,
+    MulticurveSensitivity3 pvcs3 = pvcsPair3.getSecond();
+    assertEquals(pv.getAmount(USD).getAmount(), pvcsPair.getFirst().getAmount(USD).getAmount(), TOLERANCE_PV,
         "DefaultSwapPricerFn: Present Value curve sensitivity");
+    assertEquals(pv.getAmount(USD).getAmount(), pvcsPair3.getFirst().getAmount(USD).getAmount(), TOLERANCE_PV,
+        "DefaultSwapPricerFn: Present Value curve sensitivity");
+    assertEquals(20, pvcsPair3.getSecond().getForwardRateSensitivities().size(),
+        "DefaultSwapPricerFn: Present Value curve sensitivity");
+    assertEquals(30, pvcsPair3.getSecond().getZeroRateSensitivities().size(),
+        "DefaultSwapPricerFn: Present Value curve sensitivity");
+    pvcs3 = pvcs3.cleaned();
+    assertEquals(20, pvcs3.getZeroRateSensitivities().size(),
+        "DefaultSwapPricerFn: Present Value curve sensitivity");
+    MultipleCurrencyParameterSensitivity ps = PSC.pointToParameterSensitivity(pvcsPair.getSecond(), MULTICURVE_OIS);
+    MultipleCurrencyParameterSensitivity ps3 =
+        ParameterSensitivityParameterCalculator3.pointToParameterSensitivity(pvcs3, MULTICURVE_OIS);
+    AssertSensitivityObjects.assertEquals("DefaultSwapPricerFn: Present Value curve sensitivity",
+        ps, ps3, TOLERANCE_PV_DELTA);
+    MultipleCurrencyParameterSensitivity ps3LD =
+        ParameterSensitivityParameterCalculator3LD.pointToParameterSensitivity(pvcs3LD, ENV_WITHOUTTODAY, VALUATION_DATE);
+    AssertSensitivityObjects.assertEquals("DefaultSwapPricerFn: Present Value curve sensitivity",
+        ps, ps3LD, TOLERANCE_PV_DELTA);
+    @SuppressWarnings("unused")
+    MultipleCurrencyParameterSensitivity pvMarketQuoteSensi = MQSBC.fromParameterSensitivity(ps3LD, BLOCK_OIS);
+    @SuppressWarnings("unused")
+    int t = 0;
   }
-  
+
   @Test
   public void parRate() {
     double parRateWithoutFixingComputed = SWAP_PRICER.parRate(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
@@ -148,7 +211,7 @@ public class DefaultSwapPricerFnTest {
     assertEquals(0.0d, pv0WithFixing.getAmount(NOTIONAL.getCurrency()).getAmount(), TOLERANCE_PV,
         "DefaultSwapPricerFn: parRate");
   }
-  
+
   @Test
   public void parSpread() {
     double parSpreadWithoutFixingComputed = SWAP_PRICER.parSpread(ENV_WITHOUTTODAY, VALUATION_DATE, SWAP_TRADE.getSwap());
@@ -166,65 +229,6 @@ public class DefaultSwapPricerFnTest {
     assertEquals(0.0d, pv0WithFixing.getAmount(NOTIONAL.getCurrency()).getAmount(), TOLERANCE_PV,
         "DefaultSwapPricerFn: parRate");
   }
-  
-
-  @Test(enabled = false)
-  public void performance() {
-
-    long startTime, endTime;
-    int nbTest = 100;
-    int nbSwap = 100;
-    int nbRep = 10;
-
-    for (int looprep = 0; looprep < nbRep; looprep++) {
-      double pvTotal = 0.0;
-      startTime = System.currentTimeMillis();
-      for (int looptest = 0; looptest < nbTest; looptest++) {
-        pvTotal = 0.0;
-        for (int loops = 0; loops < nbSwap; loops++) {
-          double rate = FIXED_RATE - 0.0050 + loops * BP1;
-          SwapLeg fixedLeg = fixedLeg(
-              START_DATE_1, END_DATE_1, P6M, PAY, NOTIONAL, rate, null);
-          SwapLeg iborLeg = iborLeg(
-              START_DATE_1, END_DATE_1, P3M, RECEIVE, NOTIONAL, USD_LIBOR_3M, null);
-          Swap swap = Swap.of(fixedLeg, iborLeg);
-          @SuppressWarnings("unused")
-          MultiCurrencyAmount pv = SWAP_PRICER.presentValue(ENV_WITHOUTTODAY, VALUATION_DATE, swap);
-          pvTotal += pv.getAmount(USD).getAmount();
-        }
-      }
-      endTime = System.currentTimeMillis();
-      System.out.println("DefaultSwapPricerFn: " + nbTest + " x " + nbSwap + " swaps (5Y/Q) - construction+pv " +
-          (endTime - startTime) + " ms - " + pvTotal);
-      // Performance note: construction + pv: On Mac Book Pro 2.6 GHz Intel i7: 605 ms for 100x100 swaps.
-      // Performance note: OG-Analytics: 434 ms
-    }
-
-    for (int looprep = 0; looprep < nbRep; looprep++) {
-      double pvTotal = 0.0;
-      startTime = System.currentTimeMillis();
-      for (int looptest = 0; looptest < nbTest; looptest++) {
-        pvTotal = 0.0;
-        for (int loops = 0; loops < nbSwap; loops++) {
-          double rate = FIXED_RATE - 0.0050 + loops * BP1;
-          SwapLeg fixedLeg = fixedLeg(
-              START_DATE_1, END_DATE_1, P6M, PAY, NOTIONAL, rate, null);
-          SwapLeg iborLeg = iborLeg(
-              START_DATE_1, END_DATE_1, P3M, RECEIVE, NOTIONAL, USD_LIBOR_3M, null);
-          Swap swap = Swap.of(fixedLeg, iborLeg);
-          @SuppressWarnings("unused")
-          Pair<MultiCurrencyAmount, MultipleCurrencyMulticurveSensitivity> pvcs = 
-          SWAP_PRICER.presentValueCurveSensitivity(ENV_WITHOUTTODAY, VALUATION_DATE, swap);
-          pvTotal += pvcs.getFirst().getAmount(USD).getAmount();
-        }
-      }
-      endTime = System.currentTimeMillis();
-      System.out.println("DefaultSwapPricerFn: " + nbTest + " x " + nbSwap + " swaps (5Y/Q) - construction+pvcs " +
-          (endTime - startTime) + " ms - " + pvTotal);
-      // Performance note: construction + pv: On Mac Book Pro 2.6 GHz Intel i7: 875 ms for 100x100 swaps.
-    }
-
-  }
 
   /**
    * Create a pricing environment from the existing MulticurveProvider and Ibor fixing time series.
@@ -239,16 +243,56 @@ public class DefaultSwapPricerFnTest {
             USD_LIBOR_3M, ts,
             USD_LIBOR_6M, SwapInstrumentsDataSet.TS_USDLIBOR6M,
             USD_FED_FUND, SwapInstrumentsDataSet.TS_USDON))
-        .dayCount(ACT_ACT_ISDA)
+        .dayCount(DC)
         .build();
   }
+  
+  private static ImmutableStoredPricingEnvironment envStored(LocalDateDoubleTimeSeries ts) {
+    long startTime, endTime;
+    startTime = System.currentTimeMillis();
+    Map<IborIndex, Map<LocalDate, Double>> iborRate = new HashMap<IborIndex, Map<LocalDate,Double>>();
+    Map<LocalDate, Double> libor3MForward = new HashMap<LocalDate, Double>();
+    for(LocalDate tsDate: ts.dates()) {
+      libor3MForward.put(tsDate, ts.get(tsDate).getAsDouble());
+    }
+    // ValuationDate
+    OptionalDouble valuationFixing = ts.get(VALUATION_DATE);
+    // 
+    int nbDate = 12_500; // nbDate in the map ~ 50Y
+    LocalDate fixingDate = valuationFixing.isPresent()?HolidayCalendars.GBLO.next(VALUATION_DATE):VALUATION_DATE;
+    for(int loopFixing = 0 ; loopFixing<nbDate; loopFixing++) {
+      LocalDate fixingStartDate = USD_LIBOR_3M.calculateEffectiveFromFixing(fixingDate);
+      LocalDate fixingEndDate = USD_LIBOR_3M.calculateMaturityFromEffective(fixingStartDate);
+      double fixingYearFraction = USD_LIBOR_3M.getDayCount().yearFraction(fixingStartDate, fixingEndDate);
+      libor3MForward.put(fixingDate, MULTICURVE_OIS.getSimplyCompoundForwardRate(USDLIBOR3M_OGA,
+          DC.yearFraction(VALUATION_DATE, fixingStartDate), 
+          DC.yearFraction(VALUATION_DATE, fixingEndDate),
+          fixingYearFraction));
+      fixingDate = HolidayCalendars.GBLO.next(fixingDate);
+    }
+    iborRate.put(USD_LIBOR_3M, libor3MForward);
+    endTime = System.currentTimeMillis();
+    System.out.println("PricingEnvironement: loading 50Y fixing 1 curve:" + (endTime - startTime) + " ms");
+    return ImmutableStoredPricingEnvironment.builder()
+        .multicurve(MULTICURVE_OIS)
+        .timeSeries(ImmutableMap.of(
+            USD_LIBOR_1M, SwapInstrumentsDataSet.TS_USDLIBOR1M,
+            USD_LIBOR_3M, ts,
+            USD_LIBOR_6M, SwapInstrumentsDataSet.TS_USDLIBOR6M,
+            USD_FED_FUND, SwapInstrumentsDataSet.TS_USDON))
+        .iborRate(iborRate)
+        .dayCount(DC)
+        .build();
+  }
+  
+  
 
   //-------------------------------------------------------------------------
   // fixed rate leg
   private static RateSwapLeg fixedLeg(
       LocalDate start, LocalDate end, Frequency frequency,
       PayReceive payReceive, NotionalAmount notional, double fixedRate, StubConvention stubConvention) {
-    
+
     return RateSwapLeg.builder()
         .payReceive(payReceive)
         .accrualPeriods(PeriodicSchedule.builder()
@@ -269,7 +313,6 @@ public class DefaultSwapPricerFnTest {
             .build())
         .build();
   }
-  
 
   // fixed rate leg
   private static RateSwapLeg iborLeg(
@@ -296,5 +339,5 @@ public class DefaultSwapPricerFnTest {
             .build())
         .build();
   }
-  
+
 }

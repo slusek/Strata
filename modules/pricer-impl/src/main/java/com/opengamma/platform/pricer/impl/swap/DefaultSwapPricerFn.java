@@ -22,6 +22,8 @@ import com.opengamma.platform.finance.swap.RatePaymentPeriod;
 import com.opengamma.platform.finance.swap.Swap;
 import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.PricingEnvironment;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 import com.opengamma.platform.pricer.swap.PaymentEventPricerFn;
 import com.opengamma.platform.pricer.swap.PaymentPeriodPricerFn;
 import com.opengamma.platform.pricer.swap.SwapLegPricerFn;
@@ -75,6 +77,22 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
         .map(leg -> CurrencyAmount.of(leg.getCurrency(), swapLegPricerFn.presentValue(env, valuationDate, leg)))
         .reduce(MultiCurrencyAmount.of(), MultiCurrencyAmount::plus, MultiCurrencyAmount::plus);
   }
+  
+  @Override
+  public MultiCurrencyAmount[] presentValue(PricingEnvironment[] env, LocalDate valuationDate, Swap swap) {
+    int nbEnv = env.length;
+    MultiCurrencyAmount[] result = new MultiCurrencyAmount[nbEnv];
+    for(int i = 0; i< nbEnv; i++) {
+      result[i] = MultiCurrencyAmount.of();
+    }
+    for(SwapLeg leg : swap.getLegs()) {
+      double[] legPv = swapLegPricerFn.presentValue(env, valuationDate, leg);
+      for(int i = 0; i< nbEnv; i++) {
+        result[i] = result[i].plus(leg.getCurrency(), legPv[i]);
+      }
+    }
+    return result;
+  }
 
   @Override
   public MultiCurrencyAmount futureValue(PricingEnvironment env, LocalDate valuationDate, Swap swap) {
@@ -92,6 +110,34 @@ public class DefaultSwapPricerFn implements SwapPricerFn {
           swapLegPricerFn.presentValueCurveSensitivity(env, valuationDate, leg);
       pv = pv.plus(leg.getCurrency(), pair.getFirst());
       sensi = sensi.plus(env.currency(leg.getCurrency()), pair.getSecond());      
+    }
+    return Pair.of(pv, sensi);
+  }
+
+  @Override
+  public Pair<MultiCurrencyAmount, MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env, LocalDate valuationDate, Swap swap) {
+    MulticurveSensitivity3 sensi = new MulticurveSensitivity3();
+    MultiCurrencyAmount pv = MultiCurrencyAmount.of();
+    for(SwapLeg leg: swap.getLegs()) {
+      Pair<Double, MulticurveSensitivity3> pair = 
+          swapLegPricerFn.presentValueCurveSensitivity3(env, valuationDate, leg);
+      pv = pv.plus(leg.getCurrency(), pair.getFirst());
+      sensi.add(pair.getSecond());      
+    }
+    return Pair.of(pv, sensi);
+  }
+
+  @Override
+  public Pair<MultiCurrencyAmount, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
+      PricingEnvironment env, LocalDate valuationDate, Swap swap) {
+    MulticurveSensitivity3LD sensi = new MulticurveSensitivity3LD();
+    MultiCurrencyAmount pv = MultiCurrencyAmount.of();
+    for(SwapLeg leg: swap.getLegs()) {
+      Pair<Double, MulticurveSensitivity3LD> pair = 
+          swapLegPricerFn.presentValueCurveSensitivity3LD(env, valuationDate, leg);
+      pv = pv.plus(leg.getCurrency(), pair.getFirst());
+      sensi.add(pair.getSecond());      
     }
     return Pair.of(pv, sensi);
   }

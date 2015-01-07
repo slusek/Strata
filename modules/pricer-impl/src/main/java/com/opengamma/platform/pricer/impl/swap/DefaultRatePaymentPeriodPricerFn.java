@@ -7,6 +7,7 @@ package com.opengamma.platform.pricer.impl.swap;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.Map;
 import org.apache.commons.lang.NotImplementedException;
 
 import com.opengamma.analytics.financial.provider.sensitivity.multicurve.MulticurveSensitivity;
+import com.opengamma.basics.currency.Currency;
 import com.opengamma.basics.currency.CurrencyPair;
 import com.opengamma.collect.ArgChecker;
 import com.opengamma.collect.tuple.Pair;
@@ -24,6 +26,10 @@ import com.opengamma.platform.finance.swap.RatePaymentPeriod;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.impl.rate.DefaultRateProviderFn;
 import com.opengamma.platform.pricer.rate.RateProviderFn;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
+import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
+import com.opengamma.platform.pricer.results.ZeroRateSensitivity;
+import com.opengamma.platform.pricer.results.ZeroRateSensitivityLD;
 import com.opengamma.platform.pricer.swap.PaymentPeriodPricerFn;
 import com.opengamma.util.tuple.DoublesPair;
 
@@ -67,6 +73,23 @@ public class DefaultRatePaymentPeriodPricerFn
     double df = env.discountFactor(period.getCurrency(), valuationDate, period.getPaymentDate());
     return futureValue(env, valuationDate, period) * df;
   }
+  
+  @Override
+  public double[] presentValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    // futureValue * discountFactor
+    int nbEnv = env.length;
+    double[] fv = futureValue(env, valuationDate, period);
+    double[] pv = new double[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      double time = env[i].relativeTime(period.getCurrency(), valuationDate, period.getPaymentDate());
+      double df = env[i].getMulticurve().getDiscountFactor(env[i].currency(period.getCurrency()), time);
+      pv[i] = fv[i] * df;
+    }
+    return pv;
+  }
 
   //-------------------------------------------------------------------------
   @Override
@@ -93,6 +116,43 @@ public class DefaultRatePaymentPeriodPricerFn
       unitAccrual = unitNotionalNoCompounding(env, valuationDate, period);
     }
     return notional * unitAccrual;
+  }
+  
+  @Override
+  public double[] futureValue(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    int nbEnv = env.length;
+    // historic payments have zero pv
+    if (period.getPaymentDate().isBefore(valuationDate)) {
+      return new double[nbEnv];
+    }
+    // find FX rate, using 1 if no FX reset occurs
+    double[] fxRate = new double[nbEnv];
+    Arrays.fill(fxRate, 1.0d);
+    if (period.getFxReset() != null) {
+      CurrencyPair pair = CurrencyPair.of(period.getFxReset().getReferenceCurrency(), period.getCurrency());
+      for (int i = 0; i < nbEnv; i++) {
+        fxRate[i] = env[i].fxRate(period.getFxReset().getIndex(), pair, valuationDate, period.getFxReset().getFixingDate());
+      }
+    }
+    double[] notional = new double[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      notional[i] = period.getNotional() * fxRate[i];
+    }
+    // handle compounding
+    double[] unitAccrual; 
+    if (period.isCompounding()) {
+      throw new NotImplementedException("compounding not yet implemented for futureValueCurveSensitivity");
+    } else {
+      unitAccrual = unitNotionalNoCompounding(env, valuationDate, period);
+    }
+    double[] result = new double[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      result[i] = notional[i] * unitAccrual[i];
+    }
+    return result;
   }
 
   //-------------------------------------------------------------------------
@@ -121,6 +181,56 @@ public class DefaultRatePaymentPeriodPricerFn
   }
 
   //-------------------------------------------------------------------------
+  public Pair<Double, MulticurveSensitivity3> futureValueCurveSensitivity3(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    // historic payments have zero sensi
+    if (period.getPaymentDate().isBefore(valuationDate)) {
+      return Pair.of(0.0D, new MulticurveSensitivity3());
+    }
+    // find FX rate, using 1 if no FX reset occurs
+    double fxRate = 1d;
+    if (period.getFxReset() != null) { // FX Reset not yet implemented
+      throw new NotImplementedException("FX Reset not yet implemented for futureValueCurveSensitivity");
+    }
+    double notional = period.getNotional() * fxRate;
+    // handle compounding
+    Pair<Double,MulticurveSensitivity3> unitAccrual;
+    if (period.isCompounding()) {
+      throw new NotImplementedException("compounding not yet implemented for futureValueCurveSensitivity");
+    } else {
+      unitAccrual = unitNotionalSensiNoCompounding3(env, valuationDate, period);
+    }
+    return Pair.of(notional * unitAccrual.getFirst(), unitAccrual.getSecond().multipliedBy(notional));
+  }
+
+  //-------------------------------------------------------------------------
+  public Pair<Double, MulticurveSensitivity3LD> futureValueCurveSensitivity3LD(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    // historic payments have zero sensi
+    if (period.getPaymentDate().isBefore(valuationDate)) {
+      return Pair.of(0.0D, new MulticurveSensitivity3LD());
+    }
+    // find FX rate, using 1 if no FX reset occurs
+    double fxRate = 1d;
+    if (period.getFxReset() != null) { // FX Reset not yet implemented
+      throw new NotImplementedException("FX Reset not yet implemented for futureValueCurveSensitivity");
+    }
+    double notional = period.getNotional() * fxRate;
+    // handle compounding
+    Pair<Double,MulticurveSensitivity3LD> unitAccrual;
+    if (period.isCompounding()) {
+      throw new NotImplementedException("compounding not yet implemented for futureValueCurveSensitivity");
+    } else {
+      unitAccrual = unitNotionalSensiNoCompounding3LD(env, valuationDate, period);
+    }
+    return Pair.of(notional * unitAccrual.getFirst(), unitAccrual.getSecond().multipliedBy(notional));
+  }
+
+  //-------------------------------------------------------------------------
   @Override
   public Pair<Double,MulticurveSensitivity> presentValueCurveSensitivity(
       PricingEnvironment env,
@@ -137,6 +247,43 @@ public class DefaultRatePaymentPeriodPricerFn
     mapDsc.put(env.getMulticurve().getName(env.currency(period.getCurrency())), listDiscounting);
     MulticurveSensitivity sensi = MulticurveSensitivity.ofYieldDiscounting(mapDsc);
     sensi = sensi.plus(fvSensitivity.getSecond().multipliedBy(df));
+    return Pair.of(pv, sensi);
+  }
+
+  //-------------------------------------------------------------------------
+  @Override
+  public Pair<Double,MulticurveSensitivity3> presentValueCurveSensitivity3(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    Currency ccy = period.getCurrency();
+    double paymentTime = env.relativeTime(valuationDate, period.getPaymentDate());
+    double df = env.discountFactor(period.getCurrency(), valuationDate, period.getPaymentDate());
+    Pair<Double, MulticurveSensitivity3> fvSensitivity = futureValueCurveSensitivity3(env, valuationDate, period);
+    double pv = fvSensitivity.getFirst() * df;
+    String curveName = env.getMulticurve().getName(env.currency(period.getCurrency()));
+    final List<ZeroRateSensitivity> zeroRateSensi = new ArrayList<>();
+    zeroRateSensi.add(new ZeroRateSensitivity(curveName, paymentTime, -paymentTime * df * fvSensitivity.getFirst(), ccy));
+    MulticurveSensitivity3 sensi = MulticurveSensitivity3.ofZeroRate(zeroRateSensi);
+    sensi.add(fvSensitivity.getSecond().multipliedBy(df));
+    return Pair.of(pv, sensi);
+  }
+
+  //-------------------------------------------------------------------------
+  @Override
+  public Pair<Double, MulticurveSensitivity3LD> presentValueCurveSensitivity3LD(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RatePaymentPeriod period) {
+    Currency ccy = period.getCurrency();
+    double paymentTime = env.relativeTime(valuationDate, period.getPaymentDate());
+    double df = env.discountFactor(period.getCurrency(), valuationDate, period.getPaymentDate());
+    Pair<Double, MulticurveSensitivity3LD> fvSensitivity = futureValueCurveSensitivity3LD(env, valuationDate, period);
+    double pv = fvSensitivity.getFirst() * df;
+    final List<ZeroRateSensitivityLD> zeroRateSensi = new ArrayList<>();
+    zeroRateSensi.add(new ZeroRateSensitivityLD(ccy, period.getPaymentDate(), -paymentTime * df * fvSensitivity.getFirst(), ccy));
+    MulticurveSensitivity3LD sensi = MulticurveSensitivity3LD.ofZeroRate(zeroRateSensi);
+    sensi.add(fvSensitivity.getSecond().multipliedBy(df));
     return Pair.of(pv, sensi);
   }
 
@@ -180,6 +327,19 @@ public class DefaultRatePaymentPeriodPricerFn
   }
   
   // no compounding needed
+  private double[] unitNotionalNoCompounding(PricingEnvironment[] env, LocalDate valuationDate, RatePaymentPeriod period) {
+    int nbEnv = env.length;
+    double[] result = new double[nbEnv];
+    for(RateAccrualPeriod ap: period.getAccrualPeriods()) {
+      double[] periodAccrual = unitNotionalAccrual(env, valuationDate, ap, ap.getSpread());
+      for (int i = 0; i < nbEnv; i++) {
+        result[i] += periodAccrual[i];
+      }
+    }
+    return result;
+  }
+  
+  // no compounding needed
   private Pair<Double, MulticurveSensitivity> unitNotionalSensiNoCompounding(PricingEnvironment env, LocalDate valuationDate, RatePaymentPeriod period) {
     double un = 0.0d;
     MulticurveSensitivity sensi = new MulticurveSensitivity();
@@ -187,6 +347,35 @@ public class DefaultRatePaymentPeriodPricerFn
       Pair<Double, MulticurveSensitivity> pair = unitNotionalSensiAccrual(env, valuationDate, accrualPeriod, accrualPeriod.getSpread());
       un += pair.getFirst();
       sensi = sensi.plus(pair.getSecond());
+    }
+    return Pair.of(un, sensi);
+  }
+  
+  // no compounding needed
+  private Pair<Double, MulticurveSensitivity3> unitNotionalSensiNoCompounding3(PricingEnvironment env, 
+      LocalDate valuationDate, RatePaymentPeriod period) {
+    Currency ccy = period.getCurrency();
+    double un = 0.0d;
+    MulticurveSensitivity3 sensi = new MulticurveSensitivity3();
+    for (RateAccrualPeriod accrualPeriod : period.getAccrualPeriods()) {
+      Pair<Double, MulticurveSensitivity3> pair = unitNotionalSensiAccrual3(env, valuationDate, accrualPeriod, 
+          accrualPeriod.getSpread(), ccy);
+      un += pair.getFirst();
+      sensi.add(pair.getSecond());
+    }
+    return Pair.of(un, sensi);
+  }
+  
+  private Pair<Double, MulticurveSensitivity3LD> unitNotionalSensiNoCompounding3LD(PricingEnvironment env, 
+      LocalDate valuationDate, RatePaymentPeriod period) {
+    Currency ccy = period.getCurrency();
+    double un = 0.0d;
+    MulticurveSensitivity3LD sensi = new MulticurveSensitivity3LD();
+    for (RateAccrualPeriod accrualPeriod : period.getAccrualPeriods()) {
+      Pair<Double, MulticurveSensitivity3LD> pair = unitNotionalSensiAccrual3LD(env, valuationDate, accrualPeriod, 
+          accrualPeriod.getSpread(), ccy);
+      un += pair.getFirst();
+      sensi.add(pair.getSecond());
     }
     return Pair.of(un, sensi);
   }
@@ -257,6 +446,22 @@ public class DefaultRatePaymentPeriodPricerFn
   }
 
   // calculate the accrual for a unit notional
+  private double[] unitNotionalAccrual(
+      PricingEnvironment[] env,
+      LocalDate valuationDate,
+      RateAccrualPeriod period,
+      double spread) {
+    int nbEnv = env.length;
+    double[] rates = rateProviderFn.rate(env, valuationDate, period.getRate(), period.getStartDate(), period.getEndDate());
+    double[] adjustedRates = new double[nbEnv];
+    for (int i = 0; i < nbEnv; i++) {
+      double treatedRate = rates[i] * period.getGearing() + spread;
+      adjustedRates[i] = period.getNegativeRateMethod().adjust(treatedRate * period.getYearFraction());
+    }
+    return adjustedRates;
+  }
+
+  // calculate the accrual for a unit notional
   private Pair<Double, MulticurveSensitivity> unitNotionalSensiAccrual(
       PricingEnvironment env,
       LocalDate valuationDate,
@@ -267,7 +472,39 @@ public class DefaultRatePaymentPeriodPricerFn
     double unitNotionalAccrual = period.getNegativeRateMethod().adjust(treatedRate * period.getYearFraction());
     // Backward sweep.
     // FIXME: need to adjust also the sensitivity
-    return Pair.of(unitNotionalAccrual, pair.getSecond().multipliedBy(period.getGearing()));
+    return Pair.of(unitNotionalAccrual, pair.getSecond().multipliedBy(period.getGearing() * period.getYearFraction()));
+  }
+
+  // calculate the accrual for a unit notional
+  private Pair<Double, MulticurveSensitivity3> unitNotionalSensiAccrual3(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RateAccrualPeriod period,
+      double spread,
+      Currency ccy) {
+    Pair<Double, MulticurveSensitivity3> pair = rateProviderFn.rateMulticurveSensitivity3(
+        env, valuationDate, period.getRate(), period.getStartDate(), period.getEndDate(), ccy);
+    double treatedRate = pair.getFirst() * period.getGearing() + spread;
+    double unitNotionalAccrual = period.getNegativeRateMethod().adjust(treatedRate * period.getYearFraction());
+    // Backward sweep.
+    // FIXME: need to adjust also the sensitivity
+    return Pair.of(unitNotionalAccrual, pair.getSecond().multipliedBy(period.getGearing() * period.getYearFraction()));
+  }
+
+  // calculate the accrual for a unit notional
+  private Pair<Double, MulticurveSensitivity3LD> unitNotionalSensiAccrual3LD(
+      PricingEnvironment env,
+      LocalDate valuationDate,
+      RateAccrualPeriod period,
+      double spread,
+      Currency ccy) {
+    Pair<Double, MulticurveSensitivity3LD> pair = rateProviderFn.rateMulticurveSensitivity3LD(
+        env, valuationDate, period.getRate(), period.getStartDate(), period.getEndDate(), ccy);
+    double treatedRate = pair.getFirst() * period.getGearing() + spread;
+    double unitNotionalAccrual = period.getNegativeRateMethod().adjust(treatedRate * period.getYearFraction());
+    // Backward sweep.
+    // FIXME: need to adjust also the sensitivity
+    return Pair.of(unitNotionalAccrual, pair.getSecond().multipliedBy(period.getGearing() * period.getYearFraction()));
   }
 
 }
