@@ -59,8 +59,8 @@ import com.opengamma.platform.finance.swap.SwapLeg;
 import com.opengamma.platform.pricer.CalendarUSD;
 import com.opengamma.platform.pricer.PricingEnvironment;
 import com.opengamma.platform.pricer.SwapInstrumentsDataSet;
-import com.opengamma.platform.pricer.impl.ImmutableStoredPricingEnvironment;
 import com.opengamma.platform.pricer.impl.ImmutablePricingEnvironment;
+import com.opengamma.platform.pricer.impl.ImmutableStoredPricingEnvironment;
 import com.opengamma.platform.pricer.results.MulticurveSensitivity3;
 import com.opengamma.platform.pricer.results.MulticurveSensitivity3LD;
 import com.opengamma.platform.pricer.results.ParameterSensitivityParameterCalculator3;
@@ -468,7 +468,8 @@ public class DefaultSwapPricerFnPerformance {
     startTime = System.currentTimeMillis();
     Map<IborIndex, Map<LocalDate, Double>> iborRate = new HashMap<IborIndex, Map<LocalDate,Double>>();
     Map<LocalDate, Double> libor3MForward = new HashMap<LocalDate, Double>();
-    for(LocalDate tsDate: ts.dates()) {
+    LocalDate[] tsDates = ts.dates().toArray(LocalDate[]::new);
+    for (LocalDate tsDate : tsDates) {
       libor3MForward.put(tsDate, ts.get(tsDate).getAsDouble());
     }
     // ValuationDate
