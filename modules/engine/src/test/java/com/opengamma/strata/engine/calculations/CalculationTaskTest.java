@@ -16,6 +16,7 @@ import com.opengamma.strata.basics.CalculationTarget;
 import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.index.IborIndices;
 import com.opengamma.strata.basics.index.OvernightIndices;
+import com.opengamma.strata.engine.calculations.function.EngineSingleFunction;
 import com.opengamma.strata.engine.config.ReportingRules;
 import com.opengamma.strata.engine.marketdata.CalculationMarketData;
 import com.opengamma.strata.engine.marketdata.MarketDataRequirements;
@@ -32,20 +33,14 @@ public class CalculationTaskTest {
 
   public void requirements() {
     String curveGroupName = "curve group";
-    MarketDataFeed marketDataFeed = MarketDataFeed.of("market data vendor");
+    MarketDataFeed marketDataFeed = MarketDataFeed.of("MarketDataVendor");
     MarketDataMappings marketDataMappings =
         MarketDataMappings.builder()
             .curveGroup(curveGroupName)
             .marketDataFeed(marketDataFeed)
             .build();
     CalculationTask task =
-        new CalculationTask(
-            new TestTarget(),
-            0,
-            0,
-            new TestFunction(),
-            marketDataMappings,
-            ReportingRules.EMPTY);
+        new CalculationTask(new TestTarget(), 0, 0, new TestFunction(), marketDataMappings, ReportingRules.EMPTY);
     MarketDataRequirements requirements = task.requirements();
     Set<? extends MarketDataId<?>> nonObservables = requirements.getNonObservables();
     ImmutableSet<? extends ObservableId> observables = requirements.getObservables();
@@ -66,7 +61,7 @@ public class CalculationTaskTest {
 
   private static class TestTarget implements CalculationTarget { }
 
-  public static final class TestFunction implements VectorEngineFunction<TestTarget, Object> {
+  public static final class TestFunction implements EngineSingleFunction<TestTarget, Object> {
 
     @Override
     public CalculationRequirements requirements(TestTarget target) {
@@ -80,7 +75,7 @@ public class CalculationTaskTest {
     }
 
     @Override
-    public Object execute(TestTarget input, CalculationMarketData marketData, ReportingRules reportingRules) {
+    public Object execute(TestTarget target, CalculationMarketData marketData) {
       return "bar";
     }
   }

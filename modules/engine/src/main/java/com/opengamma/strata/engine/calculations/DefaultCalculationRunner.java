@@ -10,21 +10,27 @@ import static com.opengamma.strata.collect.Guavate.toImmutableList;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.opengamma.strata.basics.CalculationTarget;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.collect.result.Result;
 import com.opengamma.strata.engine.Column;
 import com.opengamma.strata.engine.config.CalculationTaskConfig;
 import com.opengamma.strata.engine.config.CalculationTasksConfig;
-import com.opengamma.strata.engine.config.EngineFunctionConfig;
+import com.opengamma.strata.engine.config.FunctionConfig;
 import com.opengamma.strata.engine.config.MarketDataRules;
-import com.opengamma.strata.engine.config.PricingRules;
+import com.opengamma.strata.engine.config.Measure;
 import com.opengamma.strata.engine.config.ReportingRules;
+import com.opengamma.strata.engine.config.pricing.ConfiguredFunctionGroup;
+import com.opengamma.strata.engine.config.pricing.FunctionGroup;
+import com.opengamma.strata.engine.config.pricing.PricingRules;
 import com.opengamma.strata.engine.marketdata.BaseMarketData;
 import com.opengamma.strata.engine.marketdata.ScenarioMarketData;
 import com.opengamma.strata.engine.marketdata.SingleScenarioMarketData;
@@ -66,6 +72,8 @@ public class DefaultCalculationRunner implements CalculationRunner {
 
     for (int i = 0; i < targets.size(); i++) {
       for (int j = 0; j < columns.size(); j++) {
+        // TODO For each target, build a map of function group to set of measures.
+        // Then request function config from the group for all measures at once
         configBuilder.add(createTaskConfig(i, j, targets.get(i), effectiveColumns.get(j)));
       }
     }
@@ -162,6 +170,12 @@ public class DefaultCalculationRunner implements CalculationRunner {
     }
   }
 
+  // TODO This needs to handle a whole set of columns and return a list of config
+  // TODO Need to group the columns by configured function group, market data mappings and reporting rules.
+  //   Columns are only eligible to be calculated by the same fn if all the rules are the same
+  //   Need a compound key? ConfigKey[ConfiguredFunctionGroup, MarketDataMappings]. ConfigGroup?
+  //   What's the value? Column? Measure? Index? Some combination of the 3?
+  // TODO Does this need to return an object containing different types of task config? CalculationTasksConfig?
   /**
    * Creates configuration for calculating the value of a single measure for a target.
    *
@@ -177,9 +191,9 @@ public class DefaultCalculationRunner implements CalculationRunner {
       CalculationTarget target,
       Column column) {
 
-    EngineFunctionConfig functionConfig =
-        column.getPricingRules().functionConfig(target, column.getMeasure())
-            .orElse(EngineFunctionConfig.DEFAULT);
+    Measure measure = column.getMeasure(target);
+
+    Optional<ConfiguredFunctionGroup> functionGroup = column.getPricingRules().functionGroup(target, measure);
 
     // Use the mappings from the market data rules, else create a set of mappings that cause a failure to
     // be returned in the market data with an error message saying the rules didn't match the target
@@ -187,13 +201,45 @@ public class DefaultCalculationRunner implements CalculationRunner {
         column.getMarketDataRules().mappings(target)
             .orElse(NoMatchingRuleMappings.INSTANCE);
 
+    ReportingRules reportingRules = column.getReportingRules();
+
+    FunctionConfig<?> functionConfig =
+        functionGroup
+            .map(group -> functionConfig(group, target, column))
+            .orElse(FunctionConfig.missing());
+
+    Map<String, Object> functionArguments =
+        functionGroup
+            .map(ConfiguredFunctionGroup::getArguments)
+            .orElse(ImmutableMap.of());
+
     return CalculationTaskConfig.of(
         target,
         rowIndex,
         columnIndex,
         functionConfig,
+        functionArguments,
         marketDataMappings,
-        column.getReportingRules());
+        reportingRules);
+  }
+
+  /**
+   * Returns configuration for calculating a value.
+   *
+   * @param configuredGroup  the function group providing the function to calculate the value
+   * @param target  the target of the calculation
+   * @param column  the column containing the value. This defines the measure that is calculated
+   * @return configuration for calculating the value
+   */
+  private static <T extends CalculationTarget> FunctionConfig<T> functionConfig(
+      ConfiguredFunctionGroup configuredGroup,
+      CalculationTarget target,
+      Column column) {
+
+    @SuppressWarnings("unchecked")
+    FunctionGroup<T> functionGroup = (FunctionGroup<T>) configuredGroup.getFunctionGroup();
+    Measure measure = column.getMeasure(target);
+    return functionGroup.functionConfig(target, measure).orElse(FunctionConfig.missing());
   }
 
   /**
@@ -207,7 +253,7 @@ public class DefaultCalculationRunner implements CalculationRunner {
         config.getTarget(),
         config.getRowIndex(),
         config.getColumnIndex(),
-        config.getEngineFunctionConfig().createFunction(),
+        config.createFunction(),
         config.getMarketDataMappings(),
         config.getReportingRules());
   }
