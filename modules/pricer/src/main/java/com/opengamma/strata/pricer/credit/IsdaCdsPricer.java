@@ -71,6 +71,31 @@ public class IsdaCdsPricer {
     return IsdaCdsHelper.price(valuationDate, product, convert(yieldCurve), convert(creditCurve), recoveryRate, scalingFactor);
   }
 
+  /**
+   * Calculates the par spread of the expanded CDS product.
+   * <p>
+   * The par spread of the CDS is the coupon rate that will make present value of all cashflows
+   * equal zero as of the valuation date.
+   *
+   * @param product             expanded CDS product
+   * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
+   * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
+   * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @return present value of fee leg and any up front fee
+   */
+  public double parSpread(
+      ExpandedCds product,
+      IsdaYieldCurveParRates yieldCurveParRates,
+      IsdaCreditCurveParRates creditCurveParRates,
+      LocalDate valuationDate) {
+
+    double recoveryRate = creditCurveParRates.getRecoveryRate();
+    ISDACompliantYieldCurve yieldCurve = IsdaCdsHelper.createIsdaDiscountCurve(valuationDate, yieldCurveParRates);
+    ISDACompliantCreditCurve creditCurve = IsdaCdsHelper.createIsdaCreditCurve(valuationDate, creditCurveParRates, yieldCurve, recoveryRate);
+
+    return IsdaCdsHelper.parSpread(valuationDate, product, convert(yieldCurve), convert(creditCurve), recoveryRate);
+  }
+
   private NodalCurve convert(ISDACompliantYieldCurve yieldCurve) {
     return new NodalCurve() {
       @Override

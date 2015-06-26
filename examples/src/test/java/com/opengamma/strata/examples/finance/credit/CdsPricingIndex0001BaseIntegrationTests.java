@@ -26,6 +26,10 @@ public class CdsPricingIndex0001BaseIntegrationTests {
     onTrade().pvShouldBe(-81969.80760349892).on(valuationDate);
   }
 
+  public void test_par_spread_on_index_0001_base() {
+    onTrade().parSpreadShouldBe(0.04550001684800108).on(valuationDate);
+  }
+
   public void test_ir01_parallel_par_on_index_0001_base_case() {
     onTrade().ir01ParallelParShouldBe(400.30528782797046).on(valuationDate);
   }

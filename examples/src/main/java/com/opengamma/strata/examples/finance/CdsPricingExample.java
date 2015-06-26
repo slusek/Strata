@@ -49,6 +49,7 @@ public class CdsPricingExample {
     // the columns, specifying the measures to be calculated
     List<Column> columns = ImmutableList.of(
         Column.of(Measure.PRESENT_VALUE),
+        Column.of(Measure.PAR_SPREAD),
         Column.of(Measure.IR01_PARALLEL_PAR),
         Column.of(Measure.CS01_PARALLEL_PAR),
         Column.of(Measure.IR01_BUCKETED_PAR),

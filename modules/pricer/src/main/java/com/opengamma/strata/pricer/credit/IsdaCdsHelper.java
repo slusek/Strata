@@ -1,26 +1,11 @@
 /**
  * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
- *
+ * <p>
  * Please see distribution for license.
  */
 package com.opengamma.strata.pricer.credit;
 
-import java.time.LocalDate;
-import java.time.Period;
-import java.util.Optional;
-import java.util.OptionalDouble;
-import java.util.stream.Stream;
-
-import com.opengamma.analytics.financial.credit.isdastandardmodel.AccrualOnDefaultFormulae;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.AnalyticCDSPricer;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.CDSAnalytic;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.FastCreditCurveBuilder;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.ISDACompliantCreditCurve;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.ISDACompliantCreditCurveBuilder;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.ISDACompliantYieldCurve;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.ISDACompliantYieldCurveBuild;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.ISDAInstrumentTypes;
-import com.opengamma.analytics.financial.credit.isdastandardmodel.PriceType;
+import com.opengamma.analytics.financial.credit.isdastandardmodel.*;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.date.BusinessDayConvention;
 import com.opengamma.strata.basics.date.DayCount;
@@ -35,6 +20,12 @@ import com.opengamma.strata.market.curve.IsdaYieldCurveParRates;
 import com.opengamma.strata.market.curve.IsdaYieldCurveUnderlyingType;
 import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.pricer.PricingException;
+
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.stream.Stream;
 
 /**
  * Helper for interacting with the underlying Analytics layer for CDS pricing.
@@ -70,13 +61,14 @@ public class IsdaCdsHelper {
   private final static AnalyticCDSPricer CALCULATOR = new AnalyticCDSPricer();
 
   //-------------------------------------------------------------------------
+
   /**
    * Calculate present value on the specified valuation date.
    *
-   * @param valuationDate  date that present value is calculated on, also date that curves will be calibrated to
-   * @param product  expanded CDS product
-   * @param yieldCurve  par rates representation of the ISDA yield curve
-   * @param creditCurve  par rates representation of the ISDA credit curve
+   * @param valuationDate date that present value is calculated on, also date that curves will be calibrated to
+   * @param product       expanded CDS product
+   * @param yieldCurve    par rates representation of the ISDA yield curve
+   * @param creditCurve   par rates representation of the ISDA credit curve
    * @param recoveryRate  recovery rate for the reference entity/issue
    * @return the present value of the expanded CDS product
    */
@@ -90,7 +82,7 @@ public class IsdaCdsHelper {
 
     // setup
     CDSAnalytic cdsAnalytic = toAnalytic(valuationDate, product, recoveryRate);
-    ISDACompliantYieldCurve yieldCurveAnalytics = ISDACompliantYieldCurve.makeFromRT(yieldCurve.getXValues(),yieldCurve.getYValues());
+    ISDACompliantYieldCurve yieldCurveAnalytics = ISDACompliantYieldCurve.makeFromRT(yieldCurve.getXValues(), yieldCurve.getYValues());
     ISDACompliantCreditCurve creditCurveAnalytics = ISDACompliantCreditCurve.makeFromRT(creditCurve.getXValues(), creditCurve.getYValues());
 
     // calculate
@@ -126,6 +118,32 @@ public class IsdaCdsHelper {
     double feeSettleYearFraction = CURVE_DAY_COUNT.yearFraction(valuationDate, paymentDate.get());
     double discountFactor = yieldCurve.getDiscountFactor(feeSettleYearFraction);
     return discountFactor * amount.getAsDouble();
+  }
+
+  /**
+   * Calculate par spread on the specified valuation date.
+   *
+   * @param valuationDate date that par spread is calculated on, also date that curves will be calibrated to
+   * @param product       expanded CDS product
+   * @param yieldCurve    par rates representation of the ISDA yield curve
+   * @param creditCurve   par rates representation of the ISDA credit curve
+   * @param recoveryRate  recovery rate for the reference entity/issue
+   * @return the par spread of the expanded CDS product
+   */
+  public static double parSpread(LocalDate valuationDate,
+                                 ExpandedCds product,
+                                 NodalCurve yieldCurve,
+                                 NodalCurve creditCurve,
+                                 double recoveryRate) {
+    // setup
+    CDSAnalytic cdsAnalytic = toAnalytic(valuationDate, product, recoveryRate);
+    ISDACompliantYieldCurve yieldCurveAnalytics = ISDACompliantYieldCurve.makeFromRT(
+        yieldCurve.getXValues(), yieldCurve.getYValues());
+    ISDACompliantCreditCurve creditCurveAnalytics = ISDACompliantCreditCurve.makeFromRT(
+        creditCurve.getXValues(), creditCurve.getYValues());
+
+    return CALCULATOR.parSpread(cdsAnalytic, yieldCurveAnalytics, creditCurveAnalytics);
+
   }
 
   // Converts the interest rate curve par rates to the corresponding analytics form.
