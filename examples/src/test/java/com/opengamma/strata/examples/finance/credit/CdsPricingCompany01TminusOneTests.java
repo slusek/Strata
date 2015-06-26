@@ -30,6 +30,10 @@ public class CdsPricingCompany01TminusOneTests {
     onTrade().pvShouldBe(7_388_093.704033349).on(valuationDate);
   }
 
+  public void test_par_spread_on_company_01_t_minus_1() {
+    onTrade().parSpreadShouldBe(0.002800000823400466).on(valuationDate);
+  }
+
   public void test_ir01_parallel_par_on_company_01_t_minus_1() {
     onTrade().ir01ParallelParShouldBe(-972.8116886373609).on(valuationDate);
   }
