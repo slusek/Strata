@@ -95,7 +95,7 @@ public class TestHarness {
       return new ScalarMeasureOnADay(Measure.PRESENT_VALUE, expected, tradeSource);
     }
 
-    public ScalarMeasureOnADay parSpreadShouldBe(double expected) {
+    public ScalarMeasureOnADay parRateShouldBe(double expected) {
       return new ScalarMeasureOnADay(Measure.PAR_SPREAD, expected, tradeSource);
     }
 

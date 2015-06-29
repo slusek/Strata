@@ -30,8 +30,8 @@ public class CdsPricingCompany01TminusThreeTests {
     onTrade().pvShouldBe(-3_694_038.9745626342).on(valuationDate);
   }
 
-  public void test_par_spread_on_company_01_t_minus_3() {
-    onTrade().parSpreadShouldBe(0.002800000823400466).on(valuationDate);
+  public void test_par_rate_on_company_01_t_minus_3() {
+    onTrade().parRateShouldBe(0.002800000823400466).on(valuationDate);
   }
 
   public void test_ir01_parallel_par_on_company_01_t_minus_3() {
