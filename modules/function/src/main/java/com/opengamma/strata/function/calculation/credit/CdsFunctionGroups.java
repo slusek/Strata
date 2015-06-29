@@ -24,7 +24,7 @@ public final class CdsFunctionGroups {
   private static final FunctionGroup<CdsTrade> DISCOUNTING_GROUP =
       DefaultFunctionGroup.builder(CdsTrade.class).name("CdsDiscounting")
           .addFunction(Measure.PRESENT_VALUE, CdsPvFunction.class)
-          .addFunction(Measure.PAR_SPREAD, CdsParSpreadFunction.class)
+          .addFunction(Measure.PAR_RATE, CdsParRateFunction.class)
           .addFunction(Measure.IR01_PARALLEL_PAR, CdsIr01ParallelParFunction.class)
           .addFunction(Measure.IR01_BUCKETED_PAR, CdsIr01BucketedParFunction.class)
           .addFunction(Measure.CS01_PARALLEL_PAR, CdsCs01ParallelParFunction.class)

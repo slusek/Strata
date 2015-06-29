@@ -72,18 +72,18 @@ public class IsdaCdsPricer {
   }
 
   /**
-   * Calculates the par spread of the expanded CDS product.
+   * Calculates the par rate of the expanded CDS product.
    * <p>
-   * The par spread of the CDS is the coupon rate that will make present value of all cashflows
+   * The par rate of the CDS is the coupon rate that will make present value of all cashflows
    * equal zero as of the valuation date.
    *
    * @param product             expanded CDS product
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
-   * @return present value of fee leg and any up front fee
+   * @return par rate for the credit default swap
    */
-  public double parSpread(
+  public double parRate(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,

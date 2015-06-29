@@ -12,7 +12,7 @@ import com.opengamma.strata.market.curve.IsdaCreditCurveParRates;
 import com.opengamma.strata.market.curve.IsdaYieldCurveParRates;
 
 /**
- * Calculates the par spread of a {@code CdsTrade} for each of a set of scenarios.
+ * Calculates the par rate of a {@code CdsTrade} for each of a set of scenarios.
  */
 public class CdsParRateFunction
     extends AbstractCdsFunction<Double> {
