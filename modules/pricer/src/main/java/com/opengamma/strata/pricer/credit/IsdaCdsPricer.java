@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
- * <p>
+ *
  * Please see distribution for license.
  */
 package com.opengamma.strata.pricer.credit;
@@ -18,13 +18,10 @@ import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivity;
-import org.joda.beans.MetaBean;
-import org.joda.beans.Property;
 
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Pricer for for CDS products using the ISDA methodology.
@@ -138,20 +135,6 @@ public class IsdaCdsPricer {
         return 0;
       }
 
-      @Override
-      public MetaBean metaBean() {
-        return null;
-      }
-
-      @Override
-      public <R> Property<R> property(String s) {
-        return null;
-      }
-
-      @Override
-      public Set<String> propertyNames() {
-        return null;
-      }
     };
   }
 
@@ -197,20 +180,6 @@ public class IsdaCdsPricer {
         return 0;
       }
 
-      @Override
-      public MetaBean metaBean() {
-        return null;
-      }
-
-      @Override
-      public <R> Property<R> property(String s) {
-        return null;
-      }
-
-      @Override
-      public Set<String> propertyNames() {
-        return null;
-      }
     };
   }
 
