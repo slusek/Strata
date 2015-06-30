@@ -18,10 +18,13 @@ import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivity;
+import org.joda.beans.MetaBean;
+import org.joda.beans.Property;
 
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Pricer for for CDS products using the ISDA methodology.
@@ -52,16 +55,18 @@ public class IsdaCdsPricer {
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
    * @return present value of fee leg and any up front fee
    */
   public CurrencyAmount presentValue(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
 
-    double recoveryRate = creditCurveParRates.getRecoveryRate();
-    double scalingFactor = creditCurveParRates.getScalingFactor();
     ISDACompliantYieldCurve yieldCurve = IsdaCdsHelper.createIsdaDiscountCurve(valuationDate, yieldCurveParRates);
     ISDACompliantCreditCurve creditCurve = IsdaCdsHelper.createIsdaCreditCurve(valuationDate, creditCurveParRates, yieldCurve, recoveryRate);
 
@@ -78,15 +83,16 @@ public class IsdaCdsPricer {
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
    * @return par rate for the credit default swap
    */
   public double parRate(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate) {
 
-    double recoveryRate = creditCurveParRates.getRecoveryRate();
     ISDACompliantYieldCurve yieldCurve = IsdaCdsHelper.createIsdaDiscountCurve(valuationDate, yieldCurveParRates);
     ISDACompliantCreditCurve creditCurve = IsdaCdsHelper.createIsdaCreditCurve(valuationDate, creditCurveParRates, yieldCurve, recoveryRate);
 
@@ -135,6 +141,21 @@ public class IsdaCdsPricer {
         return 0;
       }
 
+      @Override
+      public MetaBean metaBean() {
+        return null;
+      }
+
+      @Override
+      public <R> Property<R> property(String s) {
+        return null;
+      }
+
+      @Override
+      public Set<String> propertyNames() {
+        return null;
+      }
+
     };
   }
 
@@ -180,6 +201,21 @@ public class IsdaCdsPricer {
         return 0;
       }
 
+      @Override
+      public MetaBean metaBean() {
+        return null;
+      }
+
+      @Override
+      public <R> Property<R> property(String s) {
+        return null;
+      }
+
+      @Override
+      public Set<String> propertyNames() {
+        return null;
+      }
+
     };
   }
 
@@ -192,17 +228,21 @@ public class IsdaCdsPricer {
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
    * @return present value of fee leg and any up front fee
    */
   public CurrencyAmount ir01ParallelPar(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
 
-    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate);
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
     IsdaYieldCurveParRates bumpedCurve = yieldCurveParRates.parallelShiftParRatesinBps(ONE_BPS);
-    CurrencyAmount bumpedPrice = presentValue(product, bumpedCurve, creditCurveParRates, valuationDate);
+    CurrencyAmount bumpedPrice = presentValue(product, bumpedCurve, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
     return bumpedPrice.minus(basePrice);
   }
 
@@ -219,15 +259,17 @@ public class IsdaCdsPricer {
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
 
-    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate);
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
     int points = yieldCurveParRates.getNumberOfPoints();
     double[] paramSensitivities = new double[points];
     List<TenorCurveNodeMetadata> metaData = Lists.newArrayList();
     for (int i = 0; i < points; i++) {
       IsdaYieldCurveParRates bumpedCurve = yieldCurveParRates.bucketedShiftParRatesinBps(i, ONE_BPS);
-      CurrencyAmount bumpedPrice = presentValue(product, bumpedCurve, creditCurveParRates, valuationDate);
+      CurrencyAmount bumpedPrice = presentValue(product, bumpedCurve, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
       CurrencyAmount sensitivity = bumpedPrice.minus(basePrice);
       paramSensitivities[i] = sensitivity.getAmount();
       Period period = yieldCurveParRates.getYieldCurvePoints()[i];
@@ -248,17 +290,21 @@ public class IsdaCdsPricer {
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
    * @return present value of fee leg and any up front fee
    */
   public CurrencyAmount cs01ParallelPar(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
 
-    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate);
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
     IsdaCreditCurveParRates bumpedCurve = creditCurveParRates.parallelShiftParRatesinBps(ONE_BPS);
-    CurrencyAmount bumpedPrice = presentValue(product, yieldCurveParRates, bumpedCurve, valuationDate);
+    CurrencyAmount bumpedPrice = presentValue(product, yieldCurveParRates, bumpedCurve, valuationDate, recoveryRate, scalingFactor);
     return bumpedPrice.minus(basePrice);
   }
 
@@ -269,21 +315,25 @@ public class IsdaCdsPricer {
    * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
    * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
    * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
    * @return present value of fee leg and any up front fee
    */
   public CurveCurrencyParameterSensitivities cs01BucketedPar(
       ExpandedCds product,
       IsdaYieldCurveParRates yieldCurveParRates,
       IsdaCreditCurveParRates creditCurveParRates,
-      LocalDate valuationDate) {
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
 
-    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate);
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
     int points = creditCurveParRates.getNumberOfPoints();
     double[] paramSensitivities = new double[points];
     List<TenorCurveNodeMetadata> metaData = Lists.newArrayList();
     for (int i = 0; i < points; i++) {
       IsdaCreditCurveParRates bumpedCurve = creditCurveParRates.bucketedShiftParRatesinBps(i, ONE_BPS);
-      CurrencyAmount bumpedPrice = presentValue(product, yieldCurveParRates, bumpedCurve, valuationDate);
+      CurrencyAmount bumpedPrice = presentValue(product, yieldCurveParRates, bumpedCurve, valuationDate, recoveryRate, scalingFactor);
       CurrencyAmount sensitivity = bumpedPrice.minus(basePrice);
       paramSensitivities[i] = sensitivity.getAmount();
       Period period = creditCurveParRates.getCreditCurvePoints()[i];
@@ -293,6 +343,58 @@ public class IsdaCdsPricer {
     CurveMetadata curveMetadata = CurveMetadata.of(creditCurveParRates.getName(), metaData);
     return CurveCurrencyParameterSensitivities.of(
         CurveCurrencyParameterSensitivity.of(curveMetadata, product.getCurrency(), paramSensitivities));
+  }
+
+  //-------------------------------------------------------------------------
+
+  /**
+   * Calculates the scalar PV change to a 1 basis point shift in recovery rate.
+   *
+   * @param product             expanded CDS product
+   * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
+   * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
+   * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
+   * @return present value of fee leg and any up front fee
+   */
+  public CurrencyAmount recovery01(
+      ExpandedCds product,
+      IsdaYieldCurveParRates yieldCurveParRates,
+      IsdaCreditCurveParRates creditCurveParRates,
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
+
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
+    CurrencyAmount bumpedPrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate + ONE_BPS, scalingFactor);
+    return bumpedPrice.minus(basePrice);
+  }
+
+  //-------------------------------------------------------------------------
+
+  /**
+   * Calculates the risk of default by subtracting from current MTM the Notional amount times Recovery Rate - 1
+   *
+   * @param product             expanded CDS product
+   * @param yieldCurveParRates  par rate curve points of the ISDA discount curve to use
+   * @param creditCurveParRates par spread rate curve points of the ISDA spread curve to use
+   * @param valuationDate       date to use when calibrating curves and calculating the result
+   * @param recoveryRate        recovery rate associate with underlying issue or index
+   * @param scalingFactor       linear scaling factor associated with underlying index, or 1 in case of CDS
+   * @return present value of fee leg and any up front fee
+   */
+  public CurrencyAmount jumpToDefault(
+      ExpandedCds product,
+      IsdaYieldCurveParRates yieldCurveParRates,
+      IsdaCreditCurveParRates creditCurveParRates,
+      LocalDate valuationDate,
+      double recoveryRate,
+      double scalingFactor) {
+
+    CurrencyAmount basePrice = presentValue(product, yieldCurveParRates, creditCurveParRates, valuationDate, recoveryRate, scalingFactor);
+    CurrencyAmount expectedLoss = CurrencyAmount.of(product.getCurrency(), product.getNotional() * (recoveryRate - 1));
+    return expectedLoss.minus(basePrice);
   }
 
 }

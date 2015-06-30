@@ -50,6 +50,8 @@ public class CdsPricingExample {
     List<Column> columns = ImmutableList.of(
         Column.of(Measure.PRESENT_VALUE),
         Column.of(Measure.PAR_RATE),
+        Column.of(Measure.RECOVERY01),
+        Column.of(Measure.JUMP_TO_DEFAULT),
         Column.of(Measure.IR01_PARALLEL_PAR),
         Column.of(Measure.CS01_PARALLEL_PAR),
         Column.of(Measure.IR01_BUCKETED_PAR),
@@ -81,7 +83,7 @@ public class CdsPricingExample {
 
     TradeReportTemplate reportTemplate = ExampleData.loadTradeReportTemplate("cds-report-template");
     TradeReport tradeReport = TradeReport.of(calculationResults, reportTemplate);
-    tradeReport.writeAsciiTable(System.out);
+    tradeReport.writeCsv(System.out);
   }
 
   //-----------------------------------------------------------------------  
@@ -90,7 +92,7 @@ public class CdsPricingExample {
     return ImmutableList.of(
         createCompany01Cds(),
         createCompany02Cds(),
-        createIndexNAHY());
+        createIndex0001());
   }
 
   //-----------------------------------------------------------------------  
@@ -106,7 +108,7 @@ public class CdsPricingExample {
             MarkitRedCode.id("COMP01"),
             SeniorityLevel.SENIOR_UNSECURED_FOREIGN,
             RestructuringClause.NO_RESTRUCTURING_2014,
-            3_694_117.73d,
+            3_694_117.72d,
             LocalDate.of(2014, 10, 21));
   }
 
@@ -127,7 +129,7 @@ public class CdsPricingExample {
   }
 
   // create a index CDS on with 500 bps coupon
-  private static Trade createIndexNAHY() {
+  private static Trade createIndex0001() {
     return CdsConventions.NORTH_AMERICAN_USD
         .toIndexTrade(
             LocalDate.of(2014, 3, 20),
