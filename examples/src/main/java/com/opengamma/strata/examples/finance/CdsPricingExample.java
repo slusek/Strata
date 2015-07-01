@@ -1,12 +1,9 @@
 /**
  * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
- *
+ * <p>
  * Please see distribution for license.
  */
 package com.opengamma.strata.examples.finance;
-
-import java.time.LocalDate;
-import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 import com.opengamma.strata.basics.BuySell;
@@ -30,6 +27,9 @@ import com.opengamma.strata.report.ReportCalculationResults;
 import com.opengamma.strata.report.trade.TradeReport;
 import com.opengamma.strata.report.trade.TradeReportTemplate;
 
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * Example to illustrate using the engine to price a credit default swap.
  * <p>
@@ -39,7 +39,7 @@ public class CdsPricingExample {
 
   /**
    * Runs the example, pricing the instruments, producing the output as an ASCII table.
-   * 
+   *
    * @param args  ignored
    */
   public static void main(String[] args) {
@@ -53,9 +53,14 @@ public class CdsPricingExample {
         Column.of(Measure.RECOVERY01),
         Column.of(Measure.JUMP_TO_DEFAULT),
         Column.of(Measure.IR01_PARALLEL_PAR),
+        Column.of(Measure.IR01_PARALLEL_ZERO),
         Column.of(Measure.CS01_PARALLEL_PAR),
+        Column.of(Measure.CS01_PARALLEL_HAZARD),
         Column.of(Measure.IR01_BUCKETED_PAR),
-        Column.of(Measure.CS01_BUCKETED_PAR));
+        Column.of(Measure.IR01_BUCKETED_ZERO),
+        Column.of(Measure.CS01_BUCKETED_PAR),
+        Column.of(Measure.CS01_BUCKETED_HAZARD)
+    );
 
     // use the built-in example market data
     MarketDataBuilder marketDataBuilder = ExampleMarketData.builder();
