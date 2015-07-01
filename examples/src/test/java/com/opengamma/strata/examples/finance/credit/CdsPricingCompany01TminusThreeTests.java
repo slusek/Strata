@@ -34,6 +34,14 @@ public class CdsPricingCompany01TminusThreeTests {
     onTrade().parRateShouldBe(0.002800000823400466).on(valuationDate);
   }
 
+  public void test_recovery01_on_company_01_t_minus_3() {
+    onTrade().recovery01ShouldBe(7.254387962631881).on(valuationDate);
+  }
+
+  public void test_jump_to_default_on_company_01_t_minus_3() {
+    onTrade().jumpToDefaultShouldBe(-56_305_961.02543736).on(valuationDate);
+  }
+
   public void test_ir01_parallel_par_on_company_01_t_minus_3() {
     onTrade().ir01ParallelParShouldBe(968.7077457923442).on(valuationDate);
   }
