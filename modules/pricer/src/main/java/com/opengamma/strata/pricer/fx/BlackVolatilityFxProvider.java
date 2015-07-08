@@ -15,6 +15,7 @@ import org.joda.beans.ImmutableBean;
 
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
+import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
 
 /**
  * Data provider of volatility for FX options in the lognormal or Black-Scholes model.
@@ -66,4 +67,6 @@ public interface BlackVolatilityFxProvider
    * @return the sensitivity to the nodes
    */
   public abstract Map<?, Double> nodeSensitivity(FxOptionSensitivity point);
+
+  public abstract SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point);
 }
