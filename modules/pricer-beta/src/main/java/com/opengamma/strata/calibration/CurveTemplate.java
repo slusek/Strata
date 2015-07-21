@@ -6,6 +6,7 @@
 package com.opengamma.strata.calibration;
 
 import com.opengamma.strata.market.curve.Curve;
+import com.opengamma.strata.market.curve.CurveName;
 
 /**
  * A template to generate a {@link Curve} from a set of parameters
@@ -28,5 +29,7 @@ public interface CurveTemplate {
    * @return the number of parameters
    */
   public abstract int getParameterCount();
+  
+  public abstract CurveName getName();
 
 }
