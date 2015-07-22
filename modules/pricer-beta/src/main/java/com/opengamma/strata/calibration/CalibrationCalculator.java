@@ -31,18 +31,33 @@ import com.opengamma.strata.pricer.rate.RatesProvider;
 public class CalibrationCalculator {
 
   /** The measure for {@link IborFixingDepositTrade}. */
-  BiFunction<IborFixingDepositTrade, RatesProvider, Double> fixingValue;
+  private final BiFunction<IborFixingDepositTrade, RatesProvider, Double> fixingValue;
   /** The measure for {@link FraTrade}. */
-  BiFunction<FraTrade, RatesProvider, Double> fraValue;
+  private final BiFunction<FraTrade, RatesProvider, Double> fraValue;
   /** The measure for {@link SwapTrade}. */
-  BiFunction<SwapTrade, RatesProvider, Double> swapValue;
+  private final BiFunction<SwapTrade, RatesProvider, Double> swapValue;
 
   /** The measure for {@link IborFixingDepositTrade}. */
-  BiFunction<IborFixingDepositTrade, RatesProvider, PointSensitivities> fixingSensitivity;
+  private final BiFunction<IborFixingDepositTrade, RatesProvider, PointSensitivities> fixingSensitivity;
   /** The measure for {@link FraTrade}. */
-  BiFunction<FraTrade, RatesProvider, PointSensitivities> fraSensitivity;
+  private final BiFunction<FraTrade, RatesProvider, PointSensitivities> fraSensitivity;
   /** The measure for {@link SwapTrade}. */
-  BiFunction<SwapTrade, RatesProvider, PointSensitivities> swapSensitivity;
+  private final BiFunction<SwapTrade, RatesProvider, PointSensitivities> swapSensitivity;
+  
+  public CalibrationCalculator(
+      BiFunction<IborFixingDepositTrade, RatesProvider, Double> fixingValue, 
+      BiFunction<FraTrade, RatesProvider, Double> fraValue,
+      BiFunction<SwapTrade, RatesProvider, Double> swapValue, 
+      BiFunction<IborFixingDepositTrade, RatesProvider, PointSensitivities> fixingSensitivity,
+      BiFunction<FraTrade, RatesProvider, PointSensitivities> fraSensitivity, 
+      BiFunction<SwapTrade, RatesProvider, PointSensitivities> swapSensitivity) {
+    this.fixingValue = fixingValue;
+    this.fraValue = fraValue;
+    this.swapValue = swapValue;
+    this.fixingSensitivity = fixingSensitivity;
+    this.fraSensitivity = fraSensitivity;
+    this.swapSensitivity = swapSensitivity;
+  }
 
   public double value(Trade trade, RatesProvider provider) {
     if (trade instanceof IborFixingDepositTrade) {
