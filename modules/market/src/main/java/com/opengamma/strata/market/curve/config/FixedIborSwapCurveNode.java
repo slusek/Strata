@@ -25,10 +25,6 @@ import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 import com.google.common.collect.ImmutableSet;
 import com.opengamma.strata.basics.BuySell;
 import com.opengamma.strata.basics.market.ObservableKey;
-import com.opengamma.strata.finance.Trade;
-import com.opengamma.strata.finance.rate.swap.ExpandedSwap;
-import com.opengamma.strata.finance.rate.swap.ExpandedSwapLeg;
-import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapTemplate;
 import com.opengamma.strata.market.curve.CurveParameterMetadata;
@@ -81,16 +77,14 @@ public final class FixedIborSwapCurveNode implements CurveNode, ImmutableBean {
   }
 
   @Override
-  public Trade trade(LocalDate valuationDate, Map<ObservableKey, Double> marketData) {
+  public SwapTrade trade(LocalDate valuationDate, Map<ObservableKey, Double> marketData) {
     return template.toTrade(valuationDate, BuySell.BUY, 1, rate(marketData));
   }
 
   @Override
   public CurveParameterMetadata metadata(LocalDate valuationDate) {
     SwapTrade trade = template.toTrade(valuationDate, BuySell.BUY, 1, 1);
-    ExpandedSwap expandedSwap = trade.getProduct().expand();
-    ExpandedSwapLeg fixedLeg = expandedSwap.getLegs(SwapLegType.FIXED).get(0);
-    return TenorCurveNodeMetadata.of(fixedLeg.getEndDate(), template.getTenor());
+    return TenorCurveNodeMetadata.of(trade.getProduct().getEndDate(), template.getTenor());
   }
 
   // returns the rate from the market data for the rate key or throws an exception if it isn't available

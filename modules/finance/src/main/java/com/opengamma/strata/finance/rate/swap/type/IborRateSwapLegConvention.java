@@ -452,6 +452,7 @@ public final class IborRateSwapLegConvention
         .index(index)
         .currency(getCurrency())
         .dayCount(getDayCount())
+        .accrualFrequency(getAccrualFrequency())
         .accrualBusinessDayAdjustment(getAccrualBusinessDayAdjustment())
         .startDateBusinessDayAdjustment(getStartDateBusinessDayAdjustment())
         .endDateBusinessDayAdjustment(getEndDateBusinessDayAdjustment())
