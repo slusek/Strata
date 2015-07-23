@@ -6,11 +6,8 @@
 package com.opengamma.strata.pricer.fx;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -28,12 +25,11 @@ import org.joda.beans.impl.direct.DirectMetaBean;
 import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
+import com.google.common.primitives.Doubles;
 import com.opengamma.analytics.financial.model.volatility.surface.SmileDeltaTermStructureParametersStrikeInterpolation;
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.collect.ArgChecker;
-import com.opengamma.strata.collect.DoubleArrayMath;
-import com.opengamma.strata.collect.tuple.DoublesPair;
 import com.opengamma.strata.market.option.DeltaStrike;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
 import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
@@ -98,8 +94,8 @@ public final class BlackVolatilitySmileFxProvider implements BlackVolatilityFxPr
 
   //-------------------------------------------------------------------------
   @Override
-  public double getVolatility(CurrencyPair currencyPair, LocalDate expiryDate, double strike, double forward) {
-    double expiryTime = relativeTime(expiryDate, null, null); // TODO: time and zone
+  public double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike, double forward) {
+    double expiryTime = relativeTime(expiryDateTime);
     if (currencyPair.isInverse(this.currencyPair)) {
       return smile.getVolatility(expiryTime, 1d / strike, 1d / forward);
     }
@@ -108,40 +104,15 @@ public final class BlackVolatilitySmileFxProvider implements BlackVolatilityFxPr
 
   //-------------------------------------------------------------------------
   @Override
-  public double relativeTime(LocalDate date, LocalTime time, ZoneId zone) {
-    ArgChecker.notNull(date, "date");
+  public double relativeTime(ZonedDateTime zonedDateTime) {
+    ArgChecker.notNull(zonedDateTime, "zonedDateTime");
+    LocalDate date = zonedDateTime.toLocalDate(); // TODO: time and zone
     return dayCount.relativeYearFraction(valuationDateTime.toLocalDate(), date);
   }
 
   @Override
-  public Map<DoublesPair, Double> nodeSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
-    double strike = currencyPair.isInverse(point.getCurrencyPair()) ? 1d / point.getStrike() : point.getStrike();
-    double forward = currencyPair.isInverse(point.getCurrencyPair()) ? 1d / point.getForward() : point.getForward();
-    Map<DoublesPair, Double> result = new HashMap<>();
-    double[][] bucketedSensi = smile.getVolatilityAndSensitivities(
-        expiryTime, strike, forward).getBucketedSensitivities();
-    double[] times = smile.getTimeToExpiration();
-    int nTimes = times.length;
-    for (int i = 0; i < nTimes; ++i) {
-      double[] deltas = smile.getVolatilityTerm()[i].getDelta();
-      int nDeltas = deltas.length;
-      int nDeltasTotal = 2 * nDeltas + 1;
-      double[] deltasTotal = new double[nDeltasTotal];
-      for (int j = 0; j < nDeltas; ++j) {
-        deltasTotal[j] = -deltas[j];
-        deltasTotal[2 * nDeltas - j] = deltas[j];
-      }
-      for (int j = 0; j < nDeltasTotal; ++j) {
-        result.put(DoublesPair.of(times[i], deltasTotal[j]), bucketedSensi[i][j]);
-      }
-    }
-    return result;
-  }
-
-  @Override
   public SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
+    double expiryTime = relativeTime(point.getExpiryDateTime());
     double strike = currencyPair.isInverse(point.getCurrencyPair()) ? 1d / point.getStrike() : point.getStrike();
     double forward = currencyPair.isInverse(point.getCurrencyPair()) ? 1d / point.getForward() : point.getForward();
     double pointValue = point.getSensitivity();
@@ -168,7 +139,7 @@ public final class BlackVolatilitySmileFxProvider implements BlackVolatilityFxPr
         paramList.add(parameterMetadata);
       }
     }
-    double[] sensi = DoubleArrayMath.toPrimitive((Double[]) sensiList.toArray());
+    double[] sensi = Doubles.toArray(sensiList);
     DefaultSurfaceMetadata metadata = DefaultSurfaceMetadata.builder()
         .dayCount(dayCount)
         .parameterMetadata(paramList)

@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Map;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
@@ -29,8 +29,10 @@ import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolat
 import com.opengamma.analytics.math.interpolation.Interpolator1D;
 import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.basics.currency.CurrencyPair;
-import com.opengamma.strata.collect.tuple.DoublesPair;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
+import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
+import com.opengamma.strata.market.surface.FxVolatilitySurfaceYearFractionNodeMetadata;
+import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
 
 /**
  * Test {@link BlackVolatilitySmileFxProvider}.
@@ -58,8 +60,12 @@ public class BlackVolatilitySmileFxProviderTest {
 
   private static final BlackVolatilitySmileFxProvider PROVIDER =
       BlackVolatilitySmileFxProvider.of(SMILE_TERM, CURRENCY_PAIR, ACT_365F, VALUATION_DATE_TIME);
-  private static final LocalDate[] TEST_EXPIRY = new LocalDate[] {
-    date(2015, 2, 18), date(2015, 5, 17), date(2015, 10, 17), date(2017, 12, 17), date(2020, 10, 17) };
+  private static final LocalTime TIME = LocalTime.of(11, 45);
+  private static final ZonedDateTime[] TEST_EXPIRY = new ZonedDateTime[] {
+    date(2015, 2, 18).atTime(LocalTime.MIDNIGHT).atZone(LONDON_ZONE),
+    date(2015, 9, 17).atTime(TIME).atZone(LONDON_ZONE),
+    date(2016, 6, 17).atTime(TIME).atZone(LONDON_ZONE),
+    date(2018, 7, 17).atTime(TIME).atZone(LONDON_ZONE) };
   private static final double[] FORWARD = new double[] {1.4, 1.395, 1.39, 1.38, 1.35 };
   private static final int NB_EXPIRY = TEST_EXPIRY.length;
   private static final double[] TEST_STRIKE = new double[] {1.1, 1.28, 1.45, 1.62, 1.8 };
@@ -86,7 +92,7 @@ public class BlackVolatilitySmileFxProviderTest {
   //-------------------------------------------------------------------------
   public void test_volatility() {
     for (int i = 0; i < NB_EXPIRY; i++) {
-      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i], LocalTime.MIDNIGHT, LONDON_ZONE);
+      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
         double volExpected = SMILE_TERM.getVolatility(expiryTime, TEST_STRIKE[j], FORWARD[i]);
         double volComputed = PROVIDER.getVolatility(CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i]);
@@ -97,7 +103,7 @@ public class BlackVolatilitySmileFxProviderTest {
 
   public void test_volatility_inverse() {
     for (int i = 0; i < NB_EXPIRY; i++) {
-      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i], LocalTime.MIDNIGHT, LONDON_ZONE);
+      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
         double volExpected = SMILE_TERM.getVolatility(expiryTime, TEST_STRIKE[j], FORWARD[i]);
         double volComputed = PROVIDER.getVolatility(CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j],
@@ -108,35 +114,40 @@ public class BlackVolatilitySmileFxProviderTest {
   }
 
   //-------------------------------------------------------------------------
-  public void test_nodeSensitivity() {
+  public void test_surfaceParameterSensitivity() {
     for (int i = 0; i < NB_EXPIRY; i++) {
       for (int j = 0; j < NB_STRIKE; ++j) {
         FxOptionSensitivity sensi = FxOptionSensitivity.of(
             CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], GBP, 1d);
-        Map<DoublesPair, Double> computed = PROVIDER.nodeSensitivity(sensi);
-        for (DoublesPair key : computed.keySet()) {
-          Double x = key.getFirst();
-          Double y = key.getSecond();
-          double expected = nodeSensitivity(PROVIDER, CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], x, y);
-          assertEquals(computed.get(key), expected, EPS);
+        SurfaceCurrencyParameterSensitivity computed = PROVIDER.surfaceParameterSensitivity(sensi);
+        Iterator<SurfaceParameterMetadata> itr = computed.getMetadata().getParameterMetadata().get().iterator();
+        for (double value : computed.getSensitivity()) {
+          FxVolatilitySurfaceYearFractionNodeMetadata meta = ((FxVolatilitySurfaceYearFractionNodeMetadata) itr.next());
+          double nodeExpiry = meta.getYearFraction();
+          double nodeDelta = meta.getStrike().getValue();
+          double expected = nodeSensitivity(
+              PROVIDER, CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], nodeExpiry, nodeDelta);
+          assertEquals(value, expected, EPS);
         }
 
       }
     }
   }
 
-  public void test_nodeSensitivity_inverse() {
+  public void test_surfaceParameterSensitivity_inverse() {
     for (int i = 0; i < NB_EXPIRY; i++) {
       for (int j = 0; j < NB_STRIKE; ++j) {
         FxOptionSensitivity sensi = FxOptionSensitivity.of(
             CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], GBP, 1d);
-        Map<DoublesPair, Double> computed = PROVIDER.nodeSensitivity(sensi);
-        for (DoublesPair key : computed.keySet()) {
-          Double x = key.getFirst();
-          Double y = key.getSecond();
-          double expected = nodeSensitivity(
-              PROVIDER, CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], x, y);
-          assertEquals(computed.get(key), expected, EPS);
+        SurfaceCurrencyParameterSensitivity computed = PROVIDER.surfaceParameterSensitivity(sensi);
+        Iterator<SurfaceParameterMetadata> itr = computed.getMetadata().getParameterMetadata().get().iterator();
+        for (double value : computed.getSensitivity()) {
+          FxVolatilitySurfaceYearFractionNodeMetadata meta = ((FxVolatilitySurfaceYearFractionNodeMetadata) itr.next());
+          double nodeExpiry = meta.getYearFraction();
+          double nodeDelta = meta.getStrike().getValue();
+          double expected = nodeSensitivity(PROVIDER, CURRENCY_PAIR.inverse(),
+              TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], nodeExpiry, nodeDelta);
+          assertEquals(value, expected, EPS);
         }
       }
     }
@@ -157,7 +168,7 @@ public class BlackVolatilitySmileFxProviderTest {
 
   //-------------------------------------------------------------------------
   // bumping a node point at (nodeExpiry, nodeDelta)
-  private double nodeSensitivity(BlackVolatilitySmileFxProvider provider, CurrencyPair pair, LocalDate expiry,
+  private double nodeSensitivity(BlackVolatilitySmileFxProvider provider, CurrencyPair pair, ZonedDateTime expiry,
       double strike, double forward, double nodeExpiry, double nodeDelta) {
     double strikeMod = provider.getCurrencyPair().equals(pair) ? strike : 1.0 / strike;
     double forwardMod = provider.getCurrencyPair().equals(pair) ? forward : 1.0 / forward;
@@ -174,7 +185,7 @@ public class BlackVolatilitySmileFxProviderTest {
       int nDeltasTotal = 2 * nDeltas + 1;
       double[] deltasTotal = new double[nDeltasTotal];
       for (int j = 0; j < nDeltas; ++j) {
-        deltasTotal[j] = -deltas[j];
+        deltasTotal[j] = 1d - deltas[j];
         deltasTotal[2 * nDeltas - j] = deltas[j];
       }
       double[] volsUp = smileTerm.getVolatilityTerm()[i].getVolatility().clone();
@@ -203,7 +214,7 @@ public class BlackVolatilitySmileFxProviderTest {
     double volDw = provDw.getVolatility(pair, expiry, strike, forward);
     double totalSensi = 0.5 * (volUp - volDw) / EPS;
 
-    double expiryTime = provider.relativeTime(expiry, null, null);
+    double expiryTime = provider.relativeTime(expiry);
     SmileDeltaParameters singleSmile = smileTerm.getSmileForTime(expiryTime);
     double[] strikesUp = singleSmile.getStrike(forwardMod);
     double[] strikesDw = strikesUp.clone();

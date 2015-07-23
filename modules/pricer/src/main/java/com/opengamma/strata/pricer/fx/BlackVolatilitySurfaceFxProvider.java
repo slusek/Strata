@@ -6,8 +6,6 @@
 package com.opengamma.strata.pricer.fx;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,12 +25,12 @@ import org.joda.beans.impl.direct.DirectMetaBean;
 import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
+import com.google.common.primitives.Doubles;
 import com.opengamma.analytics.math.interpolation.data.Interpolator1DDataBundle;
 import com.opengamma.analytics.math.surface.InterpolatedDoublesSurface;
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.collect.ArgChecker;
-import com.opengamma.strata.collect.DoubleArrayMath;
 import com.opengamma.strata.collect.tuple.DoublesPair;
 import com.opengamma.strata.market.option.SimpleStrike;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
@@ -96,8 +94,8 @@ public final class BlackVolatilitySurfaceFxProvider implements BlackVolatilityFx
 
   //-------------------------------------------------------------------------
   @Override
-  public double getVolatility(CurrencyPair currencyPair, LocalDate expiryDate, double strike, double forward) {
-    double expiryTime = relativeTime(expiryDate, null, null); // TODO: time and zone
+  public double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike, double forward) {
+    double expiryTime = relativeTime(expiryDateTime);
     if (currencyPair.isInverse(this.currencyPair)) {
       return surface.getZValue(expiryTime, 1d / strike);
     }
@@ -106,24 +104,15 @@ public final class BlackVolatilitySurfaceFxProvider implements BlackVolatilityFx
 
   //-------------------------------------------------------------------------
   @Override
-  public double relativeTime(LocalDate date, LocalTime time, ZoneId zone) {
-    ArgChecker.notNull(date, "date");
+  public double relativeTime(ZonedDateTime zonedDateTime) {
+    ArgChecker.notNull(zonedDateTime, "zonedDateTime");
+    LocalDate date = zonedDateTime.toLocalDate(); // TODO: time and zone
     return dayCount.relativeYearFraction(valuationDateTime.toLocalDate(), date);
   }
 
   @Override
-  public Map<DoublesPair, Double> nodeSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
-    double strike = point.getCurrencyPair().isInverse(currencyPair) ? 1d / point.getStrike() : point.getStrike();
-    @SuppressWarnings("unchecked")
-    Map<DoublesPair, Double> result = surface.getInterpolator().getNodeSensitivitiesForValue(
-        (Map<Double, Interpolator1DDataBundle>) surface.getInterpolatorData(), DoublesPair.of(expiryTime, strike));
-    return result;
-  }
-
-  @Override
   public SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
+    double expiryTime = relativeTime(point.getExpiryDateTime());
     double strike = point.getCurrencyPair().isInverse(currencyPair) ? 1d / point.getStrike() : point.getStrike();
     double pointValue = point.getSensitivity();
     @SuppressWarnings("unchecked")
@@ -138,7 +127,7 @@ public final class BlackVolatilitySurfaceFxProvider implements BlackVolatilityFx
           pair.getFirst(), SimpleStrike.of(pair.getSecond()), currencyPair);
       paramList.add(parameterMetadata);
     }
-    double[] sensi = DoubleArrayMath.toPrimitive((Double[]) sensiList.toArray());
+    double[] sensi = Doubles.toArray(sensiList);
     DefaultSurfaceMetadata metadata = DefaultSurfaceMetadata.builder()
         .dayCount(dayCount)
         .parameterMetadata(paramList)

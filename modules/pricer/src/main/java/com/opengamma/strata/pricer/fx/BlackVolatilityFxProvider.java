@@ -5,11 +5,7 @@
  */
 package com.opengamma.strata.pricer.fx;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Map;
 
 import org.joda.beans.ImmutableBean;
 
@@ -34,12 +30,13 @@ public interface BlackVolatilityFxProvider
    * Returns the Black volatility.
    * 
    * @param currencyPair the currency pair
-   * @param expiryDate  the option expiry
+   * @param expiryDateTime  the option expiry
    * @param strike  the option strike
    * @param forward  the underling forward
    * @return the volatility
    */
-  public abstract double getVolatility(CurrencyPair currencyPair, LocalDate expiryDate, double strike, double forward);
+  public abstract double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike,
+      double forward);
 
   /**
    * Returns the index on which the underlying FX is based.
@@ -50,23 +47,18 @@ public interface BlackVolatilityFxProvider
   /**
    * Converts a date to a relative {@code double} time.
    * 
-   * @param date  the date to find the relative time of
-   * @param time  the time to find the relative time of
-   * @param zone  the time zone
+   * @param zonedDateTime  the zoned date time
    * @return the relative time
    */
-  public abstract double relativeTime(LocalDate date, LocalTime time, ZoneId zone);
+  public abstract double relativeTime(ZonedDateTime zonedDateTime);
 
   /**
    * Computes the sensitivity to the nodes used in the description of the Black volatility from a point sensitivity.
    * <p>
-   * The returned value is a map between the parameter of a node (for example, {@code DoublesPair} specifying 
-   * expiry time and strike for a surface) and the sensitivity value to the node as {@code Double}.  
+   * The returned value is {@link SurfaceCurrencyParameterSensitivity}.  
    * 
    * @param point  the point sensitivity at a given key
    * @return the sensitivity to the nodes
    */
-  public abstract Map<?, Double> nodeSensitivity(FxOptionSensitivity point);
-
   public abstract SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point);
 }

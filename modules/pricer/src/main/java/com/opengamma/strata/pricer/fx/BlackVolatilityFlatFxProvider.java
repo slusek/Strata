@@ -6,11 +6,8 @@
 package com.opengamma.strata.pricer.fx;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -28,11 +25,11 @@ import org.joda.beans.impl.direct.DirectMetaBean;
 import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
+import com.google.common.primitives.Doubles;
 import com.opengamma.analytics.math.curve.DoublesCurve;
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.collect.ArgChecker;
-import com.opengamma.strata.collect.DoubleArrayMath;
 import com.opengamma.strata.market.option.DeltaStrike;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
 import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
@@ -93,34 +90,22 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
 
   //-------------------------------------------------------------------------
   @Override
-  public double getVolatility(CurrencyPair currencyPair, LocalDate expiryDate, double strike, double forward) {
-    double expiryTime = relativeTime(expiryDate, null, null); // TODO: time and zone
+  public double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike, double forward) {
+    double expiryTime = relativeTime(expiryDateTime);
     return curve.getYValue(expiryTime);
   }
 
   //-------------------------------------------------------------------------
   @Override
-  public double relativeTime(LocalDate date, LocalTime time, ZoneId zone) {
-    ArgChecker.notNull(date, "date");
+  public double relativeTime(ZonedDateTime zonedDateTime) {
+    ArgChecker.notNull(zonedDateTime, "zonedDateTime");
+    LocalDate date = zonedDateTime.toLocalDate(); // TODO: time and zone
     return dayCount.relativeYearFraction(valuationDateTime.toLocalDate(), date);
   }
 
   @Override
-  public Map<Double, Double> nodeSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
-    Double[] yValueParameterSensitivity = curve.getYValueParameterSensitivity(expiryTime);
-    Double[] times = curve.getXData();
-    Map<Double, Double> result = new HashMap<>();
-    int nTimes = times.length;
-    for (int i = 0; i < nTimes; ++i) {
-      result.put(times[i], yValueParameterSensitivity[i]);
-    }
-    return result;
-  }
-
-  @Override
   public SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point) {
-    double expiryTime = relativeTime(point.getExpiryDate(), null, null); // TODO: time and zone
+    double expiryTime = relativeTime(point.getExpiryDateTime());
     Double[] yValueParameterSensitivity = curve.getYValueParameterSensitivity(expiryTime);
     Double[] times = curve.getXData();
     double pointValue = point.getSensitivity();
@@ -134,7 +119,7 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
           FxVolatilitySurfaceYearFractionNodeMetadata.of(times[i], absoluteDelta, currencyPair);
       paramList.add(parameterMetadata);
     }
-    double[] sensi = DoubleArrayMath.toPrimitive((Double[]) sensiList.toArray());
+    double[] sensi = Doubles.toArray(sensiList);
     DefaultSurfaceMetadata metadata = DefaultSurfaceMetadata.builder()
         .dayCount(dayCount)
         .parameterMetadata(paramList)

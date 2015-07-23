@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Map;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
@@ -28,8 +28,10 @@ import com.opengamma.analytics.math.interpolation.Interpolator1D;
 import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.analytics.math.surface.InterpolatedDoublesSurface;
 import com.opengamma.strata.basics.currency.CurrencyPair;
-import com.opengamma.strata.collect.tuple.DoublesPair;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
+import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
+import com.opengamma.strata.market.surface.FxVolatilitySurfaceYearFractionNodeMetadata;
+import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
 
 /**
  * Test {@link BlackVolatilitySurfaceFxProvider}.
@@ -55,8 +57,12 @@ public class BlackVolatilitySurfaceFxProviderTest {
   private static final BlackVolatilitySurfaceFxProvider PROVIDER =
       BlackVolatilitySurfaceFxProvider.of(SURFACE, CURRENCY_PAIR, ACT_365F, VALUATION_DATE_TIME);
 
-  private static final LocalDate[] TEST_EXPIRY =
-      new LocalDate[] {date(2015, 2, 17), date(2015, 5, 17), date(2015, 6, 17), date(2017, 2, 17) };
+  private static final LocalTime TIME = LocalTime.of(11, 45);
+  private static final ZonedDateTime[] TEST_EXPIRY = new ZonedDateTime[] {
+    date(2015, 2, 17).atTime(LocalTime.MIDNIGHT).atZone(LONDON_ZONE),
+    date(2015, 9, 17).atTime(TIME).atZone(LONDON_ZONE),
+    date(2016, 6, 17).atTime(TIME).atZone(LONDON_ZONE),
+    date(2018, 7, 17).atTime(TIME).atZone(LONDON_ZONE) };
   private static final double[] FORWARD = new double[] {0.85, 0.82, 0.77, 0.76 };
   private static final int NB_EXPIRY = TEST_EXPIRY.length;
   private static final double[] TEST_STRIKE = new double[] {0.65, 0.73, 0.85, 0.92 };
@@ -83,7 +89,7 @@ public class BlackVolatilitySurfaceFxProviderTest {
   //-------------------------------------------------------------------------
   public void test_volatility() {
     for (int i = 0; i < NB_EXPIRY; i++) {
-      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i], LocalTime.MIDNIGHT, LONDON_ZONE);
+      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
         double volExpected = SURFACE.getZValue(expiryTime, TEST_STRIKE[j]);
         double volComputed = PROVIDER.getVolatility(CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i]);
@@ -94,7 +100,7 @@ public class BlackVolatilitySurfaceFxProviderTest {
 
   public void test_volatility_inverse() {
     for (int i = 0; i < NB_EXPIRY; i++) {
-      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i], LocalTime.MIDNIGHT, LONDON_ZONE);
+      double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
         double volExpected = SURFACE.getZValue(expiryTime, TEST_STRIKE[j]);
         double volComputed = PROVIDER
@@ -110,12 +116,15 @@ public class BlackVolatilitySurfaceFxProviderTest {
       for (int j = 0; j < NB_STRIKE; ++j) {
         FxOptionSensitivity sensi = FxOptionSensitivity.of(
             CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], GBP, 1d);
-        Map<DoublesPair, Double> computed = PROVIDER.nodeSensitivity(sensi);
-        for (DoublesPair key : computed.keySet()) {
-          Double x = key.getFirst();
-          Double y = key.getSecond();
-          double expected = nodeSensitivity(PROVIDER, CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], x, y);
-          assertEquals(computed.get(key), expected, EPS);
+        SurfaceCurrencyParameterSensitivity computed = PROVIDER.surfaceParameterSensitivity(sensi);
+        Iterator<SurfaceParameterMetadata> itr = computed.getMetadata().getParameterMetadata().get().iterator();
+        for (double value : computed.getSensitivity()) {
+          FxVolatilitySurfaceYearFractionNodeMetadata meta = ((FxVolatilitySurfaceYearFractionNodeMetadata) itr.next());
+          double nodeExpiry = meta.getYearFraction();
+          double nodeStrike = meta.getStrike().getValue();
+          double expected = nodeSensitivity(
+              PROVIDER, CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i], nodeExpiry, nodeStrike);
+          assertEquals(value, expected, EPS);
         }
       }
     }
@@ -126,13 +135,15 @@ public class BlackVolatilitySurfaceFxProviderTest {
       for (int j = 0; j < NB_STRIKE; ++j) {
         FxOptionSensitivity sensi = FxOptionSensitivity.of(
             CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], GBP, 1d);
-        Map<DoublesPair, Double> computed = PROVIDER.nodeSensitivity(sensi);
-        for (DoublesPair key : computed.keySet()) {
-          Double x = key.getFirst();
-          Double y = key.getSecond();
-          double expected = nodeSensitivity(
-              PROVIDER, CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], x, y);
-          assertEquals(computed.get(key), expected, EPS);
+        SurfaceCurrencyParameterSensitivity computed = PROVIDER.surfaceParameterSensitivity(sensi);
+        Iterator<SurfaceParameterMetadata> itr = computed.getMetadata().getParameterMetadata().get().iterator();
+        for (double value : computed.getSensitivity()) {
+          FxVolatilitySurfaceYearFractionNodeMetadata meta = ((FxVolatilitySurfaceYearFractionNodeMetadata) itr.next());
+          double nodeExpiry = meta.getYearFraction();
+          double nodeStrike = meta.getStrike().getValue();
+          double expected = nodeSensitivity(PROVIDER, CURRENCY_PAIR.inverse(),
+              TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i], nodeExpiry, nodeStrike);
+          assertEquals(value, expected, EPS);
         }
       }
     }
@@ -153,7 +164,7 @@ public class BlackVolatilitySurfaceFxProviderTest {
 
   //-------------------------------------------------------------------------
   // bumping a node point at (nodeExpiry, nodeStrike)
-  private double nodeSensitivity(BlackVolatilitySurfaceFxProvider provider, CurrencyPair pair, LocalDate expiry,
+  private double nodeSensitivity(BlackVolatilitySurfaceFxProvider provider, CurrencyPair pair, ZonedDateTime expiry,
       double strike, double forward, double nodeExpiry, double nodeStrike) {
     InterpolatedDoublesSurface surface =  provider.getSurface();
     Double [] xData = surface.getXData().clone();
