@@ -27,13 +27,12 @@ public class DefaultCalibrationCalculator extends CalibrationCalculator {
     super(fixingValue, fraValue, swapValue, fixingSensitivity, fraSensitivity, swapSensitivity);
   }
 
-  public final DefaultCalibrationCalculator DEFAULT = new DefaultCalibrationCalculator(
+  public static final DefaultCalibrationCalculator DEFAULT = new DefaultCalibrationCalculator(
       (fixing, p) -> DiscountingIborFixingDepositProductPricer.DEFAULT.parSpread(fixing.getProduct(), p), 
       (fra, p) -> DiscountingFraProductPricer.DEFAULT.parSpread(fra.getProduct(), p),
-      (swap, p) -> DiscountingSwapProductPricer.DEFAULT.parSpread(swap, p),
-      fixingSensitivity, fraSensitivity, swapSensitivity);
+      (swap, p) -> 0.0,
+      (fixing, p) -> DiscountingIborFixingDepositProductPricer.DEFAULT.parSpreadSensitivity(fixing.getProduct(), p),  
+      (fra, p) -> DiscountingFraProductPricer.DEFAULT.parSpreadCurveSensitivity(fra.getProduct(), p), // TODO: Change name in pricer
+      (swap, p) -> PointSensitivities.empty());
 
-  
-  
-  
 }

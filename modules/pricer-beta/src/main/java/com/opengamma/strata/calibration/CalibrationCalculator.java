@@ -95,7 +95,7 @@ public class CalibrationCalculator {
     ImmutableList<CurveCurrencyParameterSensitivity> ps2 = ps.getSensitivities();
     CurveUnitParameterSensitivities ups = CurveUnitParameterSensitivities.empty();
     for (CurveCurrencyParameterSensitivity ccps : ps2) {
-      ups.combinedWith(CurveUnitParameterSensitivity.of(ccps.getMetadata(), ccps.getSensitivity()));
+      ups = ups.combinedWith(CurveUnitParameterSensitivity.of(ccps.getMetadata(), ccps.getSensitivity()));
     }
     // Expand to vector
     double[] result = new double[0];
