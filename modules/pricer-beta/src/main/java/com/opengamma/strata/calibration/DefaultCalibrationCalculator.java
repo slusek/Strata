@@ -14,6 +14,7 @@ import com.opengamma.strata.market.sensitivity.PointSensitivities;
 import com.opengamma.strata.pricer.rate.RatesProvider;
 import com.opengamma.strata.pricer.rate.deposit.DiscountingIborFixingDepositProductPricer;
 import com.opengamma.strata.pricer.rate.fra.DiscountingFraProductPricer;
+import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 
 public class DefaultCalibrationCalculator extends CalibrationCalculator {
   
@@ -30,9 +31,9 @@ public class DefaultCalibrationCalculator extends CalibrationCalculator {
   public static final DefaultCalibrationCalculator DEFAULT = new DefaultCalibrationCalculator(
       (fixing, p) -> DiscountingIborFixingDepositProductPricer.DEFAULT.parSpread(fixing.getProduct(), p), 
       (fra, p) -> DiscountingFraProductPricer.DEFAULT.parSpread(fra.getProduct(), p),
-      (swap, p) -> 0.0,
+      (swap, p) -> DiscountingSwapProductPricer.DEFAULT.parSpread(swap.getProduct(), p),
       (fixing, p) -> DiscountingIborFixingDepositProductPricer.DEFAULT.parSpreadSensitivity(fixing.getProduct(), p),  
       (fra, p) -> DiscountingFraProductPricer.DEFAULT.parSpreadCurveSensitivity(fra.getProduct(), p), // TODO: Change name in pricer
-      (swap, p) -> PointSensitivities.empty());
+      (swap, p) -> DiscountingSwapProductPricer.DEFAULT.parSpreadSensitivity(swap.getProduct(), p).build());
 
 }
