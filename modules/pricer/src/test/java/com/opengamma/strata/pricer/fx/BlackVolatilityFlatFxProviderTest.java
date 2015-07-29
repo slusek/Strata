@@ -22,12 +22,13 @@ import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
-import com.opengamma.analytics.math.curve.DoublesCurve;
-import com.opengamma.analytics.math.curve.InterpolatedDoublesCurve;
-import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolatorFactory;
-import com.opengamma.analytics.math.interpolation.Interpolator1D;
 import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.basics.currency.CurrencyPair;
+import com.opengamma.strata.basics.interpolator.CurveInterpolator;
+import com.opengamma.strata.market.curve.CurveMetadata;
+import com.opengamma.strata.market.curve.DefaultCurveMetadata;
+import com.opengamma.strata.market.curve.InterpolatedNodalCurve;
+import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
 import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
 import com.opengamma.strata.market.surface.FxVolatilitySurfaceYearFractionNodeMetadata;
@@ -39,12 +40,11 @@ import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
 @Test
 public class BlackVolatilityFlatFxProviderTest {
 
-  private static final Interpolator1D LINEAR_FLAT =
-      CombinedInterpolatorExtrapolatorFactory.getInterpolator(Interpolator1DFactory.LINEAR,
-          Interpolator1DFactory.FLAT_EXTRAPOLATOR, Interpolator1DFactory.FLAT_EXTRAPOLATOR);
+  private static final CurveInterpolator INTERPOLATOR = Interpolator1DFactory.LINEAR_INSTANCE;
   private static final double[] TIMES = new double[] {0.5, 1.0, 3.0 };
   private static final double[] VOLS = new double[] {0.05, 0.09, 0.16 };
-  private static final InterpolatedDoublesCurve CURVE = InterpolatedDoublesCurve.from(TIMES, VOLS, LINEAR_FLAT);
+  private static final CurveMetadata METADATA = DefaultCurveMetadata.of("TestCurve");
+  private static final InterpolatedNodalCurve CURVE = InterpolatedNodalCurve.of(METADATA, TIMES, VOLS, INTERPOLATOR);
   private static final LocalDate VALUATION_DATE = date(2015, 2, 17);
   private static final LocalTime VALUATION_TIME = LocalTime.of(13, 45);
   private static final ZoneId LONDON_ZONE = ZoneId.of("Europe/London");
@@ -87,7 +87,7 @@ public class BlackVolatilityFlatFxProviderTest {
     for (int i = 0; i < NB_EXPIRY; i++) {
       double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
-        double volExpected = CURVE.getYValue(expiryTime);
+        double volExpected = CURVE.yValue(expiryTime);
         double volComputed = PROVIDER.getVolatility(CURRENCY_PAIR, TEST_EXPIRY[i], TEST_STRIKE[j], FORWARD[i]);
         assertEquals(volComputed, volExpected, TOLERANCE);
       }
@@ -98,7 +98,7 @@ public class BlackVolatilityFlatFxProviderTest {
     for (int i = 0; i < NB_EXPIRY; i++) {
       double expiryTime = PROVIDER.relativeTime(TEST_EXPIRY[i]);
       for (int j = 0; j < NB_STRIKE; ++j) {
-        double volExpected = CURVE.getYValue(expiryTime);
+        double volExpected = CURVE.yValue(expiryTime);
         double volComputed = PROVIDER
             .getVolatility(CURRENCY_PAIR.inverse(), TEST_EXPIRY[i], 1d / TEST_STRIKE[j], 1d / FORWARD[i]);
         assertEquals(volComputed, volExpected, TOLERANCE);
@@ -165,10 +165,10 @@ public class BlackVolatilityFlatFxProviderTest {
       double forward,
       double nodeExpiry) {
 
-    DoublesCurve curve = provider.getCurve();
-    Double[] xData = curve.getXData().clone();
-    Double[] yDataUp = curve.getYData().clone();
-    Double[] yDataDw = curve.getYData().clone();
+    NodalCurve curve = provider.getCurve();
+    double[] xData = curve.getXValues();
+    double[] yDataUp = curve.getYValues();
+    double[] yDataDw = curve.getYValues();
     int nData = xData.length;
     int index = -1;
     for (int i = 0; i < nData; ++i) {
@@ -178,8 +178,8 @@ public class BlackVolatilityFlatFxProviderTest {
     }
     yDataUp[index] += EPS;
     yDataDw[index] -= EPS;
-    InterpolatedDoublesCurve curveUp = InterpolatedDoublesCurve.from(xData, yDataUp, LINEAR_FLAT);
-    InterpolatedDoublesCurve curveDw = InterpolatedDoublesCurve.from(xData, yDataDw, LINEAR_FLAT);
+    InterpolatedNodalCurve curveUp = InterpolatedNodalCurve.of(METADATA, xData, yDataUp, INTERPOLATOR);
+    InterpolatedNodalCurve curveDw = InterpolatedNodalCurve.of(METADATA, xData, yDataDw, INTERPOLATOR);
     BlackVolatilityFlatFxProvider provUp =
         BlackVolatilityFlatFxProvider.of(curveUp, CURRENCY_PAIR, ACT_365F, VALUATION_DATE_TIME);
     BlackVolatilityFlatFxProvider provDw =

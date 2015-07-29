@@ -26,10 +26,10 @@ import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
 import com.google.common.primitives.Doubles;
-import com.opengamma.analytics.math.curve.DoublesCurve;
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.collect.ArgChecker;
+import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.option.DeltaStrike;
 import com.opengamma.strata.market.sensitivity.FxOptionSensitivity;
 import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivity;
@@ -55,7 +55,7 @@ public final class BlackVolatilityFlatFxProvider
    * The x-dimension is the expiration.
    */
   @PropertyDefinition(validate = "notNull")
-  private final DoublesCurve curve;
+  private final NodalCurve curve;
   /**
    * The currency pair for which the volatility data are presented.
    */
@@ -84,7 +84,7 @@ public final class BlackVolatilityFlatFxProvider
    * @return the provider
    */
   public static BlackVolatilityFlatFxProvider of(
-      DoublesCurve curve,
+      NodalCurve curve,
       CurrencyPair currencyPair,
       DayCount dayCount,
       ZonedDateTime valuationTime) {
@@ -96,7 +96,7 @@ public final class BlackVolatilityFlatFxProvider
   @Override
   public double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike, double forward) {
     double expiryTime = relativeTime(expiryDateTime);
-    return curve.getYValue(expiryTime);
+    return curve.yValue(expiryTime);
   }
 
   //-------------------------------------------------------------------------
@@ -110,8 +110,8 @@ public final class BlackVolatilityFlatFxProvider
   @Override
   public SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point) {
     double expiryTime = relativeTime(point.getExpiryDateTime());
-    Double[] yValueParameterSensitivity = curve.getYValueParameterSensitivity(expiryTime);
-    Double[] times = curve.getXData();
+    double[] yValueParameterSensitivity = curve.yValueParameterSensitivity(expiryTime);
+    double[] times = curve.getXValues();
     double pointValue = point.getSensitivity();
     List<Double> sensiList = new ArrayList<Double>();
     List<SurfaceParameterMetadata> paramList = new ArrayList<SurfaceParameterMetadata>();
@@ -127,7 +127,7 @@ public final class BlackVolatilityFlatFxProvider
     DefaultSurfaceMetadata metadata = DefaultSurfaceMetadata.builder()
         .dayCount(dayCount)
         .parameterMetadata(paramList)
-        .surfaceName(SurfaceName.of(curve.getName()))
+        .surfaceName(SurfaceName.of(curve.getName().toString()))
         .xValueType(ValueType.YEAR_FRACTION)
         .yValueType(ValueType.STRIKE)
         .zValueType(ValueType.VOLATILITY)
@@ -160,7 +160,7 @@ public final class BlackVolatilityFlatFxProvider
   }
 
   private BlackVolatilityFlatFxProvider(
-      DoublesCurve curve,
+      NodalCurve curve,
       CurrencyPair currencyPair,
       DayCount dayCount,
       ZonedDateTime valuationDateTime) {
@@ -196,7 +196,7 @@ public final class BlackVolatilityFlatFxProvider
    * The x-dimension is the expiration.
    * @return the value of the property, not null
    */
-  public DoublesCurve getCurve() {
+  public NodalCurve getCurve() {
     return curve;
   }
 
@@ -289,8 +289,8 @@ public final class BlackVolatilityFlatFxProvider
     /**
      * The meta-property for the {@code curve} property.
      */
-    private final MetaProperty<DoublesCurve> curve = DirectMetaProperty.ofImmutable(
-        this, "curve", BlackVolatilityFlatFxProvider.class, DoublesCurve.class);
+    private final MetaProperty<NodalCurve> curve = DirectMetaProperty.ofImmutable(
+        this, "curve", BlackVolatilityFlatFxProvider.class, NodalCurve.class);
     /**
      * The meta-property for the {@code currencyPair} property.
      */
@@ -357,7 +357,7 @@ public final class BlackVolatilityFlatFxProvider
      * The meta-property for the {@code curve} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<DoublesCurve> curve() {
+    public MetaProperty<NodalCurve> curve() {
       return curve;
     }
 
@@ -418,7 +418,7 @@ public final class BlackVolatilityFlatFxProvider
    */
   public static final class Builder extends DirectFieldsBeanBuilder<BlackVolatilityFlatFxProvider> {
 
-    private DoublesCurve curve;
+    private NodalCurve curve;
     private CurrencyPair currencyPair;
     private DayCount dayCount;
     private ZonedDateTime valuationDateTime;
@@ -461,7 +461,7 @@ public final class BlackVolatilityFlatFxProvider
     public Builder set(String propertyName, Object newValue) {
       switch (propertyName.hashCode()) {
         case 95027439:  // curve
-          this.curve = (DoublesCurve) newValue;
+          this.curve = (NodalCurve) newValue;
           break;
         case 1005147787:  // currencyPair
           this.currencyPair = (CurrencyPair) newValue;
@@ -519,7 +519,7 @@ public final class BlackVolatilityFlatFxProvider
      * @param curve  the new value, not null
      * @return this, for chaining, not null
      */
-    public Builder curve(DoublesCurve curve) {
+    public Builder curve(NodalCurve curve) {
       JodaBeanUtils.notNull(curve, "curve");
       this.curve = curve;
       return this;
