@@ -43,8 +43,7 @@ public class BlackFxVanillaOptionProductPricer {
    * 
    * @param fxPricer  the pricer for {@link FxProduct}
    */
-  public BlackFxVanillaOptionProductPricer(
-      DiscountingFxProductPricer fxPricer) {
+  public BlackFxVanillaOptionProductPricer(DiscountingFxProductPricer fxPricer) {
     this.fxPricer = ArgChecker.notNull(fxPricer, "fxPricer");
   }
 
@@ -73,10 +72,10 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     Fx underlying = option.getUnderlying();
     double forwardPrice = undiscountedPrice(option, ratesProvider, volatilityProvider);
-    double discountFactor =
-        ratesProvider.discountFactor(option.getPayoffCurrency(), underlying.getPaymentDate());
+    double discountFactor = ratesProvider.discountFactor(option.getPayoffCurrency(), underlying.getPaymentDate());
     return discountFactor * forwardPrice;
   }
 
@@ -94,16 +93,18 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     double price = price(option, ratesProvider, volatilityProvider);
     return CurrencyAmount.of(option.getPayoffCurrency(), signedNotional(option) * price);
   }
 
+  // the price without discounting
   private double undiscountedPrice(
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       return 0d;
     }
@@ -116,8 +117,7 @@ public class BlackFxVanillaOptionProductPricer {
     boolean isCall = option.getPutCall().isCall();
     double volatility = volatilityProvider.getVolatility(
         strikePair, option.getExpiryDateTime(), strikeRate, forwardRate);
-    double undiscountedPrice = BlackFormulaRepository.price(forwardRate, strikeRate, timeToExpiry, volatility, isCall);
-    return undiscountedPrice;
+    return BlackFormulaRepository.price(forwardRate, strikeRate, timeToExpiry, volatility, isCall);
   }
 
   //-------------------------------------------------------------------------
@@ -135,6 +135,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     Fx underlying = option.getUnderlying();
     double fwdDelta = undiscountedDelta(option, ratesProvider, volatilityProvider);
     double discountFactor = ratesProvider.discountFactor(option.getPayoffCurrency(), underlying.getPaymentDate());
@@ -156,6 +157,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     double delta = delta(option, ratesProvider, volatilityProvider);
     return CurrencyAmount.of(option.getPayoffCurrency(), signedNotional(option) * delta);
   }
@@ -177,6 +179,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     if (volatilityProvider.relativeTime(option.getExpiryDateTime()) <= 0d) {
       return PointSensitivities.empty();
     }
@@ -192,12 +195,13 @@ public class BlackFxVanillaOptionProductPricer {
     return fwdSensi.combinedWith(dscSensi).build();
   }
 
+  // the delta without discounting
   private double undiscountedDelta(
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       return 0d;
     }
@@ -229,8 +233,8 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       return 0d;
     }
@@ -262,6 +266,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     double gamma = gamma(option, ratesProvider, volatilityProvider);
     return CurrencyAmount.of(option.getPayoffCurrency(), signedNotional(option) * gamma);
   }
@@ -281,8 +286,8 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       return 0d;
     }
@@ -313,6 +318,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     double vega = vega(option, ratesProvider, volatilityProvider);
     return CurrencyAmount.of(option.getPayoffCurrency(), signedNotional(option) * vega);
   }
@@ -331,6 +337,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     if (volatilityProvider.relativeTime(option.getExpiryDateTime()) <= 0d) {
       return PointSensitivityBuilder.none();
     }
@@ -359,8 +366,8 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       return 0d;
     }
@@ -392,6 +399,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     double theta = theta(option, ratesProvider, volatilityProvider);
     return CurrencyAmount.of(option.getPayoffCurrency(), signedNotional(option) * theta);
   }
@@ -404,13 +412,14 @@ public class BlackFxVanillaOptionProductPricer {
    * @param ratesProvider  the rates provider
    * @param volatilityProvider  the Black volatility provider
    * @return the implied volatility of the product
+   * @throws IllegalArgumentException if the option has expired
    */
   public double impliedVolatility(
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
-    double timeToExpiry =
-        volatilityProvider.relativeTime(option.getExpiryDateTime());
+
+    double timeToExpiry = volatilityProvider.relativeTime(option.getExpiryDateTime());
     if (timeToExpiry <= 0d) {
       throw new IllegalArgumentException("valuation is after option's expiry.");
     }
@@ -434,6 +443,7 @@ public class BlackFxVanillaOptionProductPricer {
       FxVanillaOption option,
       RatesProvider ratesProvider,
       BlackVolatilityFxProvider volatilityProvider) {
+
     CurrencyPair strikePair = option.getStrike().getPair();
     double price = price(option, ratesProvider, volatilityProvider);
     double delta = delta(option, ratesProvider, volatilityProvider);
@@ -449,4 +459,5 @@ public class BlackFxVanillaOptionProductPricer {
   private double signedNotional(FxVanillaOption option) {
     return (option.getLongShort().isLong() ? 1d : -1d) * option.getUnderlying().getReceiveCurrencyAmount().getAmount();
   }
+
 }

@@ -157,8 +157,14 @@ public class BlackVolatilityFlatFxProviderTest {
 
   //-------------------------------------------------------------------------
   // bumping a node point at nodeExpiry
-  private double nodeSensitivity(BlackVolatilityFlatFxProvider provider, CurrencyPair pair, ZonedDateTime expiry,
-      double strike, double forward, double nodeExpiry) {
+  private double nodeSensitivity(
+      BlackVolatilityFlatFxProvider provider,
+      CurrencyPair pair,
+      ZonedDateTime expiry,
+      double strike,
+      double forward,
+      double nodeExpiry) {
+
     DoublesCurve curve = provider.getCurve();
     Double[] xData = curve.getXData().clone();
     Double[] yDataUp = curve.getYData().clone();
@@ -182,4 +188,5 @@ public class BlackVolatilityFlatFxProviderTest {
     double volDw = provDw.getVolatility(pair, expiry, strike, forward);
     return 0.5 * (volUp - volDw) / EPS;
   }
+
 }

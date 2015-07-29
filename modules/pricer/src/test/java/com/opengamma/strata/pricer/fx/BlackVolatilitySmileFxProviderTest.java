@@ -39,6 +39,7 @@ import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
  */
 @Test
 public class BlackVolatilitySmileFxProviderTest {
+
   private static final Interpolator1D LINEAR_FLAT =
       CombinedInterpolatorExtrapolatorFactory.getInterpolator(Interpolator1DFactory.LINEAR,
           Interpolator1DFactory.FLAT_EXTRAPOLATOR, Interpolator1DFactory.FLAT_EXTRAPOLATOR);
@@ -168,8 +169,15 @@ public class BlackVolatilitySmileFxProviderTest {
 
   //-------------------------------------------------------------------------
   // bumping a node point at (nodeExpiry, nodeDelta)
-  private double nodeSensitivity(BlackVolatilitySmileFxProvider provider, CurrencyPair pair, ZonedDateTime expiry,
-      double strike, double forward, double nodeExpiry, double nodeDelta) {
+  private double nodeSensitivity(
+      BlackVolatilitySmileFxProvider provider,
+      CurrencyPair pair,
+      ZonedDateTime expiry,
+      double strike,
+      double forward,
+      double nodeExpiry,
+      double nodeDelta) {
+
     double strikeMod = provider.getCurrencyPair().equals(pair) ? strike : 1.0 / strike;
     double forwardMod = provider.getCurrencyPair().equals(pair) ? forward : 1.0 / forward;
 

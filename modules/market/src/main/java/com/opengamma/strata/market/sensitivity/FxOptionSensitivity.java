@@ -89,8 +89,7 @@ public final class FxOptionSensitivity
       Currency currency,
       double sensitivity) {
 
-    return new FxOptionSensitivity(
-        currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
+    return new FxOptionSensitivity(currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
   }
 
 
@@ -100,14 +99,12 @@ public final class FxOptionSensitivity
     if (this.currency.equals(currency)) {
       return this;
     }
-    return new FxOptionSensitivity(
-        currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
+    return new FxOptionSensitivity(currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
   }
 
   @Override
   public FxOptionSensitivity withSensitivity(double sensitivity) {
-    return new FxOptionSensitivity(
-        currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
+    return new FxOptionSensitivity(currencyPair, expiryDateTime, strike, forward, currency, sensitivity);
   }
 
   @Override

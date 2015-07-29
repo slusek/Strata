@@ -40,15 +40,19 @@ import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
 import com.opengamma.strata.market.value.ValueType;
 
 /**
- * Data provider of volatility for FX options in the lognormal or Black-Scholes model. 
+ * Data provider of volatility for FX options in the lognormal or Black-Scholes model.
  * <p>
- * The volatility is represented by a curve on the expiration and the volatility is flat along the strike direction. 
+ * The volatility is represented by a curve on the expiration and the volatility
+ * is flat along the strike direction.
  */
 @BeanDefinition
-public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxProvider, ImmutableBean {
+public final class BlackVolatilityFlatFxProvider
+    implements BlackVolatilityFxProvider, ImmutableBean {
 
   /**
-   * The volatility term structure. The dimension is the expiration.
+   * The volatility term structure.
+   * <p>
+   * The x-dimension is the expiration.
    */
   @PropertyDefinition(validate = "notNull")
   private final DoublesCurve curve;
@@ -71,7 +75,7 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
 
   //-------------------------------------------------------------------------
   /**
-   * Obtains an {@code BlackVolatilityFlatFxProvider}.
+   * Obtains a {@code BlackVolatilityFlatFxProvider}.
    * 
    * @param curve  the term structure of volatility
    * @param currencyPair  the currency pair
@@ -187,7 +191,9 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the volatility term structure. The dimension is the expiration.
+   * Gets the volatility term structure.
+   * <p>
+   * The x-dimension is the expiration.
    * @return the value of the property, not null
    */
   public DoublesCurve getCurve() {
@@ -507,7 +513,9 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
 
     //-----------------------------------------------------------------------
     /**
-     * Sets the {@code curve} property in the builder.
+     * Sets the volatility term structure.
+     * <p>
+     * The x-dimension is the expiration.
      * @param curve  the new value, not null
      * @return this, for chaining, not null
      */
@@ -518,7 +526,7 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
     }
 
     /**
-     * Sets the {@code currencyPair} property in the builder.
+     * Sets the currency pair for which the volatility data are presented.
      * @param currencyPair  the new value, not null
      * @return this, for chaining, not null
      */
@@ -529,7 +537,7 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
     }
 
     /**
-     * Sets the {@code dayCount} property in the builder.
+     * Sets the day count applicable to the model.
      * @param dayCount  the new value, not null
      * @return this, for chaining, not null
      */
@@ -540,7 +548,8 @@ public final class BlackVolatilityFlatFxProvider implements BlackVolatilityFxPro
     }
 
     /**
-     * Sets the {@code valuationDateTime} property in the builder.
+     * Sets the valuation date-time.
+     * All data items in this provider is calibrated for this date-time.
      * @param valuationDateTime  the new value, not null
      * @return this, for chaining, not null
      */

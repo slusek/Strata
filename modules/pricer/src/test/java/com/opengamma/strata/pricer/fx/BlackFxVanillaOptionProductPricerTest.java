@@ -44,16 +44,19 @@ import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityC
  */
 @Test
 public class BlackFxVanillaOptionProductPricerTest {
+
   private static final FxMatrix FX_MATRIX = RatesProviderFxDataSets.fxMatrix();
   private static final RatesProvider RATES_PROVIDER = RatesProviderFxDataSets.createProviderEURUSD();
 
   private static final double[] TIME_TO_EXPIRY = new double[] {0.01, 0.252, 0.501, 1.0, 2.0, 5.0 };
   private static final double[] ATM = {0.175, 0.185, 0.18, 0.17, 0.16, 0.16 };
   private static final double[] DELTA = new double[] {0.10, 0.25 };
-  private static final double[][] RISK_REVERSAL = new double[][] { {-0.010, -0.0050 }, {-0.011, -0.0060 },
-    {-0.012, -0.0070 }, {-0.013, -0.0080 }, {-0.014, -0.0090 }, {-0.014, -0.0090 } };
-  private static final double[][] STRANGLE = new double[][] { {0.0300, 0.0100 }, {0.0310, 0.0110 }, {0.0320, 0.0120 },
-    {0.0330, 0.0130 }, {0.0340, 0.0140 }, {0.0340, 0.0140 } };
+  private static final double[][] RISK_REVERSAL = new double[][] {
+      {-0.010, -0.0050}, {-0.011, -0.0060}, {-0.012, -0.0070},
+      {-0.013, -0.0080}, {-0.014, -0.0090}, {-0.014, -0.0090}};
+  private static final double[][] STRANGLE = new double[][] {
+      {0.0300, 0.0100}, {0.0310, 0.0110}, {0.0320, 0.0120},
+      {0.0330, 0.0130}, {0.0340, 0.0140}, {0.0340, 0.0140}};
   private static final SmileDeltaTermStructureParametersStrikeInterpolation SMILE_TERM =
       new SmileDeltaTermStructureParametersStrikeInterpolation(TIME_TO_EXPIRY, DELTA, ATM, RISK_REVERSAL, STRANGLE);
 
@@ -91,6 +94,7 @@ public class BlackFxVanillaOptionProductPricerTest {
   private static final BlackFxVanillaOptionProductPricer PRICER = BlackFxVanillaOptionProductPricer.DEFAULT;
   private static final double TOL = 1.0e-13;
 
+  //-------------------------------------------------------------------------
   public void test_price_presentValue() {
     double price = PRICER.price(OPTION_PRODUCT, RATES_PROVIDER, VOL_PROVIDER);
     CurrencyAmount pv = PRICER.presentValue(OPTION_PRODUCT, RATES_PROVIDER, VOL_PROVIDER);
@@ -191,7 +195,7 @@ public class BlackFxVanillaOptionProductPricerTest {
     assertEquals(pvDelta.getAmount(), 0d, NOTIONAL * TOL);
     PointSensitivities point = PRICER.presentValueSensitivity(callItm, RATES_PROVIDER, VOL_PROVIDER);
     CurveCurrencyParameterSensitivities sensi = RATES_PROVIDER.curveParameterSensitivity(point);
-    System.out.println(sensi);
+    assertEquals(sensi.getSensitivities().size(), 0);
   }
 
   public void test_presentValueSensitivity() {
@@ -410,4 +414,5 @@ public class BlackFxVanillaOptionProductPricerTest {
     assertEquals(computedPricer.getAmount(EUR).getAmount(), computedPoint.getAmount(EUR).getAmount(), NOTIONAL * TOL);
     assertEquals(computedPricer.getAmount(USD).getAmount(), computedPoint.getAmount(USD).getAmount(), NOTIONAL * TOL);
   }
+
 }

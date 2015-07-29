@@ -29,18 +29,22 @@ public interface BlackVolatilityFxProvider
   /**
    * Returns the Black volatility.
    * 
-   * @param currencyPair the currency pair
+   * @param currencyPair  the currency pair
    * @param expiryDateTime  the option expiry
    * @param strike  the option strike
    * @param forward  the underling forward
    * @return the volatility
    */
-  public abstract double getVolatility(CurrencyPair currencyPair, ZonedDateTime expiryDateTime, double strike,
+  public abstract double getVolatility(
+      CurrencyPair currencyPair,
+      ZonedDateTime expiryDateTime,
+      double strike,
       double forward);
 
   /**
-   * Returns the index on which the underlying FX is based.
-   * @return the index
+   * Returns the currencies that the underlying FX is based on.
+   * 
+   * @return the currencies
    */
   public abstract CurrencyPair getCurrencyPair();
 
@@ -61,4 +65,5 @@ public interface BlackVolatilityFxProvider
    * @return the sensitivity to the nodes
    */
   public abstract SurfaceCurrencyParameterSensitivity surfaceParameterSensitivity(FxOptionSensitivity point);
+
 }

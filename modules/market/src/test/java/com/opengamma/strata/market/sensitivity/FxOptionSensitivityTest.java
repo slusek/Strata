@@ -29,6 +29,7 @@ import com.opengamma.strata.basics.currency.CurrencyPair;
  */
 @Test
 public class FxOptionSensitivityTest {
+
   private static final LocalDate EXPIRY_DATE = LocalDate.of(2015, 1, 23);
   private static final LocalTime EXPIRY_TIME = LocalTime.of(12, 15);
   private static final ZoneId EXPIRY_ZONE = ZoneId.of("Z");
@@ -153,4 +154,5 @@ public class FxOptionSensitivityTest {
     FxOptionSensitivity test = FxOptionSensitivity.of(PAIR, EXPIRY_DATE_TIME, STRIKE, FORWARD, GBP, SENSI_VALUE);
     assertSerialization(test);
   }
+
 }
