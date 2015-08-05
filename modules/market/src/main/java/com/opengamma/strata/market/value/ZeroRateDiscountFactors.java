@@ -123,6 +123,11 @@ public final class ZeroRateDiscountFactors
     return curve.getParameterCount();
   }
 
+  @Override
+  public DayCount getDayCount() {
+    return dayCount;
+  }
+
   //-------------------------------------------------------------------------
   @Override
   public double discountFactor(LocalDate date) {

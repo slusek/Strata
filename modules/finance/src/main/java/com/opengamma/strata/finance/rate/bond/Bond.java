@@ -1,0 +1,669 @@
+package com.opengamma.strata.finance.rate.bond;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.joda.beans.Bean;
+import org.joda.beans.BeanDefinition;
+import org.joda.beans.ImmutableBean;
+import org.joda.beans.JodaBeanUtils;
+import org.joda.beans.MetaProperty;
+import org.joda.beans.Property;
+import org.joda.beans.PropertyDefinition;
+import org.joda.beans.impl.direct.DirectFieldsBeanBuilder;
+import org.joda.beans.impl.direct.DirectMetaBean;
+import org.joda.beans.impl.direct.DirectMetaProperty;
+import org.joda.beans.impl.direct.DirectMetaPropertyMap;
+
+import com.google.common.collect.ImmutableList;
+import com.opengamma.analytics.convention.yield.YieldConvention;
+import com.opengamma.analytics.financial.legalentity.LegalEntity;
+import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.finance.rate.swap.PaymentEvent;
+import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
+
+@BeanDefinition
+public final class Bond
+    implements BondProduct, ImmutableBean, Serializable {
+  // TODO javadoc
+  /**
+   * The payment periods that combine to form the swap leg.
+   * <p>
+   * Each payment period represents part of the life-time of the leg.
+   * In most cases, the periods do not overlap. However, since each payment period
+   * is essentially independent the data model allows overlapping periods.
+   * <p>
+   * The start date and end date of the leg are determined from the first and last period.
+   * As such, the periods should be sorted.
+   */
+  @PropertyDefinition(validate = "notEmpty")
+  private final ImmutableList<PaymentPeriod> paymentPeriods;
+  /**
+   * The payment events that are associated with the swap leg.
+   * <p>
+   * Payment events include notional exchange and fees.
+   */
+  @PropertyDefinition(validate = "notNull")
+  private final ImmutableList<PaymentEvent> paymentEvents;
+  /**
+   * The currency of the leg.
+   */
+
+  @PropertyDefinition(validate = "notNull")
+  private final LocalDate settlementDate;
+
+  @PropertyDefinition(validate = "notNull")
+  private final LegalEntity legalEntity; // TODO this is in Analytics, to be replaced by non-Analytics object 
+
+  //  private final Currency currency;
+
+  // TODO to compute "from yield", stored here? use YieldConvention?
+  @PropertyDefinition(validate = "notNull")
+  private final YieldConvention yieldConvention; //TODO enumn for the moment
+
+
+  //-------------------------------------------------------------------------
+  //  @ImmutableConstructor
+  //  private Bond(
+  //      List<PaymentPeriod> paymentPeriods,
+  //      List<PaymentEvent> paymentEvents,
+  //      LocalDate settlementDate,
+  //      LegalEntity legalEntity) {
+  //    JodaBeanUtils.notEmpty(paymentPeriods, "paymentPeriods");
+  //    JodaBeanUtils.notNull(paymentEvents, "paymentEvents");
+  //    this.paymentPeriods = ImmutableList.copyOf(paymentPeriods);
+  //    this.paymentEvents = ImmutableList.copyOf(paymentEvents);
+  //    this.settlementDate = settlementDate;
+  //    this.legalEntity = legalEntity;
+  //    // determine and validate currency, with explicit error message
+  //    Stream<Currency> periodCurrencies = paymentPeriods.stream().map(PaymentPeriod::getCurrency);
+  //    Stream<Currency> eventCurrencies = paymentEvents.stream().map(PaymentEvent::getCurrency);
+  //    Set<Currency> currencies = Stream.concat(periodCurrencies, eventCurrencies).collect(Collectors.toSet());
+  //    if (currencies.size() > 1) {
+  //      throw new IllegalArgumentException("Swap leg must have a single currency, found: " + currencies);
+  //    }
+  //  }
+
+  //-------------------------------------------------------------------------
+  /**
+   * Gets the start date of the leg.
+   * <p>
+   * This is the first accrual date in the leg, often known as the effective date.
+   * This date has been adjusted to be a valid business day.
+   * 
+   * @return the start date of the leg
+   */
+  public LocalDate getStartDate() {
+    return paymentPeriods.get(0).getStartDate();
+  }
+
+  /**
+   * Gets the end date of the leg.
+   * <p>
+   * This is the last accrual date in the leg, often known as the maturity date.
+   * This date has been adjusted to be a valid business day.
+   * 
+   * @return the end date of the leg
+   */
+  public LocalDate getEndDate() {
+    return paymentPeriods.get(paymentPeriods.size() - 1).getEndDate();
+  }
+
+  /**
+   * Gets the currency of the swap leg.
+   * <p>
+   * All periods in the leg will have this currency.
+   * 
+   * @return the currency
+   */
+  public Currency getCurrency() {
+    return paymentEvents.get(0).getCurrency(); //TODO
+  }
+
+  //-------------------------------------------------------------------------
+
+  /**
+   * Expands this swap leg, trivially returning {@code this}.
+   * 
+   * @return this swap leg
+   */
+  @Override
+  public Bond expand() {
+    return this;
+  }
+
+  //------------------------- AUTOGENERATED START -------------------------
+  ///CLOVER:OFF
+  /**
+   * The meta-bean for {@code Bond}.
+   * @return the meta-bean, not null
+   */
+  public static Bond.Meta meta() {
+    return Bond.Meta.INSTANCE;
+  }
+
+  static {
+    JodaBeanUtils.registerMetaBean(Bond.Meta.INSTANCE);
+  }
+
+  /**
+   * The serialization version id.
+   */
+  private static final long serialVersionUID = 1L;
+
+  /**
+   * Returns a builder used to create an instance of the bean.
+   * @return the builder, not null
+   */
+  public static Bond.Builder builder() {
+    return new Bond.Builder();
+  }
+
+  private Bond(
+      List<PaymentPeriod> paymentPeriods,
+      List<PaymentEvent> paymentEvents,
+      LocalDate settlementDate,
+      LegalEntity legalEntity,
+      YieldConvention yieldConvention) {
+    JodaBeanUtils.notEmpty(paymentPeriods, "paymentPeriods");
+    JodaBeanUtils.notNull(paymentEvents, "paymentEvents");
+    JodaBeanUtils.notNull(settlementDate, "settlementDate");
+    JodaBeanUtils.notNull(legalEntity, "legalEntity");
+    JodaBeanUtils.notNull(yieldConvention, "yieldConvention");
+    this.paymentPeriods = ImmutableList.copyOf(paymentPeriods);
+    this.paymentEvents = ImmutableList.copyOf(paymentEvents);
+    this.settlementDate = settlementDate;
+    this.legalEntity = legalEntity;
+    this.yieldConvention = yieldConvention;
+  }
+
+  @Override
+  public Bond.Meta metaBean() {
+    return Bond.Meta.INSTANCE;
+  }
+
+  @Override
+  public <R> Property<R> property(String propertyName) {
+    return metaBean().<R>metaProperty(propertyName).createProperty(this);
+  }
+
+  @Override
+  public Set<String> propertyNames() {
+    return metaBean().metaPropertyMap().keySet();
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the payment periods that combine to form the swap leg.
+   * <p>
+   * Each payment period represents part of the life-time of the leg.
+   * In most cases, the periods do not overlap. However, since each payment period
+   * is essentially independent the data model allows overlapping periods.
+   * <p>
+   * The start date and end date of the leg are determined from the first and last period.
+   * As such, the periods should be sorted.
+   * @return the value of the property, not empty
+   */
+  public ImmutableList<PaymentPeriod> getPaymentPeriods() {
+    return paymentPeriods;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the payment events that are associated with the swap leg.
+   * <p>
+   * Payment events include notional exchange and fees.
+   * @return the value of the property, not null
+   */
+  public ImmutableList<PaymentEvent> getPaymentEvents() {
+    return paymentEvents;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the settlementDate.
+   * @return the value of the property, not null
+   */
+  public LocalDate getSettlementDate() {
+    return settlementDate;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the legalEntity.
+   * @return the value of the property, not null
+   */
+  public LegalEntity getLegalEntity() {
+    return legalEntity;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the yieldConvention.
+   * @return the value of the property, not null
+   */
+  public YieldConvention getYieldConvention() {
+    return yieldConvention;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Returns a builder that allows this bean to be mutated.
+   * @return the mutable builder, not null
+   */
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (obj != null && obj.getClass() == this.getClass()) {
+      Bond other = (Bond) obj;
+      return JodaBeanUtils.equal(getPaymentPeriods(), other.getPaymentPeriods()) &&
+          JodaBeanUtils.equal(getPaymentEvents(), other.getPaymentEvents()) &&
+          JodaBeanUtils.equal(getSettlementDate(), other.getSettlementDate()) &&
+          JodaBeanUtils.equal(getLegalEntity(), other.getLegalEntity()) &&
+          JodaBeanUtils.equal(getYieldConvention(), other.getYieldConvention());
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = getClass().hashCode();
+    hash = hash * 31 + JodaBeanUtils.hashCode(getPaymentPeriods());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getPaymentEvents());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getSettlementDate());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getLegalEntity());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getYieldConvention());
+    return hash;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder buf = new StringBuilder(192);
+    buf.append("Bond{");
+    buf.append("paymentPeriods").append('=').append(getPaymentPeriods()).append(',').append(' ');
+    buf.append("paymentEvents").append('=').append(getPaymentEvents()).append(',').append(' ');
+    buf.append("settlementDate").append('=').append(getSettlementDate()).append(',').append(' ');
+    buf.append("legalEntity").append('=').append(getLegalEntity()).append(',').append(' ');
+    buf.append("yieldConvention").append('=').append(JodaBeanUtils.toString(getYieldConvention()));
+    buf.append('}');
+    return buf.toString();
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * The meta-bean for {@code Bond}.
+   */
+  public static final class Meta extends DirectMetaBean {
+    /**
+     * The singleton instance of the meta-bean.
+     */
+    static final Meta INSTANCE = new Meta();
+
+    /**
+     * The meta-property for the {@code paymentPeriods} property.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes" })
+    private final MetaProperty<ImmutableList<PaymentPeriod>> paymentPeriods = DirectMetaProperty.ofImmutable(
+        this, "paymentPeriods", Bond.class, (Class) ImmutableList.class);
+    /**
+     * The meta-property for the {@code paymentEvents} property.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes" })
+    private final MetaProperty<ImmutableList<PaymentEvent>> paymentEvents = DirectMetaProperty.ofImmutable(
+        this, "paymentEvents", Bond.class, (Class) ImmutableList.class);
+    /**
+     * The meta-property for the {@code settlementDate} property.
+     */
+    private final MetaProperty<LocalDate> settlementDate = DirectMetaProperty.ofImmutable(
+        this, "settlementDate", Bond.class, LocalDate.class);
+    /**
+     * The meta-property for the {@code legalEntity} property.
+     */
+    private final MetaProperty<LegalEntity> legalEntity = DirectMetaProperty.ofImmutable(
+        this, "legalEntity", Bond.class, LegalEntity.class);
+    /**
+     * The meta-property for the {@code yieldConvention} property.
+     */
+    private final MetaProperty<YieldConvention> yieldConvention = DirectMetaProperty.ofImmutable(
+        this, "yieldConvention", Bond.class, YieldConvention.class);
+    /**
+     * The meta-properties.
+     */
+    private final Map<String, MetaProperty<?>> metaPropertyMap$ = new DirectMetaPropertyMap(
+        this, null,
+        "paymentPeriods",
+        "paymentEvents",
+        "settlementDate",
+        "legalEntity",
+        "yieldConvention");
+
+    /**
+     * Restricted constructor.
+     */
+    private Meta() {
+    }
+
+    @Override
+    protected MetaProperty<?> metaPropertyGet(String propertyName) {
+      switch (propertyName.hashCode()) {
+        case -1674414612:  // paymentPeriods
+          return paymentPeriods;
+        case 1031856831:  // paymentEvents
+          return paymentEvents;
+        case -295948169:  // settlementDate
+          return settlementDate;
+        case 41124860:  // legalEntity
+          return legalEntity;
+        case -1895216418:  // yieldConvention
+          return yieldConvention;
+      }
+      return super.metaPropertyGet(propertyName);
+    }
+
+    @Override
+    public Bond.Builder builder() {
+      return new Bond.Builder();
+    }
+
+    @Override
+    public Class<? extends Bond> beanType() {
+      return Bond.class;
+    }
+
+    @Override
+    public Map<String, MetaProperty<?>> metaPropertyMap() {
+      return metaPropertyMap$;
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * The meta-property for the {@code paymentPeriods} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<ImmutableList<PaymentPeriod>> paymentPeriods() {
+      return paymentPeriods;
+    }
+
+    /**
+     * The meta-property for the {@code paymentEvents} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<ImmutableList<PaymentEvent>> paymentEvents() {
+      return paymentEvents;
+    }
+
+    /**
+     * The meta-property for the {@code settlementDate} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<LocalDate> settlementDate() {
+      return settlementDate;
+    }
+
+    /**
+     * The meta-property for the {@code legalEntity} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<LegalEntity> legalEntity() {
+      return legalEntity;
+    }
+
+    /**
+     * The meta-property for the {@code yieldConvention} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<YieldConvention> yieldConvention() {
+      return yieldConvention;
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    protected Object propertyGet(Bean bean, String propertyName, boolean quiet) {
+      switch (propertyName.hashCode()) {
+        case -1674414612:  // paymentPeriods
+          return ((Bond) bean).getPaymentPeriods();
+        case 1031856831:  // paymentEvents
+          return ((Bond) bean).getPaymentEvents();
+        case -295948169:  // settlementDate
+          return ((Bond) bean).getSettlementDate();
+        case 41124860:  // legalEntity
+          return ((Bond) bean).getLegalEntity();
+        case -1895216418:  // yieldConvention
+          return ((Bond) bean).getYieldConvention();
+      }
+      return super.propertyGet(bean, propertyName, quiet);
+    }
+
+    @Override
+    protected void propertySet(Bean bean, String propertyName, Object newValue, boolean quiet) {
+      metaProperty(propertyName);
+      if (quiet) {
+        return;
+      }
+      throw new UnsupportedOperationException("Property cannot be written: " + propertyName);
+    }
+
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * The bean-builder for {@code Bond}.
+   */
+  public static final class Builder extends DirectFieldsBeanBuilder<Bond> {
+
+    private List<PaymentPeriod> paymentPeriods = ImmutableList.of();
+    private List<PaymentEvent> paymentEvents = ImmutableList.of();
+    private LocalDate settlementDate;
+    private LegalEntity legalEntity;
+    private YieldConvention yieldConvention;
+
+    /**
+     * Restricted constructor.
+     */
+    private Builder() {
+    }
+
+    /**
+     * Restricted copy constructor.
+     * @param beanToCopy  the bean to copy from, not null
+     */
+    private Builder(Bond beanToCopy) {
+      this.paymentPeriods = beanToCopy.getPaymentPeriods();
+      this.paymentEvents = beanToCopy.getPaymentEvents();
+      this.settlementDate = beanToCopy.getSettlementDate();
+      this.legalEntity = beanToCopy.getLegalEntity();
+      this.yieldConvention = beanToCopy.getYieldConvention();
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    public Object get(String propertyName) {
+      switch (propertyName.hashCode()) {
+        case -1674414612:  // paymentPeriods
+          return paymentPeriods;
+        case 1031856831:  // paymentEvents
+          return paymentEvents;
+        case -295948169:  // settlementDate
+          return settlementDate;
+        case 41124860:  // legalEntity
+          return legalEntity;
+        case -1895216418:  // yieldConvention
+          return yieldConvention;
+        default:
+          throw new NoSuchElementException("Unknown property: " + propertyName);
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Builder set(String propertyName, Object newValue) {
+      switch (propertyName.hashCode()) {
+        case -1674414612:  // paymentPeriods
+          this.paymentPeriods = (List<PaymentPeriod>) newValue;
+          break;
+        case 1031856831:  // paymentEvents
+          this.paymentEvents = (List<PaymentEvent>) newValue;
+          break;
+        case -295948169:  // settlementDate
+          this.settlementDate = (LocalDate) newValue;
+          break;
+        case 41124860:  // legalEntity
+          this.legalEntity = (LegalEntity) newValue;
+          break;
+        case -1895216418:  // yieldConvention
+          this.yieldConvention = (YieldConvention) newValue;
+          break;
+        default:
+          throw new NoSuchElementException("Unknown property: " + propertyName);
+      }
+      return this;
+    }
+
+    @Override
+    public Builder set(MetaProperty<?> property, Object value) {
+      super.set(property, value);
+      return this;
+    }
+
+    @Override
+    public Builder setString(String propertyName, String value) {
+      setString(meta().metaProperty(propertyName), value);
+      return this;
+    }
+
+    @Override
+    public Builder setString(MetaProperty<?> property, String value) {
+      super.setString(property, value);
+      return this;
+    }
+
+    @Override
+    public Builder setAll(Map<String, ? extends Object> propertyValueMap) {
+      super.setAll(propertyValueMap);
+      return this;
+    }
+
+    @Override
+    public Bond build() {
+      return new Bond(
+          paymentPeriods,
+          paymentEvents,
+          settlementDate,
+          legalEntity,
+          yieldConvention);
+    }
+
+    //-----------------------------------------------------------------------
+    /**
+     * Sets the payment periods that combine to form the swap leg.
+     * <p>
+     * Each payment period represents part of the life-time of the leg.
+     * In most cases, the periods do not overlap. However, since each payment period
+     * is essentially independent the data model allows overlapping periods.
+     * <p>
+     * The start date and end date of the leg are determined from the first and last period.
+     * As such, the periods should be sorted.
+     * @param paymentPeriods  the new value, not empty
+     * @return this, for chaining, not null
+     */
+    public Builder paymentPeriods(List<PaymentPeriod> paymentPeriods) {
+      JodaBeanUtils.notEmpty(paymentPeriods, "paymentPeriods");
+      this.paymentPeriods = paymentPeriods;
+      return this;
+    }
+
+    /**
+     * Sets the {@code paymentPeriods} property in the builder
+     * from an array of objects.
+     * @param paymentPeriods  the new value, not empty
+     * @return this, for chaining, not null
+     */
+    public Builder paymentPeriods(PaymentPeriod... paymentPeriods) {
+      return paymentPeriods(ImmutableList.copyOf(paymentPeriods));
+    }
+
+    /**
+     * Sets the payment events that are associated with the swap leg.
+     * <p>
+     * Payment events include notional exchange and fees.
+     * @param paymentEvents  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder paymentEvents(List<PaymentEvent> paymentEvents) {
+      JodaBeanUtils.notNull(paymentEvents, "paymentEvents");
+      this.paymentEvents = paymentEvents;
+      return this;
+    }
+
+    /**
+     * Sets the {@code paymentEvents} property in the builder
+     * from an array of objects.
+     * @param paymentEvents  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder paymentEvents(PaymentEvent... paymentEvents) {
+      return paymentEvents(ImmutableList.copyOf(paymentEvents));
+    }
+
+    /**
+     * Sets the settlementDate.
+     * @param settlementDate  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder settlementDate(LocalDate settlementDate) {
+      JodaBeanUtils.notNull(settlementDate, "settlementDate");
+      this.settlementDate = settlementDate;
+      return this;
+    }
+
+    /**
+     * Sets the legalEntity.
+     * @param legalEntity  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder legalEntity(LegalEntity legalEntity) {
+      JodaBeanUtils.notNull(legalEntity, "legalEntity");
+      this.legalEntity = legalEntity;
+      return this;
+    }
+
+    /**
+     * Sets the yieldConvention.
+     * @param yieldConvention  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder yieldConvention(YieldConvention yieldConvention) {
+      JodaBeanUtils.notNull(yieldConvention, "yieldConvention");
+      this.yieldConvention = yieldConvention;
+      return this;
+    }
+
+    //-----------------------------------------------------------------------
+    @Override
+    public String toString() {
+      StringBuilder buf = new StringBuilder(192);
+      buf.append("Bond.Builder{");
+      buf.append("paymentPeriods").append('=').append(JodaBeanUtils.toString(paymentPeriods)).append(',').append(' ');
+      buf.append("paymentEvents").append('=').append(JodaBeanUtils.toString(paymentEvents)).append(',').append(' ');
+      buf.append("settlementDate").append('=').append(JodaBeanUtils.toString(settlementDate)).append(',').append(' ');
+      buf.append("legalEntity").append('=').append(JodaBeanUtils.toString(legalEntity)).append(',').append(' ');
+      buf.append("yieldConvention").append('=').append(JodaBeanUtils.toString(yieldConvention));
+      buf.append('}');
+      return buf.toString();
+    }
+
+  }
+
+  ///CLOVER:ON
+  //-------------------------- AUTOGENERATED END --------------------------
+}

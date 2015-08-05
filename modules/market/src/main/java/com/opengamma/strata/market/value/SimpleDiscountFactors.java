@@ -118,6 +118,11 @@ public final class SimpleDiscountFactors
     return curve.getParameterCount();
   }
 
+  @Override
+  public DayCount getDayCount() {
+    return dayCount;
+  }
+
   //-------------------------------------------------------------------------
   @Override
   public double discountFactor(LocalDate date) {

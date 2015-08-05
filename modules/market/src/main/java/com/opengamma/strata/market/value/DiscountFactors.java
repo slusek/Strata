@@ -8,6 +8,7 @@ package com.opengamma.strata.market.value;
 import java.time.LocalDate;
 
 import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.market.curve.CurveName;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.CurveUnitParameterSensitivities;
@@ -54,6 +55,13 @@ public interface DiscountFactors {
    * @return the number of parameters
    */
   public abstract int getParameterCount();
+
+  /**
+   * Gets day count convention of the curve.
+   * 
+   * @return the day count
+   */
+  public abstract DayCount getDayCount();
 
   //-------------------------------------------------------------------------
   /**
