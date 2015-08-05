@@ -15,7 +15,9 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import static com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConventions.USD_FIXED_6M_LIBOR_3M;
+import static com.opengamma.strata.finance.rate.swap.type.FixedOvernightSwapConventions.USD_FIXED_1Y_FED_FUND_OIS;
 import static com.opengamma.strata.basics.index.IborIndices.USD_LIBOR_3M;
+import static com.opengamma.strata.basics.index.OvernightIndices.USD_FED_FUND;
 import static com.opengamma.strata.basics.currency.Currency.USD;
 import static com.opengamma.strata.basics.date.DayCounts.ACT_365F;
 import static org.testng.Assert.assertEquals;
@@ -43,6 +45,7 @@ import com.opengamma.strata.finance.rate.fra.FraTemplate;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapTemplate;
+import com.opengamma.strata.finance.rate.swap.type.FixedOvernightSwapTemplate;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
 import com.opengamma.strata.market.curve.CurveParameterMetadata;
@@ -50,6 +53,7 @@ import com.opengamma.strata.market.curve.DefaultCurveMetadata;
 import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
 import com.opengamma.strata.market.curve.config.CurveNode;
 import com.opengamma.strata.market.curve.config.FixedIborSwapCurveNode;
+import com.opengamma.strata.market.curve.config.FixedOvernightSwapCurveNode;
 import com.opengamma.strata.market.curve.config.FraCurveNode;
 import com.opengamma.strata.market.curve.config.IborFixingDepositCurveNode;
 import com.opengamma.strata.market.key.QuoteKey;
@@ -59,7 +63,7 @@ import com.opengamma.strata.pricer.rate.deposit.DiscountingIborFixingDepositProd
 import com.opengamma.strata.pricer.rate.fra.DiscountingFraTradePricer;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 
-public class CalibrationDiscountingSimpleTest {
+public class CalibrationDiscountingSimple2Test {
   
   private static final LocalDate VALUATION_DATE = LocalDate.of(2015, 7, 21);
   
@@ -70,34 +74,75 @@ public class CalibrationDiscountingSimpleTest {
 
   private static final String SCHEME = "CALIBRATION";
   
-  /** Curve name */
-  private static final String FWD3_NAME = "USD-ALL-LIBOR3M";
+  /** Curve names */
+  private static final String DSCON_NAME = "USD-DSCON-OIS";
+  private static final CurveName DSCON_CURVE_NAME = CurveName.of(DSCON_NAME);
+  private static final String FWD3_NAME = "USD-LIBOR3M-FRAIRS";
   private static final CurveName FWD3_CURVE_NAME = CurveName.of(FWD3_NAME);
+  /** Curves associations to currencies and indices. */
   private static final Map<CurveName, Currency> DSC_NAMES = new HashMap<>();
   private static final Map<CurveName, Index[]> IDX_NAMES = new HashMap<>();
   private static final Map<Index, LocalDateDoubleTimeSeries> TS = new HashMap<>();
   static {
-    DSC_NAMES.put(FWD3_CURVE_NAME, USD);
+    DSC_NAMES.put(DSCON_CURVE_NAME, USD);
     IDX_NAMES.put(FWD3_CURVE_NAME, new Index[] {USD_LIBOR_3M});
+    IDX_NAMES.put(DSCON_CURVE_NAME, new Index[] {USD_FED_FUND});
     TS.put(USD_LIBOR_3M, TS_EMTPY);
+    TS.put(USD_FED_FUND, TS_EMTPY);
   }
 
-  /** Market values for the Fwd 3M USD curve */
+  /** Data for USD-DSCON curve */
+  /* Market values */
+  private static final double[] DSC_MARKET_QUOTES = new double[] {
+    0.00072000, 0.00082000, 0.00093000, 0.00090000, 0.00105000,
+    0.00118500, 0.00318650, 0.00704000, 0.01121500, 0.01515000,
+    0.01845500, 0.02111000, 0.02332000, 0.02513500, 0.02668500 };
+  private static final int DSC_NB_NODES = DSC_MARKET_QUOTES.length;
+  private static final String[] DSC_ID_VALUE = new String[] {
+    "OIS1M", "OIS2M", "OIS3M", "OIS6M", "OIS9M", 
+    "OIS1Y", "OIS2Y", "OIS3Y", "OIS4Y", "OIS5Y",
+    "OIS6Y", "OIS7Y", "OIS8Y", "OIS9Y", "OIS10Y"};
+  /* Nodes */
+  private static final CurveNode[] DSC_NODES = new CurveNode[DSC_NB_NODES];
+  /* Tenors */
+  private static final Period[] DSC_OIS_TENORS = new Period[] {
+    Period.ofMonths(1), Period.ofMonths(2), Period.ofMonths(3), Period.ofMonths(6), Period.ofMonths(9), 
+    Period.ofYears(1), Period.ofYears(2), Period.ofYears(3), Period.ofYears(4), Period.ofYears(5), 
+    Period.ofYears(6), Period.ofYears(7), Period.ofYears(8), Period.ofYears(9), Period.ofYears(10) };
+  private static final int DSC_NB_OIS_NODES = DSC_OIS_TENORS.length;
+  static {
+    for (int i = 0; i < DSC_NB_OIS_NODES; i++) {
+      DSC_NODES[i] = FixedOvernightSwapCurveNode.of(
+          FixedOvernightSwapTemplate.of(Period.ZERO, Tenor.of(DSC_OIS_TENORS[i]), USD_FIXED_1Y_FED_FUND_OIS),
+          QuoteKey.of(StandardId.of(SCHEME, DSC_ID_VALUE[i])));
+    }
+  }
+  
+  /** Data for USD-LIBOR3M curve */
+  /* Market values */
   private static final double[] FWD3_MARKET_QUOTES = new double[] {
-    0.0420, 0.0420, 0.0420, 0.0420, 0.0430, 
-    0.0470, 0.0540, 0.0570, 0.0600 };
+    0.00236600,
+    0.00258250, 0.00296050,
+    0.00294300, 0.00503000, 0.00939150, 0.01380800, 0.01732000,
+    0.02396200, 0.02930000, 0.03195000, 0.03423500, 0.03615500,
+    0.03696850, 0.03734500 };
   private static final int FWD3_NB_NODES = FWD3_MARKET_QUOTES.length;
   private static final String[] FWD3_ID_VALUE = new String[] {
-    "Fixing", "FRA3Mx6M", "FRA6Mx9M", "IRS1Y", "IRS2Y", 
-    "IRS3Y", "IRS5Y", "IRS7Y", "IRS10Y" };
-  /** Nodes for the Fwd 3M USD curve */
+    "Fixing", 
+    "FRA3Mx6M", "FRA6Mx9M", 
+    "IRS1Y", "IRS2Y", "IRS3Y", "IRS4Y", "IRS5Y", 
+    "IRS7Y", "IRS10Y", "IRS12Y", "IRS15Y", "IRS20Y", 
+    "IRS25Y", "IRS30Y" };
+  /* Nodes */
   private static final CurveNode[] FWD3_NODES = new CurveNode[FWD3_NB_NODES];
-  /** Tenors for the Fwd 3M USD swaps */
+  /* Tenors */
   private static final Period[] FWD3_FRA_TENORS = new Period[] { // Period to start
     Period.ofMonths(3), Period.ofMonths(6) };
   private static final int FWD3_NB_FRA_NODES = FWD3_FRA_TENORS.length;
   private static final Period[] FWD3_IRS_TENORS = new Period[] {
-    Period.ofYears(1), Period.ofYears(2), Period.ofYears(3), Period.ofYears(5), Period.ofYears(7), Period.ofYears(10) };
+    Period.ofYears(1), Period.ofYears(2), Period.ofYears(3), Period.ofYears(4), Period.ofYears(5), 
+    Period.ofYears(7), Period.ofYears(10), Period.ofYears(12), Period.ofYears(15), Period.ofYears(20), 
+    Period.ofYears(25), Period.ofYears(30) };
   private static final int FWD3_NB_IRS_NODES = FWD3_IRS_TENORS.length;
   static {
     FWD3_NODES[0] = IborFixingDepositCurveNode.of(IborFixingDepositTemplate.of(USD_LIBOR_3M),
@@ -119,23 +164,33 @@ public class CalibrationDiscountingSimpleTest {
     for (int i = 0; i < FWD3_NB_NODES; i++) {
       ALL_QUOTES.put(QuoteKey.of(StandardId.of(SCHEME, FWD3_ID_VALUE[i])), FWD3_MARKET_QUOTES[i]);
     }
+    for (int i = 0; i < DSC_NB_NODES; i++) {
+      ALL_QUOTES.put(QuoteKey.of(StandardId.of(SCHEME, DSC_ID_VALUE[i])), DSC_MARKET_QUOTES[i]);
+    }
   }
   
   /** All nodes by groups. */
   private static final List<List<CurveNode[]>> CURVES_NODES = new ArrayList<>();
   static {
-    List<CurveNode[]> groupNodes = new ArrayList<>();
-    groupNodes.add(FWD3_NODES);
-    CURVES_NODES.add(groupNodes);
+    List<CurveNode[]> groupDsc = new ArrayList<>();
+    groupDsc.add(DSC_NODES);
+    CURVES_NODES.add(groupDsc);
+    List<CurveNode[]> groupFwd3 = new ArrayList<>();
+    groupFwd3.add(FWD3_NODES);
+    CURVES_NODES.add(groupFwd3);
   }
   
   /** All metadata by groups */
   private static final List<List<CurveMetadata>> CURVES_METADATA = new ArrayList<>();
   static {
-    List<CurveMetadata> groupMetadata = new ArrayList<>();
-    groupMetadata.add(DefaultCurveMetadata.builder().curveName(FWD3_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
+    List<CurveMetadata> groupDsc = new ArrayList<>();
+    groupDsc.add(DefaultCurveMetadata.builder().curveName(DSCON_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
         .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
-    CURVES_METADATA.add(groupMetadata);
+    CURVES_METADATA.add(groupDsc);
+    List<CurveMetadata> groupFwd3 = new ArrayList<>();
+    groupFwd3.add(DefaultCurveMetadata.builder().curveName(FWD3_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
+        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
+    CURVES_METADATA.add(groupFwd3);
   }
   
   private static final DiscountingIborFixingDepositProductPricer FIXING_PRICER = 
@@ -154,8 +209,20 @@ public class CalibrationDiscountingSimpleTest {
     
     Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result = 
         calibration(VALUATION_DATE, CURVES_METADATA, CURVES_NODES, ALL_QUOTES, DSC_NAMES, IDX_NAMES, TS);
-    // Test PV
-    CurveNode[] fwd3Nodes = CURVES_NODES.get(0).get(0);
+    // Test PV Dsc
+    CurveNode[] dscNodes = CURVES_NODES.get(0).get(0);
+    List<Trade> dscTrades = new ArrayList<>();
+    for (int i = 0; i < dscNodes.length; i++) {
+      dscTrades.add(dscNodes[i].trade(VALUATION_DATE, ALL_QUOTES));
+    }
+    // OIS
+    for (int i = 0; i < DSC_NB_OIS_NODES; i++) {
+      MultiCurrencyAmount pvIrs = SWAP_PRICER
+          .presentValue(((SwapTrade) dscTrades.get(i)).getProduct(), result.getFirst());
+      assertEquals(pvIrs.getAmount(USD).getAmount(), 0.0, TOLERANCE_PV);
+    }
+    // Test PV Fwd3
+    CurveNode[] fwd3Nodes = CURVES_NODES.get(1).get(0);
     List<Trade> fwd3Trades = new ArrayList<>();
     for (int i = 0; i < fwd3Nodes.length; i++) {
       fwd3Trades.add(fwd3Nodes[i].trade(VALUATION_DATE, ALL_QUOTES));
@@ -197,7 +264,7 @@ public class CalibrationDiscountingSimpleTest {
       System.out.println("Performance: " + nbTests + " calibrations for 1 curve with 9 nodes in "
           + (endTime - startTime) + " ms.");
     }
-    // Previous run: 290 ms for 100 calibrations (1 curve - 9 nodes)
+    // Previous run: 1400 ms for 100 calibrations (2 curve - 30 nodes)
   }
 
   private Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibration(
@@ -243,8 +310,5 @@ public class CalibrationDiscountingSimpleTest {
         function.calibrate(dataTotal, knownData, discountingNames, indexNames);
     return result;
   }
-  
-  // TODO: Performance
-  // TODO: OIS
   
 }

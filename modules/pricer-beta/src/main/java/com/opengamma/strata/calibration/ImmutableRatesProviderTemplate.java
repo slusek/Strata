@@ -68,6 +68,8 @@ public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
       }
     }
     // Build from existing provider
+    discountingCurves.putAll(knownProvider.getDiscountCurves());
+    indexCurves.putAll(knownProvider.getIndexCurves());
     return knownProvider.toBuilder().discountCurves(discountingCurves).indexCurves(indexCurves).build();
   }
 

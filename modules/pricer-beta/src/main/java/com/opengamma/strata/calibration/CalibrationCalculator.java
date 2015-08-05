@@ -100,10 +100,10 @@ public class CalibrationCalculator {
     // Expand to vector
     double[] result = new double[0];
     for (Pair<CurveName, Integer> nameNb : curveOrder) {
-      CurveUnitParameterSensitivity s = ups.getSensitivity(nameNb.getFirst());
-      if (s != null) {
+      try { // TODO: Improve this; catch is not clean but need a way to know if sensi not present
+        CurveUnitParameterSensitivity s = ups.getSensitivity(nameNb.getFirst());
         result = ArrayUtils.addAll(result, s.getSensitivity());
-      } else {
+      } catch (IllegalArgumentException e) {
         result = ArrayUtils.addAll(result, new double[nameNb.getSecond()]);
       }
     }
