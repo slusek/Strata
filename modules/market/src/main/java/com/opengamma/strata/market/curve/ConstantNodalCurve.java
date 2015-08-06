@@ -16,7 +16,6 @@ import org.joda.beans.Bean;
 import org.joda.beans.BeanBuilder;
 import org.joda.beans.BeanDefinition;
 import org.joda.beans.ImmutableBean;
-import org.joda.beans.ImmutableConstructor;
 import org.joda.beans.JodaBeanUtils;
 import org.joda.beans.MetaProperty;
 import org.joda.beans.Property;
@@ -36,7 +35,7 @@ import com.opengamma.strata.collect.ArgChecker;
  * When queried, {@link #yValue(double)} always returns the constant value.
  * <p>
  * The {@link #getXValues()} method returns a single x-value of 0.
- * The {@link #getXValues()} method returns a single y-value of the constant.
+ * The {@link #getYValues()} method returns a single y-value of the constant.
  * The sensitivity is 1 and the first derivative is 0.
  */
 @BeanDefinition(builderScope = "private")
@@ -51,9 +50,7 @@ public final class ConstantNodalCurve
   @PropertyDefinition(validate = "notNull", overrideGet = true)
   private final CurveMetadata metadata;
   /**
-   * The array of x-values, one for each point.
-   * <p>
-   * This array will contains at least two elements and be of the same length as y-values.
+   * The single y-value.
    */
   @PropertyDefinition(validate = "notNull", get = "private")
   private final double yValue;
@@ -93,14 +90,6 @@ public final class ConstantNodalCurve
   }
 
   //-------------------------------------------------------------------------
-  // restricted constructor
-  @ImmutableConstructor
-  private ConstantNodalCurve(CurveMetadata metadata, double yValue) {
-    JodaBeanUtils.notNull(metadata, "metadata");
-    this.metadata = metadata;
-    this.yValue = yValue;
-  }
-
   // ensure standard constructor is invoked
   private Object readResolve() {
     return new ConstantNodalCurve(metadata, yValue);
@@ -174,6 +163,15 @@ public final class ConstantNodalCurve
    */
   private static final long serialVersionUID = 1L;
 
+  private ConstantNodalCurve(
+      CurveMetadata metadata,
+      double yValue) {
+    JodaBeanUtils.notNull(metadata, "metadata");
+    JodaBeanUtils.notNull(yValue, "yValue");
+    this.metadata = metadata;
+    this.yValue = yValue;
+  }
+
   @Override
   public ConstantNodalCurve.Meta metaBean() {
     return ConstantNodalCurve.Meta.INSTANCE;
@@ -203,9 +201,7 @@ public final class ConstantNodalCurve
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the array of x-values, one for each point.
-   * <p>
-   * This array will contains at least two elements and be of the same length as y-values.
+   * Gets the single y-value.
    * @return the value of the property, not null
    */
   private double getYValue() {

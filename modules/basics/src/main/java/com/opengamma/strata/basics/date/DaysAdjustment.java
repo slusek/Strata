@@ -23,8 +23,6 @@ import org.joda.beans.impl.direct.DirectMetaBean;
 import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
-import com.opengamma.strata.collect.ArgChecker;
-
 /**
  * An adjustment that alters a date by adding a period of days.
  * <p>
@@ -192,7 +190,7 @@ public final class DaysAdjustment
    * The calculation is performed in two steps.
    * <p>
    * Step one, use {@link HolidayCalendar#shift(LocalDate, int)} to add the number of days.
-   * If the holiday calendar is 'None' this will effectively add using simple arithmetic.
+   * If the holiday calendar is 'None' this will effectively add calendar days.
    * <p>
    * Step two, use {@link BusinessDayAdjustment#adjust(LocalDate)} to adjust the result of step one.
    * 
@@ -201,9 +199,24 @@ public final class DaysAdjustment
    */
   @Override
   public LocalDate adjust(LocalDate date) {
-    ArgChecker.notNull(date, "date");
     LocalDate added = calendar.shift(date, days);
     return adjustment.adjust(added);
+  }
+
+  /**
+   * Returns an adjustable date instance resulting from applying this adjustment to a date.
+   * <p>
+   * The number of days of this adjustment is added to the specified date using the
+   * {@link HolidayCalendar#shift(LocalDate, int)}.
+   * If the holiday calendar is 'None' this will effectively add calendar days.
+   * The result is then created from the shifted date and the result of {@link #getAdjustment()}.
+   * 
+   * @param date  the date to adjust
+   * @return the adjusted date
+   */
+  public AdjustableDate toAdjustedDate(LocalDate date) {
+    LocalDate added = calendar.shift(date, days);
+    return AdjustableDate.of(added, adjustment);
   }
 
   /**
@@ -595,7 +608,10 @@ public final class DaysAdjustment
 
     //-----------------------------------------------------------------------
     /**
-     * Sets the {@code days} property in the builder.
+     * Sets the number of days to be added.
+     * <p>
+     * When the adjustment is performed, this amount will be added to the input date
+     * using the calendar to determine the addition type.
      * @param days  the new value, not null
      * @return this, for chaining, not null
      */
@@ -606,7 +622,16 @@ public final class DaysAdjustment
     }
 
     /**
-     * Sets the {@code calendar} property in the builder.
+     * Sets the holiday calendar that defines the meaning of a day when performing the addition.
+     * <p>
+     * When the adjustment is performed, this calendar is used to determine which days are business days.
+     * <p>
+     * If the holiday calendar is 'None' then addition uses simple date addition arithmetic without
+     * considering any days as holidays or weekends.
+     * If the holiday calendar is anything other than 'None' then addition uses that calendar,
+     * effectively repeatedly finding the next business day.
+     * <p>
+     * See the class-level documentation for more information.
      * @param calendar  the new value, not null
      * @return this, for chaining, not null
      */
@@ -617,7 +642,15 @@ public final class DaysAdjustment
     }
 
     /**
-     * Sets the {@code adjustment} property in the builder.
+     * Sets the business day adjustment that is performed to the result of the addition.
+     * <p>
+     * This adjustment is applied to the result of the period addition calculation.
+     * If the addition is performed using business days then any adjustment here is expected to
+     * have a different holiday calendar to that used during addition.
+     * <p>
+     * If no adjustment is required, use the 'None' business day adjustment.
+     * <p>
+     * See the class-level documentation for more information.
      * @param adjustment  the new value, not null
      * @return this, for chaining, not null
      */
