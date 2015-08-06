@@ -128,7 +128,7 @@ public class CalibrationFunction {
         final double[][] thisMatrix = thisPair.getSecond().getData();
         loopc2 = 0;
         for (Pair<CurveName, Integer> pair2 : curveOrderBefore) { // k
-          if (thisBlockCurves.contains(pair2)) { // If not, the matrix stay with 0
+          if (thisBlockCurves.contains(pair2.getFirst().toString())) { // If not, the matrix stay with 0
             final Integer start = thisBlock.getStart(pair2.getFirst().toString());
             for (int loopp = 0; loopp < nbParametersBefore[loopc]; loopp++) {
               System.arraycopy(thisMatrix[loopp], start, transition[startIndexBefore[loopc] + loopp],
