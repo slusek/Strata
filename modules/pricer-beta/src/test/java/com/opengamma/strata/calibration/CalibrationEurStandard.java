@@ -37,6 +37,7 @@ import com.opengamma.strata.finance.rate.swap.type.FixedOvernightSwapTemplate;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
 import com.opengamma.strata.market.curve.DefaultCurveMetadata;
+import com.opengamma.strata.market.curve.SimpleCurveNodeMetadata;
 import com.opengamma.strata.market.curve.config.CurveNode;
 import com.opengamma.strata.market.curve.config.FixedIborSwapCurveNode;
 import com.opengamma.strata.market.curve.config.FixedOvernightSwapCurveNode;
@@ -93,29 +94,41 @@ public class CalibrationEurStandard {
     String[] dscIdValues = dscIdValues(dscOisTenors);
     /* Curve EUR-EURIBOR-3M */
     double[] fwd3MarketQuotes = fwdMarketQuotes(fwd3FixingQuote, fwd3FraQuotes, fwd3IrsQuotes);
-    String[] fwd3IdValue = fwdIdValue(3, fwd3FixingQuote, fwd3FraQuotes, fwd3IrsQuotes, fwd3FraTenors, fwd3IrsTenors);
+    String[] fwd3IdValues = fwdIdValue(3, fwd3FixingQuote, fwd3FraQuotes, fwd3IrsQuotes, fwd3FraTenors, fwd3IrsTenors);
     /* Curve EUR-EURIBOR-6M */
     double[] fwd6MarketQuotes = fwdMarketQuotes(fwd6FixingQuote, fwd6FraQuotes, fwd6IrsQuotes);
-    String[] fwd6IdValue = fwdIdValue(6, fwd6FixingQuote, fwd6FraQuotes, fwd6IrsQuotes, fwd6FraTenors, fwd6IrsTenors);
+    String[] fwd6IdValues = fwdIdValue(6, fwd6FixingQuote, fwd6FraQuotes, fwd6IrsQuotes, fwd6FraTenors, fwd6IrsTenors);
     /* All quotes for the curve calibration */
     Map<ObservableKey, Double> allQuotes = 
-        allQuotes(dscOisQuotes, dscIdValues, fwd3MarketQuotes, fwd3IdValue, fwd6MarketQuotes, fwd6IdValue);
+        allQuotes(dscOisQuotes, dscIdValues, fwd3MarketQuotes, fwd3IdValues, fwd6MarketQuotes, fwd6IdValues);
     /* All nodes by groups. */
     List<List<CurveNode[]>> curvesNodes = curvesNodes(
-        dscOisTenors, dscIdValues, fwd3FraTenors, fwd3IrsTenors, fwd3IdValue, fwd6FraTenors, fwd6IrsTenors, fwd6IdValue);
+        dscOisTenors, dscIdValues, fwd3FraTenors, fwd3IrsTenors, fwd3IdValues, fwd6FraTenors, fwd6IrsTenors, fwd6IdValues);
     /* All metadata by groups */
     List<List<CurveMetadata>> curvesMetadata = new ArrayList<>();
     List<CurveMetadata> groupDscMeta = new ArrayList<>();
+    List<SimpleCurveNodeMetadata> paramDscMeta = new ArrayList<>();
+    for (int i = 0; i < dscIdValues.length; i++) {
+      paramDscMeta.add(SimpleCurveNodeMetadata.of(valuationDate, dscIdValues[i]));
+    }
     groupDscMeta.add(DefaultCurveMetadata.builder().curveName(DSCON_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
+        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramDscMeta).build());
     curvesMetadata.add(groupDscMeta);
     List<CurveMetadata> groupFwd3Meta = new ArrayList<>();
+    List<SimpleCurveNodeMetadata> paramFwd3Meta = new ArrayList<>();
+    for (int i = 0; i < fwd3IdValues.length; i++) {
+      paramFwd3Meta.add(SimpleCurveNodeMetadata.of(valuationDate, fwd3IdValues[i]));
+    }
     groupFwd3Meta.add(DefaultCurveMetadata.builder().curveName(FWD3_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
+        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramFwd3Meta).build());
     curvesMetadata.add(groupFwd3Meta);
     List<CurveMetadata> groupFwd6Meta = new ArrayList<>();
+    List<SimpleCurveNodeMetadata> paramFwd6Meta = new ArrayList<>();
+    for (int i = 0; i < fwd6IdValues.length; i++) {
+      paramFwd6Meta.add(SimpleCurveNodeMetadata.of(valuationDate, fwd6IdValues[i]));
+    }
     groupFwd6Meta.add(DefaultCurveMetadata.builder().curveName(FWD6_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
+        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramFwd6Meta).build());
     curvesMetadata.add(groupFwd6Meta);
     /* Results */
     return CalibrationUtils.calibration(valuationDate, curvesMetadata, curvesNodes, allQuotes, DSC_NAMES, IDX_NAMES, TS);
