@@ -9,8 +9,10 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 
@@ -43,15 +45,16 @@ import com.opengamma.strata.finance.rate.fra.FraTemplate;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapTemplate;
+import com.opengamma.strata.market.curve.CurveGroupName;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
-import com.opengamma.strata.market.curve.CurveParameterMetadata;
 import com.opengamma.strata.market.curve.DefaultCurveMetadata;
-import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
+import com.opengamma.strata.market.curve.config.CurveGroupConfig;
 import com.opengamma.strata.market.curve.config.CurveNode;
 import com.opengamma.strata.market.curve.config.FixedIborSwapCurveNode;
 import com.opengamma.strata.market.curve.config.FraCurveNode;
 import com.opengamma.strata.market.curve.config.IborFixingDepositCurveNode;
+import com.opengamma.strata.market.curve.config.InterpolatedCurveConfig;
 import com.opengamma.strata.market.key.QuoteKey;
 import com.opengamma.strata.market.value.ValueType;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
@@ -71,15 +74,19 @@ public class CalibrationDiscountingSimple1Test {
   private static final String SCHEME = "CALIBRATION";
   
   /** Curve name */
-  private static final String FWD3_NAME = "USD-ALL-FRAIRS3M";
-  private static final CurveName FWD3_CURVE_NAME = CurveName.of(FWD3_NAME);
+  private static final String ALL_NAME = "USD-ALL-FRAIRS3M";
+  private static final CurveName ALL_CURVE_NAME = CurveName.of(ALL_NAME);
   /** Curves associations to currencies and indices. */
   private static final Map<CurveName, Currency> DSC_NAMES = new HashMap<>();
-  private static final Map<CurveName, Index[]> IDX_NAMES = new HashMap<>();
+  private static final Map<CurveName, Set<Index>> IDX_NAMES = new HashMap<>();
+  private static final Set<Index> IBOR_INDICES = new HashSet<>();
+  static {
+    IBOR_INDICES.add(USD_LIBOR_3M);
+  }
   private static final Map<Index, LocalDateDoubleTimeSeries> TS = new HashMap<>();
   static {
-    DSC_NAMES.put(FWD3_CURVE_NAME, USD);
-    IDX_NAMES.put(FWD3_CURVE_NAME, new Index[] {USD_LIBOR_3M});
+    DSC_NAMES.put(ALL_CURVE_NAME, USD);
+    IDX_NAMES.put(ALL_CURVE_NAME, IBOR_INDICES);
     TS.put(USD_LIBOR_3M, TS_EMTPY);
   }
 
@@ -92,7 +99,7 @@ public class CalibrationDiscountingSimple1Test {
     "Fixing", "FRA3Mx6M", "FRA6Mx9M", "IRS1Y", "IRS2Y", 
     "IRS3Y", "IRS5Y", "IRS7Y", "IRS10Y" };
   /** Nodes for the Fwd 3M USD curve */
-  private static final CurveNode[] FWD3_NODES = new CurveNode[FWD3_NB_NODES];
+  private static final CurveNode[] ALL_NODES = new CurveNode[FWD3_NB_NODES];
   /** Tenors for the Fwd 3M USD swaps */
   private static final Period[] FWD3_FRA_TENORS = new Period[] { // Period to start
     Period.ofMonths(3), Period.ofMonths(6) };
@@ -101,14 +108,14 @@ public class CalibrationDiscountingSimple1Test {
     Period.ofYears(1), Period.ofYears(2), Period.ofYears(3), Period.ofYears(5), Period.ofYears(7), Period.ofYears(10) };
   private static final int FWD3_NB_IRS_NODES = FWD3_IRS_TENORS.length;
   static {
-    FWD3_NODES[0] = IborFixingDepositCurveNode.of(IborFixingDepositTemplate.of(USD_LIBOR_3M),
+    ALL_NODES[0] = IborFixingDepositCurveNode.of(IborFixingDepositTemplate.of(USD_LIBOR_3M),
         QuoteKey.of(StandardId.of(SCHEME, FWD3_ID_VALUE[0])));
     for (int i = 0; i < FWD3_NB_FRA_NODES; i++) {
-      FWD3_NODES[i + 1] = FraCurveNode.of(FraTemplate.of(FWD3_FRA_TENORS[i], USD_LIBOR_3M),
+      ALL_NODES[i + 1] = FraCurveNode.of(FraTemplate.of(FWD3_FRA_TENORS[i], USD_LIBOR_3M),
           QuoteKey.of(StandardId.of(SCHEME, FWD3_ID_VALUE[1])));
     }
     for (int i = 0; i < FWD3_NB_IRS_NODES; i++) {
-      FWD3_NODES[i + 1 + FWD3_NB_FRA_NODES] = FixedIborSwapCurveNode.of(
+      ALL_NODES[i + 1 + FWD3_NB_FRA_NODES] = FixedIborSwapCurveNode.of(
           FixedIborSwapTemplate.of(Period.ZERO, Tenor.of(FWD3_IRS_TENORS[i]), USD_FIXED_6M_LIBOR_3M),
           QuoteKey.of(StandardId.of(SCHEME, FWD3_ID_VALUE[i])));
     }
@@ -126,7 +133,7 @@ public class CalibrationDiscountingSimple1Test {
   private static final List<List<CurveNode[]>> CURVES_NODES = new ArrayList<>();
   static {
     List<CurveNode[]> groupNodes = new ArrayList<>();
-    groupNodes.add(FWD3_NODES);
+    groupNodes.add(ALL_NODES);
     CURVES_NODES.add(groupNodes);
   }
   
@@ -134,7 +141,7 @@ public class CalibrationDiscountingSimple1Test {
   private static final List<List<CurveMetadata>> CURVES_METADATA = new ArrayList<>();
   static {
     List<CurveMetadata> groupMetadata = new ArrayList<>();
-    groupMetadata.add(DefaultCurveMetadata.builder().curveName(FWD3_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
+    groupMetadata.add(DefaultCurveMetadata.builder().curveName(ALL_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
         .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).build());
     CURVES_METADATA.add(groupMetadata);
   }
@@ -146,15 +153,35 @@ public class CalibrationDiscountingSimple1Test {
   private static final DiscountingSwapProductPricer SWAP_PRICER =
       DiscountingSwapProductPricer.DEFAULT;
   
+  private static final CalibrationCalculator CALIBRATION_CALCULATOR = DefaultCalibrationCalculator.DEFAULT;
+  private static final CurveCalibrator CALIBRATOR = new CurveCalibrator(1.0E-9, 1.0E-9, 100, CALIBRATION_CALCULATOR);
+  
   // Constants
   private static final double TOLERANCE_PV = 1.0E-6;
   
-  @SuppressWarnings("unused")
+  /** Test with CurveGroupConfig */
+  private static final String CURVE_GROUP_NAME_STR = "USD-SINGLE-CURVE";
+  private static final CurveGroupName CURVE_GROUP_NAME = CurveGroupName.of(CURVE_GROUP_NAME_STR);
+  private static final InterpolatedCurveConfig CURVE_CONFIG =
+      InterpolatedCurveConfig.builder()
+          .name(ALL_CURVE_NAME)
+          .xValueType(ValueType.YEAR_FRACTION)
+          .yValueType(ValueType.ZERO_RATE)
+          .dayCount(CURVE_DC)
+          .interpolator(INTERPOLATOR_LINEAR)
+          .leftExtrapolator(EXTRAPOLATOR_FLAT)
+          .rightExtrapolator(EXTRAPOLATOR_FLAT)
+          .nodes(ALL_NODES).build();
+  private static final CurveGroupConfig CURVE_GROUP_CONFIG =
+      CurveGroupConfig.builder()
+          .name(CURVE_GROUP_NAME)
+          .addCurve(CURVE_CONFIG, USD, USD_LIBOR_3M).build();
+  
   @Test
-  public void calibration_present_value() {
+  public void calibration_present_value() {  
     
-    Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result = 
-        calibration(VALUATION_DATE, CURVES_METADATA, CURVES_NODES, ALL_QUOTES, DSC_NAMES, IDX_NAMES, TS);
+    Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result2 = 
+        CALIBRATOR.calibrate(VALUATION_DATE, CURVE_GROUP_CONFIG, ALL_QUOTES, TS, FxMatrix.empty());
     // Test PV
     CurveNode[] fwd3Nodes = CURVES_NODES.get(0).get(0);
     List<Trade> fwd3Trades = new ArrayList<>();
@@ -162,24 +189,23 @@ public class CalibrationDiscountingSimple1Test {
       fwd3Trades.add(fwd3Nodes[i].trade(VALUATION_DATE, ALL_QUOTES));
     }
     // Fixing 
-    CurrencyAmount pvFixing = 
-        FIXING_PRICER.presentValue(((IborFixingDepositTrade) fwd3Trades.get(0)).getProduct(), result.getFirst());
-    assertEquals(pvFixing.getAmount(), 0.0, TOLERANCE_PV);
+    CurrencyAmount pvFixing2 = 
+        FIXING_PRICER.presentValue(((IborFixingDepositTrade) fwd3Trades.get(0)).getProduct(), result2.getFirst());
+    assertEquals(pvFixing2.getAmount(), 0.0, TOLERANCE_PV);
     // FRA
     for (int i = 0; i < FWD3_NB_FRA_NODES; i++) {
-      CurrencyAmount pvFra = 
-          FRA_PRICER.presentValue(((FraTrade) fwd3Trades.get(i + 1)), result.getFirst());
-      assertEquals(pvFra.getAmount(), 0.0, TOLERANCE_PV);
+      CurrencyAmount pvFra2 = 
+          FRA_PRICER.presentValue(((FraTrade) fwd3Trades.get(i + 1)), result2.getFirst());
+      assertEquals(pvFra2.getAmount(), 0.0, TOLERANCE_PV);
     }
     // IRS
     for (int i = 0; i < FWD3_NB_IRS_NODES; i++) {
-      MultiCurrencyAmount pvIrs = SWAP_PRICER
-          .presentValue(((SwapTrade) fwd3Trades.get(i + 1 + FWD3_NB_FRA_NODES)).getProduct(), result.getFirst());
-      assertEquals(pvIrs.getAmount(USD).getAmount(), 0.0, TOLERANCE_PV);
+      MultiCurrencyAmount pvIrs2 = SWAP_PRICER
+          .presentValue(((SwapTrade) fwd3Trades.get(i + 1 + FWD3_NB_FRA_NODES)).getProduct(), result2.getFirst());
+      assertEquals(pvIrs2.getAmount(USD).getAmount(), 0.0, TOLERANCE_PV);
     }
-    
-    int t = 0;
   }
+
 
   @SuppressWarnings("unused")
   @Test(enabled = false)
@@ -191,58 +217,14 @@ public class CalibrationDiscountingSimple1Test {
     for (int i = 0; i < nbRep; i++) {
       startTime = System.currentTimeMillis();
       for (int looprep = 0; looprep < nbTests; looprep++) {
-        Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result =
-            calibration(VALUATION_DATE, CURVES_METADATA, CURVES_NODES, ALL_QUOTES, DSC_NAMES, IDX_NAMES, TS);
+        Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result = 
+            CALIBRATOR.calibrate(VALUATION_DATE, CURVE_GROUP_CONFIG, ALL_QUOTES, TS, FxMatrix.empty());
       }
       endTime = System.currentTimeMillis();
       System.out.println("Performance: " + nbTests + " calibrations for 1 curve with 9 nodes in "
           + (endTime - startTime) + " ms.");
     }
     // Previous run: 290 ms for 100 calibrations (1 curve - 9 nodes)
-  }
-
-  private Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibration(
-      LocalDate valuationDate,
-      List<List<CurveMetadata>> curvesMetadata,
-      List<List<CurveNode[]>> curvesNodes, 
-      Map<ObservableKey, Double> quotes,
-      Map<CurveName, Currency> discountingNames,
-      Map<CurveName, Index[]> indexNames,
-      Map<Index, LocalDateDoubleTimeSeries> timeSeries) {
-    List<List<CalibrationCurveData>> dataTotal = new ArrayList<>();
-    for (int loopgroup = 0; loopgroup < curvesMetadata.size(); loopgroup++) {
-      List<CurveMetadata> groupMetadata = curvesMetadata.get(loopgroup);
-      List<CalibrationCurveData> dataGroup = new ArrayList<>();
-      for (int loopcurve = 0; loopcurve < groupMetadata.size(); loopcurve++) {
-        CurveMetadata curveMetadata = groupMetadata.get(loopcurve);
-        CurveNode[] curveNodes = curvesNodes.get(loopgroup).get(loopcurve);
-        int nbNodes = curveNodes.length;
-        double[] curveTimes = new double[nbNodes];
-        CurveParameterMetadata[] curveParamMetadata = new CurveParameterMetadata[nbNodes];
-        List<Trade> curveTrades = new ArrayList<>();
-        List<Double> curveGuesses = new ArrayList<>();
-        for (int i = 0; i < nbNodes; i++) {
-          curveParamMetadata[i] = curveNodes[i].metadata(valuationDate);
-          curveTimes[i] = curveMetadata.getDayCount().get()
-              .yearFraction(valuationDate, ((TenorCurveNodeMetadata) curveParamMetadata[i]).getDate());
-          curveTrades.add(curveNodes[i].trade(valuationDate, quotes));
-          curveGuesses.add(0.0d);
-        }
-        InterpolatedCurveTemplate template = new InterpolatedCurveTemplate(
-            curveMetadata, curveTimes, EXTRAPOLATOR_FLAT, INTERPOLATOR_LINEAR, EXTRAPOLATOR_FLAT);
-        CalibrationCurveData data = new CalibrationCurveData(template, curveTrades, curveGuesses);
-        dataGroup.add(data);
-      }
-      dataTotal.add(dataGroup);
-    }
-    ImmutableRatesProvider knownData = ImmutableRatesProvider.builder()
-        .valuationDate(valuationDate)
-        .fxMatrix(FxMatrix.empty()).timeSeries(timeSeries).build();
-    CalibrationCalculator calculator = DefaultCalibrationCalculator.DEFAULT;
-    CurveCalibrator function = new CurveCalibrator(1.0E-9, 1.0E-9, 100, calculator);
-    Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result =
-        function.calibrate(dataTotal, knownData, discountingNames, indexNames);
-    return result;
   }
   
 }

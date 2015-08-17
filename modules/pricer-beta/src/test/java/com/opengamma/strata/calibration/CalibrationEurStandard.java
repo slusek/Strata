@@ -16,16 +16,21 @@ import static com.opengamma.strata.finance.rate.swap.type.FixedOvernightSwapConv
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.opengamma.analytics.financial.provider.curve.CurveBuildingBlockBundle;
+import com.opengamma.analytics.math.interpolation.FlatExtrapolator1D;
+import com.opengamma.analytics.math.interpolation.LinearInterpolator1D;
 import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.basics.currency.FxMatrix;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.basics.date.Tenor;
 import com.opengamma.strata.basics.index.Index;
+import com.opengamma.strata.basics.interpolator.CurveExtrapolator;
+import com.opengamma.strata.basics.interpolator.CurveInterpolator;
 import com.opengamma.strata.basics.market.ObservableKey;
 import com.opengamma.strata.collect.id.StandardId;
 import com.opengamma.strata.collect.timeseries.LocalDateDoubleTimeSeries;
@@ -34,15 +39,15 @@ import com.opengamma.strata.finance.rate.deposit.IborFixingDepositTemplate;
 import com.opengamma.strata.finance.rate.fra.FraTemplate;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapTemplate;
 import com.opengamma.strata.finance.rate.swap.type.FixedOvernightSwapTemplate;
-import com.opengamma.strata.market.curve.CurveMetadata;
+import com.opengamma.strata.market.curve.CurveGroupName;
 import com.opengamma.strata.market.curve.CurveName;
-import com.opengamma.strata.market.curve.DefaultCurveMetadata;
-import com.opengamma.strata.market.curve.SimpleCurveNodeMetadata;
+import com.opengamma.strata.market.curve.config.CurveGroupConfig;
 import com.opengamma.strata.market.curve.config.CurveNode;
 import com.opengamma.strata.market.curve.config.FixedIborSwapCurveNode;
 import com.opengamma.strata.market.curve.config.FixedOvernightSwapCurveNode;
 import com.opengamma.strata.market.curve.config.FraCurveNode;
 import com.opengamma.strata.market.curve.config.IborFixingDepositCurveNode;
+import com.opengamma.strata.market.curve.config.InterpolatedCurveConfig;
 import com.opengamma.strata.market.key.QuoteKey;
 import com.opengamma.strata.market.value.ValueType;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
@@ -62,19 +67,32 @@ public class CalibrationEurStandard {
   public static final CurveName FWD3_CURVE_NAME = CurveName.of(FWD3_NAME);
   private static final String FWD6_NAME = "EUR_EURIBOR_6M";
   public static final CurveName FWD6_CURVE_NAME = CurveName.of(FWD6_NAME);
+  private static final String CURVE_GROUP_NAME_STR = "EUR-DSCON-EURIBOR3M-EURIBOR6M";
+  private static final CurveGroupName CURVE_GROUP_NAME = CurveGroupName.of(CURVE_GROUP_NAME_STR);
   /** Curves associations to currencies and indices. */
   private static final Map<CurveName, Currency> DSC_NAMES = new HashMap<>();
-  private static final Map<CurveName, Index[]> IDX_NAMES = new HashMap<>();
+  private static final Map<CurveName, Set<Index>> IDX_NAMES = new HashMap<>();
   private static final Map<Index, LocalDateDoubleTimeSeries> TS = new HashMap<>();
   static {
     DSC_NAMES.put(DSCON_CURVE_NAME, EUR);
-    IDX_NAMES.put(DSCON_CURVE_NAME, new Index[] {EUR_EONIA});
-    IDX_NAMES.put(FWD3_CURVE_NAME, new Index[] {EUR_EURIBOR_3M});
-    IDX_NAMES.put(FWD6_CURVE_NAME, new Index[] {EUR_EURIBOR_6M});
+    Set<Index> eurEoniaSet = new HashSet<>();
+    eurEoniaSet.add(EUR_EONIA);
+    IDX_NAMES.put(DSCON_CURVE_NAME, eurEoniaSet);
+    Set<Index> eurEuribor3Set = new HashSet<>();
+    eurEuribor3Set.add(EUR_EURIBOR_3M);
+    IDX_NAMES.put(FWD3_CURVE_NAME, eurEuribor3Set);
+    Set<Index> eurEuriabor6Set = new HashSet<>();
+    eurEuriabor6Set.add(EUR_EURIBOR_6M);
+    IDX_NAMES.put(FWD6_CURVE_NAME, eurEuriabor6Set);
     TS.put(EUR_EURIBOR_3M, TS_EMTPY);
     TS.put(EUR_EURIBOR_6M, TS_EMTPY);
     TS.put(EUR_EONIA, TS_EMTPY);
   }
+  private static final CurveInterpolator INTERPOLATOR_LINEAR = new LinearInterpolator1D();
+  private static final CurveExtrapolator EXTRAPOLATOR_FLAT = new FlatExtrapolator1D();
+  
+  private static final CalibrationCalculator CALIBRATION_CALCULATOR = DefaultCalibrationCalculator.DEFAULT;
+  private static final CurveCalibrator CALIBRATOR = new CurveCalibrator(1.0E-9, 1.0E-9, 100, CALIBRATION_CALCULATOR);
 
   public static Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibrateEurStandard(
       LocalDate valuationDate,
@@ -102,36 +120,10 @@ public class CalibrationEurStandard {
     Map<ObservableKey, Double> allQuotes = 
         allQuotes(dscOisQuotes, dscIdValues, fwd3MarketQuotes, fwd3IdValues, fwd6MarketQuotes, fwd6IdValues);
     /* All nodes by groups. */
-    List<List<CurveNode[]>> curvesNodes = curvesNodes(
-        dscOisTenors, dscIdValues, fwd3FraTenors, fwd3IrsTenors, fwd3IdValues, fwd6FraTenors, fwd6IrsTenors, fwd6IdValues);
-    /* All metadata by groups */
-    List<List<CurveMetadata>> curvesMetadata = new ArrayList<>();
-    List<CurveMetadata> groupDscMeta = new ArrayList<>();
-    List<SimpleCurveNodeMetadata> paramDscMeta = new ArrayList<>();
-    for (int i = 0; i < dscIdValues.length; i++) {
-      paramDscMeta.add(SimpleCurveNodeMetadata.of(valuationDate, dscIdValues[i]));
-    }
-    groupDscMeta.add(DefaultCurveMetadata.builder().curveName(DSCON_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramDscMeta).build());
-    curvesMetadata.add(groupDscMeta);
-    List<CurveMetadata> groupFwd3Meta = new ArrayList<>();
-    List<SimpleCurveNodeMetadata> paramFwd3Meta = new ArrayList<>();
-    for (int i = 0; i < fwd3IdValues.length; i++) {
-      paramFwd3Meta.add(SimpleCurveNodeMetadata.of(valuationDate, fwd3IdValues[i]));
-    }
-    groupFwd3Meta.add(DefaultCurveMetadata.builder().curveName(FWD3_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramFwd3Meta).build());
-    curvesMetadata.add(groupFwd3Meta);
-    List<CurveMetadata> groupFwd6Meta = new ArrayList<>();
-    List<SimpleCurveNodeMetadata> paramFwd6Meta = new ArrayList<>();
-    for (int i = 0; i < fwd6IdValues.length; i++) {
-      paramFwd6Meta.add(SimpleCurveNodeMetadata.of(valuationDate, fwd6IdValues[i]));
-    }
-    groupFwd6Meta.add(DefaultCurveMetadata.builder().curveName(FWD6_CURVE_NAME).xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.ZERO_RATE).dayCount(CURVE_DC).parameterMetadata(paramFwd6Meta).build());
-    curvesMetadata.add(groupFwd6Meta);
+    CurveGroupConfig config = config(dscOisTenors, dscIdValues, fwd3FraTenors, fwd3IrsTenors, fwd3IdValues, 
+        fwd6FraTenors, fwd6IrsTenors, fwd6IdValues);
     /* Results */
-    return CalibrationUtils.calibration(valuationDate, curvesMetadata, curvesNodes, allQuotes, DSC_NAMES, IDX_NAMES, TS);
+    return CALIBRATOR.calibrate(valuationDate, config, allQuotes, TS, FxMatrix.empty());
   }
 
   public static String[] dscIdValues(Period[] dscOisTenors) {
@@ -174,7 +166,7 @@ public class CalibrationEurStandard {
     return fwdMarketQuotes;
   }
   
-  public static List<List<CurveNode[]>> curvesNodes(
+  public static CurveGroupConfig config(
       Period[] dscOisTenors, 
       String[] dscIdValues,
       Period[] fwd3FraTenors, 
@@ -182,7 +174,7 @@ public class CalibrationEurStandard {
       String[] fwd3IdValues,
       Period[] fwd6FraTenors, 
       Period[] fwd6IrsTenors, 
-      String[] fwd6IdValues){
+      String[] fwd6IdValues) {
     CurveNode[] dscNodes = new CurveNode[dscOisTenors.length];
     for (int i = 0; i < dscOisTenors.length; i++) {
       dscNodes[i] = FixedOvernightSwapCurveNode.of(
@@ -213,17 +205,41 @@ public class CalibrationEurStandard {
           FixedIborSwapTemplate.of(Period.ZERO, Tenor.of(fwd6IrsTenors[i]), EUR_FIXED_1Y_EURIBOR_6M),
           QuoteKey.of(StandardId.of(SCHEME, fwd6IdValues[i + 1])));
     }    
-    List<List<CurveNode[]>> curvesNodes = new ArrayList<>();
-    List<CurveNode[]> groupDsc = new ArrayList<>();
-    groupDsc.add(dscNodes);
-    curvesNodes.add(groupDsc);
-    List<CurveNode[]> groupFwd3 = new ArrayList<>();
-    groupFwd3.add(fwd3Nodes);
-    curvesNodes.add(groupFwd3);
-    List<CurveNode[]> groupFwd6 = new ArrayList<>();
-    groupFwd6.add(fwd6Nodes);
-    curvesNodes.add(groupFwd6);    
-    return curvesNodes;
+    InterpolatedCurveConfig DSC_CURVE_CONFIG =
+        InterpolatedCurveConfig.builder()
+            .name(DSCON_CURVE_NAME)
+            .xValueType(ValueType.YEAR_FRACTION)
+            .yValueType(ValueType.ZERO_RATE)
+            .dayCount(CURVE_DC)
+            .interpolator(INTERPOLATOR_LINEAR)
+            .leftExtrapolator(EXTRAPOLATOR_FLAT)
+            .rightExtrapolator(EXTRAPOLATOR_FLAT)
+            .nodes(dscNodes).build();
+    InterpolatedCurveConfig FWD3_CURVE_CONFIG =
+        InterpolatedCurveConfig.builder()
+            .name(FWD3_CURVE_NAME)
+            .xValueType(ValueType.YEAR_FRACTION)
+            .yValueType(ValueType.ZERO_RATE)
+            .dayCount(CURVE_DC)
+            .interpolator(INTERPOLATOR_LINEAR)
+            .leftExtrapolator(EXTRAPOLATOR_FLAT)
+            .rightExtrapolator(EXTRAPOLATOR_FLAT)
+            .nodes(fwd3Nodes).build();
+    InterpolatedCurveConfig FWD6_CURVE_CONFIG =
+        InterpolatedCurveConfig.builder()
+            .name(FWD6_CURVE_NAME)
+            .xValueType(ValueType.YEAR_FRACTION)
+            .yValueType(ValueType.ZERO_RATE)
+            .dayCount(CURVE_DC)
+            .interpolator(INTERPOLATOR_LINEAR)
+            .leftExtrapolator(EXTRAPOLATOR_FLAT)
+            .rightExtrapolator(EXTRAPOLATOR_FLAT)
+            .nodes(fwd6Nodes).build();
+    return CurveGroupConfig.builder()
+            .name(CURVE_GROUP_NAME)
+            .addCurve(DSC_CURVE_CONFIG, EUR, EUR_EONIA)
+            .addForwardCurve(FWD3_CURVE_CONFIG, EUR_EURIBOR_3M)
+            .addForwardCurve(FWD6_CURVE_CONFIG, EUR_EURIBOR_6M).build();
   }
   
   public static Map<ObservableKey, Double> allQuotes(

@@ -8,6 +8,7 @@ package com.opengamma.strata.calibration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.index.Index;
@@ -30,13 +31,13 @@ public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
   private final Map<CurveName, Currency> discountingNames;
   /** The map between curve name and indices for forward. The map should contains all the curve in the template
    * list but may have more names that the curve template list. Only the curves in the templates list are created.*/
-  private final Map<CurveName, Index[]> forwardNames;
+  private final Map<CurveName, Set<Index>> forwardNames;
 
   public ImmutableRatesProviderTemplate(
       ImmutableRatesProvider knownProvider, 
       List<CurveTemplate> curveTemplates, 
       Map<CurveName, Currency> discountingMap, 
-      Map<CurveName, Index[]> forwardMap) {
+      Map<CurveName, Set<Index>> forwardMap) {
     this.knownProvider = knownProvider;
     this.curveTemplates = curveTemplates;
     this.discountingNames = discountingMap;
@@ -65,7 +66,7 @@ public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
       if(ccy != null) {
         discountingCurves.put(ccy, curves[i]);
       }
-      Index[] indices = forwardNames.get(name);
+      Set<Index> indices = forwardNames.get(name);
       for(Index index:indices) {
         indexCurves.put(index, curves[i]);
       }

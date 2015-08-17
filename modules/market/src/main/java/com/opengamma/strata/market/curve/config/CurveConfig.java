@@ -8,6 +8,7 @@ package com.opengamma.strata.market.curve.config;
 import java.time.LocalDate;
 import java.time.Period;
 
+import com.google.common.collect.ImmutableList;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
 
@@ -42,4 +43,12 @@ public interface CurveConfig {
    * @return the metadata
    */
   public abstract CurveMetadata metadata(LocalDate valuationDate);
+  
+  /**
+   * Gets the nodes in the curve config.
+   * <p>
+   * The nodes are used to calibrate the curve.
+   * @return the nodes
+   */
+  public abstract ImmutableList<CurveNode> getNodes();
 }

@@ -84,7 +84,7 @@ public final class InterpolatedCurveConfig
    * <p>
    * The nodes are used to find the par rates and calibrate the curve.
    */
-  @PropertyDefinition(validate = "notNull", builderType = "List<? extends CurveNode>")
+  @PropertyDefinition(validate = "notNull", builderType = "List<? extends CurveNode>", overrideGet = true)
   private final ImmutableList<CurveNode> nodes;
   /**
    * The interpolator used to find points on the curve.
@@ -243,6 +243,7 @@ public final class InterpolatedCurveConfig
    * The nodes are used to find the par rates and calibrate the curve.
    * @return the value of the property, not null
    */
+  @Override
   public ImmutableList<CurveNode> getNodes() {
     return nodes;
   }

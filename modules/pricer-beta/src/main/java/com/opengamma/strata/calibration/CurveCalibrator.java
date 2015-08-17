@@ -5,12 +5,17 @@
  */
 package com.opengamma.strata.calibration;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableList;
 import com.opengamma.analytics.financial.provider.curve.CurveBuildingBlock;
 import com.opengamma.analytics.financial.provider.curve.CurveBuildingBlockBundle;
 import com.opengamma.analytics.math.function.Function1D;
@@ -21,10 +26,21 @@ import com.opengamma.analytics.math.matrix.DoubleMatrix2D;
 import com.opengamma.analytics.math.matrix.MatrixAlgebra;
 import com.opengamma.analytics.math.rootfinding.newton.BroydenVectorRootFinder;
 import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.basics.currency.FxMatrix;
 import com.opengamma.strata.basics.index.Index;
+import com.opengamma.strata.basics.market.ObservableKey;
+import com.opengamma.strata.collect.ArgChecker;
+import com.opengamma.strata.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.strata.collect.tuple.Pair;
 import com.opengamma.strata.finance.Trade;
+import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
+import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
+import com.opengamma.strata.market.curve.config.CurveConfig;
+import com.opengamma.strata.market.curve.config.CurveGroupConfig;
+import com.opengamma.strata.market.curve.config.CurveGroupEntry;
+import com.opengamma.strata.market.curve.config.CurveNode;
+import com.opengamma.strata.market.curve.config.InterpolatedCurveConfig;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 
 /**
@@ -189,7 +205,7 @@ public class CurveCalibrator {
       List<List<CalibrationCurveData>> dataTotal,
       ImmutableRatesProvider knownData,
       Map<CurveName, Currency> discountingNames,
-      Map<CurveName, Index[]> forwardNames) {
+      Map<CurveName, Set<Index>> forwardNames) {
     int nbGroups = dataTotal.size();
     CurveBuildingBlockBundle blockIncremental = new CurveBuildingBlockBundle();
     ImmutableRatesProvider providerIncremental = knownData;
@@ -213,6 +229,58 @@ public class CurveCalibrator {
       curveOrderIncremental.addAll(curveOrderGroup);
     }
     return Pair.of(providerIncremental, blockIncremental);
+  }
+  
+  public Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibrate(
+      LocalDate valuationDate,
+      CurveGroupConfig curveGroupConfig,
+      Map<ObservableKey, Double> quotes,
+      Map<Index, LocalDateDoubleTimeSeries> timeSeries,
+      FxMatrix fxMatrix){
+    List<List<CalibrationCurveData>> dataTotal = new ArrayList<>();
+    List<CalibrationCurveData> dataGroup = new ArrayList<>();    
+    ImmutableList<CurveGroupEntry> groupEntries = curveGroupConfig.getEntries();
+    Map<CurveName, Currency> discountingNames = new HashMap<>();
+    Map<CurveName, Set<Index>> indexNames = new HashMap<>();    
+    for(CurveGroupEntry entry: groupEntries) {
+      CurveConfig curveConfig = entry.getCurveConfig();
+      ArgChecker.isTrue(curveConfig instanceof InterpolatedCurveConfig, 
+          "CurveConfig should be of the type InterpolatedCurveConfig");
+      InterpolatedCurveConfig interpolatedCurveConfig = (InterpolatedCurveConfig) curveConfig;
+      CurveMetadata curveMetadata = curveConfig.metadata(valuationDate);
+      List<CurveNode> nodes = entry.getCurveConfig().getNodes();
+      int nbNodes = nodes.size();
+      double[] curveTimes = new double[nbNodes];
+      List<Trade> curveTrades = new ArrayList<>();
+      List<Double> curveGuesses = new ArrayList<>();
+      for (int i = 0; i < nbNodes; i++) {        
+        curveTimes[i] = curveMetadata.getDayCount().get()
+            .yearFraction(valuationDate, 
+                ((TenorCurveNodeMetadata) curveMetadata.getParameterMetadata().get().get(i)).getDate());
+        curveTrades.add(nodes.get(i).trade(valuationDate, quotes));
+        curveGuesses.add(0.0d);
+      }
+      InterpolatedCurveTemplate template = new InterpolatedCurveTemplate(
+          curveMetadata, curveTimes, interpolatedCurveConfig.getLeftExtrapolator(), 
+          interpolatedCurveConfig.getInterpolator(), interpolatedCurveConfig.getRightExtrapolator());
+      CalibrationCurveData data = new CalibrationCurveData(template, curveTrades, curveGuesses);
+      dataGroup.add(data);
+      Optional<Currency> ccy = entry.getDiscountingCurrency();
+      if(ccy.isPresent()) {
+        discountingNames.put(curveConfig.getName(), ccy.get());
+      }
+      Set<Index> indices = new HashSet<>();
+      indices.addAll(entry.getIborIndices());
+      indices.addAll(entry.getOvernightIndices());
+      indexNames.put(curveConfig.getName(), indices);
+    }
+    dataTotal.add(dataGroup);
+    ImmutableRatesProvider knownData = ImmutableRatesProvider.builder()
+        .valuationDate(valuationDate)
+        .fxMatrix(fxMatrix).timeSeries(timeSeries).build();
+    Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result =
+        calibrate(dataTotal, knownData, discountingNames, indexNames);
+    return result;
   }
 
 }
