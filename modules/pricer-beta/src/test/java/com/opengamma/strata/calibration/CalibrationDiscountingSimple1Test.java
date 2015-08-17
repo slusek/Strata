@@ -182,7 +182,7 @@ public class CalibrationDiscountingSimple1Test {
   }
 
   @SuppressWarnings("unused")
-  @Test
+  @Test(enabled = false)
   void performance() {
     long startTime, endTime;
     int nbTests = 100;
@@ -239,13 +239,10 @@ public class CalibrationDiscountingSimple1Test {
         .valuationDate(valuationDate)
         .fxMatrix(FxMatrix.empty()).timeSeries(timeSeries).build();
     CalibrationCalculator calculator = DefaultCalibrationCalculator.DEFAULT;
-    CalibrationFunction function = new CalibrationFunction(1.0E-9, 1.0E-9, 100, calculator);
+    CurveCalibrator function = new CurveCalibrator(1.0E-9, 1.0E-9, 100, calculator);
     Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> result =
         function.calibrate(dataTotal, knownData, discountingNames, indexNames);
     return result;
   }
-  
-  // TODO: Performance
-  // TODO: OIS
   
 }

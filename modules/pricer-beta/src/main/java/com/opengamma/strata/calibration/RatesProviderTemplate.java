@@ -14,6 +14,8 @@ public interface RatesProviderTemplate {
   
   /**
    * Generates a rates provider from a set of parameters.
+   * <p>
+   * The number of parameters passed has to match the total number of parameters in all the curves generated.
    * 
    * @param parameters  the parameters describing the provider
    * @return the provider

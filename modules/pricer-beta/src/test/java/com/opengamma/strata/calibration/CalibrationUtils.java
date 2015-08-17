@@ -40,8 +40,8 @@ public class CalibrationUtils {
   private static final double DEFAULT_TOL_ABS = 1.0E-9;
   private static final double DEFAULT_TOL_REL = 1.0E-9;
   private static final int DEFAULT_MAX_IT = 100;
-  private static final CalibrationFunction CALIBRATION_FUNCTION = 
-      new CalibrationFunction(DEFAULT_TOL_ABS, DEFAULT_TOL_REL, DEFAULT_MAX_IT, CALIBRATION_CALCULATOR);
+  private static final CurveCalibrator CALIBRATION_FUNCTION = 
+      new CurveCalibrator(DEFAULT_TOL_ABS, DEFAULT_TOL_REL, DEFAULT_MAX_IT, CALIBRATION_CALCULATOR);
   
   public static Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibration(
       LocalDate valuationDate,

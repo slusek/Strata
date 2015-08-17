@@ -27,16 +27,19 @@ import com.opengamma.strata.finance.Trade;
 import com.opengamma.strata.market.curve.CurveName;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 
-public class CalibrationFunction {
+/**
+ * Class to calibrate curves to a set of trades.
+ */
+public class CurveCalibrator {
 
   /** The matrix algebra used for matrix inversion. */
   private static final MatrixAlgebra MATRIX_ALGEBRA = new CommonsMatrixAlgebra();
   /** The root finder used for curve calibration. */
   private final BroydenVectorRootFinder rootFinder;
-  
+  /** The calculator used to compute the function for which the root is found. */
   private final CalibrationCalculator calculator;
   
-  public CalibrationFunction(
+  public CurveCalibrator(
       double toleranceAbs, 
       double toleranceRel, 
       int stepMaximum,
@@ -173,6 +176,15 @@ public class CalibrationFunction {
     }
   }
   
+  /**
+   * Calibrate curves to a set of instruments.
+   * @param dataTotal The data for all the curves. The calibration is done by groups. 
+   * The List of lists correspond to a list of calibration group, each calibration group represented by a list of curves.
+   * @param knownData The starting data for the calibration. 
+   * @param discountingNames The names of the discounting curves, as a map between curve names and currencies.
+   * @param forwardNames The names of the forward curves, as a map between curve names and indices.
+   * @return The rates provider resulting from the calibration.
+   */
   public Pair<ImmutableRatesProvider, CurveBuildingBlockBundle> calibrate(
       List<List<CalibrationCurveData>> dataTotal,
       ImmutableRatesProvider knownData,

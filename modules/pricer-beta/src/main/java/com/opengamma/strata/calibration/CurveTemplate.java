@@ -30,6 +30,11 @@ public interface CurveTemplate {
    */
   public abstract int getParameterCount();
   
+  /**
+   * Returns the curve name.
+   * 
+   * @return the name.
+   */
   public abstract CurveName getName();
 
 }

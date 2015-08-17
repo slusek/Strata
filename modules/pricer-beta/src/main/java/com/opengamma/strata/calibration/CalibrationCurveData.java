@@ -14,8 +14,11 @@ import com.opengamma.strata.finance.Trade;
  */
 public class CalibrationCurveData {
   
+  /** The template for the curve to calibrate*/
   private final CurveTemplate template;
+  /** The trades to which the calibration will be done. */
   private final List<Trade> trades;
+  /** The initial guess for the parameters of the curves. */
   private final List<Double> initialGuess;
   
   public CalibrationCurveData(CurveTemplate template, List<Trade> trades, List<Double> initialGuess) {

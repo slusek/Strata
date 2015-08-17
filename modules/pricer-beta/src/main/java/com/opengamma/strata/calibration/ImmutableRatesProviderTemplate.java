@@ -21,12 +21,15 @@ import com.opengamma.strata.pricer.rate.RatesProvider;
  */
 public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
   
+  /** The known data (curves and FXMatrix). */
   private final ImmutableRatesProvider knownProvider;
-  
+  /** The curve templates for the new curves to be generated. */
   private final List<CurveTemplate> curveTemplates;
-  
+  /** The map between curve name and currencies for discounting. The map should contains all the curve in the template
+   * list but may have more names that the curve template list. Only the curves in the templates list are created.*/
   private final Map<CurveName, Currency> discountingNames;
-  
+  /** The map between curve name and indices for forward. The map should contains all the curve in the template
+   * list but may have more names that the curve template list. Only the curves in the templates list are created.*/
   private final Map<CurveName, Index[]> forwardNames;
 
   public ImmutableRatesProviderTemplate(

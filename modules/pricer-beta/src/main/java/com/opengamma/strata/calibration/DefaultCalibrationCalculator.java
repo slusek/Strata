@@ -16,6 +16,9 @@ import com.opengamma.strata.pricer.rate.deposit.DiscountingIborFixingDepositProd
 import com.opengamma.strata.pricer.rate.fra.DiscountingFraProductPricer;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 
+/**
+ * Default calibration calculator used for curve calibration.
+ */
 public class DefaultCalibrationCalculator extends CalibrationCalculator {
   
   private DefaultCalibrationCalculator(
@@ -28,6 +31,7 @@ public class DefaultCalibrationCalculator extends CalibrationCalculator {
     super(fixingValue, fraValue, swapValue, fixingSensitivity, fraSensitivity, swapSensitivity);
   }
 
+  /** The DEFAULT instance. Computing par spread for IborFixingDeposit, Fra and Swap by discounting. */
   public static final DefaultCalibrationCalculator DEFAULT = new DefaultCalibrationCalculator(
       (fixing, p) -> DiscountingIborFixingDepositProductPricer.DEFAULT.parSpread(fixing.getProduct(), p), 
       (fra, p) -> DiscountingFraProductPricer.DEFAULT.parSpread(fra.getProduct(), p),
