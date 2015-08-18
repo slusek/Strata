@@ -288,7 +288,7 @@ public class CalibrationDiscountingSimpleUsd2Test {
   }
 
   @SuppressWarnings("unused")
-  @Test(enabled = false)
+  @Test(enabled = true)
   void performance() {
     long startTime, endTime;
     int nbTests = 100;
@@ -304,7 +304,7 @@ public class CalibrationDiscountingSimpleUsd2Test {
       System.out.println("Performance: " + nbTests + " calibrations for 2 curve with 30 nodes in "
           + (endTime - startTime) + " ms.");
     }
-    // Previous run: 2100 ms for 100 calibrations (2 curve simultaneous - 30 nodes)
+    // Previous run: 2150 ms for 100 calibrations (2 curve simultaneous - 30 nodes)
   }
   
 }

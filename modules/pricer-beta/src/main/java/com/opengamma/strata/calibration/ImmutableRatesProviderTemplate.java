@@ -14,6 +14,7 @@ import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.market.curve.Curve;
 import com.opengamma.strata.market.curve.CurveName;
+import com.opengamma.strata.market.curve.config.CurveConfig;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 import com.opengamma.strata.pricer.rate.RatesProvider;
 
@@ -25,7 +26,7 @@ public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
   /** The known data (curves and FXMatrix). */
   private final ImmutableRatesProvider knownProvider;
   /** The curve templates for the new curves to be generated. */
-  private final List<CurveTemplate> curveTemplates;
+  private final List<CurveConfig> curveConfig;
   /** The map between curve name and currencies for discounting. The map should contains all the curve in the template
    * list but may have more names that the curve template list. Only the curves in the templates list are created.*/
   private final Map<CurveName, Currency> discountingNames;
@@ -35,33 +36,33 @@ public class ImmutableRatesProviderTemplate implements RatesProviderTemplate {
 
   public ImmutableRatesProviderTemplate(
       ImmutableRatesProvider knownProvider, 
-      List<CurveTemplate> curveTemplates, 
+      List<CurveConfig> curveTemplates, 
       Map<CurveName, Currency> discountingMap, 
       Map<CurveName, Set<Index>> forwardMap) {
     this.knownProvider = knownProvider;
-    this.curveTemplates = curveTemplates;
+    this.curveConfig = curveTemplates;
     this.discountingNames = discountingMap;
     this.forwardNames = forwardMap;
   }
 
   @Override
   public RatesProvider generate(double[] parameters) {
-    int nbCurves = curveTemplates.size();
+    int nbCurves = curveConfig.size();
     // Curves generation
     int nbPreviousParameters = 0;
     Curve[] curves = new Curve[nbCurves];
     for(int i=0; i<nbCurves; i++) {
-      int nbParameters = curveTemplates.get(i).getParameterCount();
+      int nbParameters = curveConfig.get(i).getParameterCount();
       double[] curveParameters = new double[nbParameters];
       System.arraycopy(parameters, nbPreviousParameters, curveParameters, 0, nbParameters);
-      curves[i] = curveTemplates.get(i).generate(curveParameters);
+      curves[i] = curveConfig.get(i).createCurve(knownProvider.getValuationDate(), curveParameters);
       nbPreviousParameters += nbParameters;
     }
     // Map for constructor
     Map<Currency, Curve> discountingCurves = new HashMap<>();
     Map<Index, Curve> indexCurves = new HashMap<>();
     for(int i=0; i<nbCurves; i++) {
-      CurveName name = curveTemplates.get(i).getName();
+      CurveName name = curveConfig.get(i).getName();
       Currency ccy = discountingNames.get(name);
       if(ccy != null) {
         discountingCurves.put(ccy, curves[i]);

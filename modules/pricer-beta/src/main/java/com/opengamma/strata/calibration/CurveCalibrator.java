@@ -29,18 +29,14 @@ import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.currency.FxMatrix;
 import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.basics.market.ObservableKey;
-import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.strata.collect.tuple.Pair;
 import com.opengamma.strata.finance.Trade;
-import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
-import com.opengamma.strata.market.curve.TenorCurveNodeMetadata;
 import com.opengamma.strata.market.curve.config.CurveConfig;
 import com.opengamma.strata.market.curve.config.CurveGroupConfig;
 import com.opengamma.strata.market.curve.config.CurveGroupEntry;
 import com.opengamma.strata.market.curve.config.CurveNode;
-import com.opengamma.strata.market.curve.config.InterpolatedCurveConfig;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 
 /**
@@ -214,13 +210,13 @@ public class CurveCalibrator {
       List<CalibrationCurveData> dataGroup = dataTotal.get(loopgroup);
       List<Trade> tradesGroup = new ArrayList<>();
       List<Double> initialGuess = new ArrayList<>();
-      List<CurveTemplate> curveTemplates = new ArrayList<>();
+      List<CurveConfig> curveTemplates = new ArrayList<>();
       List<Pair<CurveName, Integer>> curveOrderGroup = new ArrayList<>();
       for (CalibrationCurveData d : dataGroup) {
         tradesGroup.addAll(d.getTrades());
         initialGuess.addAll(d.getInitialGuess());
-        curveTemplates.add(d.getTemplate());
-        curveOrderGroup.add(Pair.of(d.getTemplate().getName(), d.getTemplate().getParameterCount()));
+        curveTemplates.add(d.getConfig());
+        curveOrderGroup.add(Pair.of(d.getConfig().getName(), d.getTrades().size()));
       }
       RatesProviderTemplate providerTemplate =
           new ImmutableRatesProviderTemplate(providerIncremental, curveTemplates, discountingNames, forwardNames);
@@ -244,26 +240,15 @@ public class CurveCalibrator {
     Map<CurveName, Set<Index>> indexNames = new HashMap<>();    
     for(CurveGroupEntry entry: groupEntries) {
       CurveConfig curveConfig = entry.getCurveConfig();
-      ArgChecker.isTrue(curveConfig instanceof InterpolatedCurveConfig, 
-          "CurveConfig should be of the type InterpolatedCurveConfig");
-      InterpolatedCurveConfig interpolatedCurveConfig = (InterpolatedCurveConfig) curveConfig;
-      CurveMetadata curveMetadata = curveConfig.metadata(valuationDate);
       List<CurveNode> nodes = entry.getCurveConfig().getNodes();
       int nbNodes = nodes.size();
-      double[] curveTimes = new double[nbNodes];
       List<Trade> curveTrades = new ArrayList<>();
       List<Double> curveGuesses = new ArrayList<>();
-      for (int i = 0; i < nbNodes; i++) {        
-        curveTimes[i] = curveMetadata.getDayCount().get()
-            .yearFraction(valuationDate, 
-                ((TenorCurveNodeMetadata) curveMetadata.getParameterMetadata().get().get(i)).getDate());
+      for (int i = 0; i < nbNodes; i++) { 
         curveTrades.add(nodes.get(i).trade(valuationDate, quotes));
         curveGuesses.add(0.0d);
       }
-      InterpolatedCurveTemplate template = new InterpolatedCurveTemplate(
-          curveMetadata, curveTimes, interpolatedCurveConfig.getLeftExtrapolator(), 
-          interpolatedCurveConfig.getInterpolator(), interpolatedCurveConfig.getRightExtrapolator());
-      CalibrationCurveData data = new CalibrationCurveData(template, curveTrades, curveGuesses);
+      CalibrationCurveData data = new CalibrationCurveData(curveConfig, curveTrades, curveGuesses);
       dataGroup.add(data);
       Optional<Currency> ccy = entry.getDiscountingCurrency();
       if(ccy.isPresent()) {

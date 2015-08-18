@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.Period;
 
 import com.google.common.collect.ImmutableList;
+import com.opengamma.strata.market.curve.Curve;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
 
@@ -51,4 +52,15 @@ public interface CurveConfig {
    * @return the nodes
    */
   public abstract ImmutableList<CurveNode> getNodes();
+  
+  /**
+   * Gets the number of parameters in the curve.
+   * <p>
+   * This returns the number of parameters in the curve.
+   * 
+   * @return the number of parameters
+   */
+  public abstract int getParameterCount();
+  
+  public abstract Curve createCurve(LocalDate valuationDate, double[] parameters);
 }

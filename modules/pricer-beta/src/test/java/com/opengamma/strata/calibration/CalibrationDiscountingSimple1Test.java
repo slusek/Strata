@@ -208,7 +208,7 @@ public class CalibrationDiscountingSimple1Test {
 
 
   @SuppressWarnings("unused")
-  @Test(enabled = false)
+  @Test(enabled = true)
   void performance() {
     long startTime, endTime;
     int nbTests = 100;
