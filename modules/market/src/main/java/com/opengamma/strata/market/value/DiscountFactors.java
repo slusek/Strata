@@ -71,6 +71,27 @@ public interface DiscountFactors {
   public abstract double discountFactor(LocalDate date);
 
   /**
+   * Gets the discount factor with z-spread.
+   * <p>
+   * The discount factor represents the time value of money for the specified currency
+   * when comparing the valuation date to the specified date.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the discounting curve. 
+   * <p>
+   * If the valuation date is on or after the specified date, the discount factor is 1.
+   * 
+   * @param date  the date to discount to
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the discount factor
+   * @throws RuntimeException if the value cannot be obtained
+   */
+  public abstract double discountFactorWithSpread(LocalDate date, double zSpread, boolean periodic, int periodPerYear);
+
+  /**
    * Calculates the zero rate point sensitivity at the specified date.
    * <p>
    * This returns a sensitivity instance referring to the zero rate sensitivity of the curve

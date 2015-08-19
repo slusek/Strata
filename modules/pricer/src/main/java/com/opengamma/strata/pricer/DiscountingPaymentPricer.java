@@ -47,6 +47,15 @@ public class DiscountingPaymentPricer {
     return payment.getValue().multipliedBy(discountFactors.discountFactor(payment.getDate()));
   }
 
+  public CurrencyAmount presentValue(Payment payment, DiscountFactors discountFactors,
+      double zSpread, boolean periodic, int periodPerYear) {
+    if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
+      return CurrencyAmount.zero(payment.getCurrency());
+    }
+    double df = discountFactors.discountFactorWithSpread(payment.getDate(), zSpread, periodic, periodPerYear);
+    return payment.getValue().multipliedBy(df);
+  }
+
   /**
    * Computes the present value of the payment by discounting.
    * <p>

@@ -130,6 +130,23 @@ public final class ZeroRateDiscountFactors
     return discountFactor(relativeYearFraction);
   }
 
+  @Override
+  public double discountFactorWithSpread(LocalDate date, double zSpread, boolean periodic, int periodPerYear) {
+    double yearFraction = relativeYearFraction(date);
+    double factor = 1d;
+    if (Math.abs(yearFraction) < 1.0E-10) {
+      return factor;
+    }
+    if (periodic) {
+      factor = discountFactor(date) * Math.exp(-zSpread * yearFraction);
+    } else {
+      double ratePeriodicAnnualPlusOne =
+          Math.pow(discountFactor(date), -1.0 / periodPerYear / yearFraction) + zSpread / periodPerYear;
+      factor = Math.pow(ratePeriodicAnnualPlusOne, -periodPerYear * yearFraction);
+    }
+    return factor;
+  }
+
   // calculates the discount factor at a given time
   private double discountFactor(double relativeYearFraction) {
     // convert zero rate to discount factor

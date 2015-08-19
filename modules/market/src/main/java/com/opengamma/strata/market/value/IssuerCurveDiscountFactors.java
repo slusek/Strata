@@ -45,7 +45,7 @@ public final class IssuerCurveDiscountFactors
    * This contains curve, curve currency, valuation date and day count convention. 
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.
    */
-  @PropertyDefinition(validate = "notNull", get = "private")
+  @PropertyDefinition(validate = "notNull")
   private final DiscountFactors discountFactors;
   /**
    * The legal entity group. 
@@ -212,7 +212,7 @@ public final class IssuerCurveDiscountFactors
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.
    * @return the value of the property, not null
    */
-  private DiscountFactors getDiscountFactors() {
+  public DiscountFactors getDiscountFactors() {
     return discountFactors;
   }
 
