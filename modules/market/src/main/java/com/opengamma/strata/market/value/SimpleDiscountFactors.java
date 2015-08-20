@@ -162,6 +162,29 @@ public final class SimpleDiscountFactors
   }
 
   @Override
+  public ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+      LocalDate date,
+      Currency sensitivityCurrency,
+      double zSpread,
+      boolean periodic,
+      int periodPerYear) {
+    double yearFraction = relativeYearFraction(date);
+    ZeroRateSensitivity sensi = zeroRatePointSensitivity(date, sensitivityCurrency);
+    double factor = 1d;
+    if (Math.abs(yearFraction) < 1.0E-10) {
+      return sensi;
+    }
+    if (periodic) {
+      factor = Math.exp(-zSpread * yearFraction);
+    } else {
+      double df = discountFactor(date);
+      double dfRoot = Math.pow(df, -1.0 / periodPerYear / yearFraction);
+      factor = dfRoot / df / Math.pow(dfRoot + zSpread / periodPerYear, periodPerYear * yearFraction + 1);
+    }
+    return sensi.multipliedBy(factor);
+  }
+
+  @Override
   public CurveUnitParameterSensitivities unitParameterSensitivity(LocalDate date) {
     double relativeYearFraction = relativeYearFraction(date);
     return CurveUnitParameterSensitivities.of(

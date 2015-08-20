@@ -8,6 +8,7 @@ package com.opengamma.strata.pricer;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
+import com.opengamma.strata.market.sensitivity.ZeroRateSensitivity;
 import com.opengamma.strata.market.value.DiscountFactors;
 
 /**
@@ -93,6 +94,16 @@ public class DiscountingPaymentPricer {
       return PointSensitivityBuilder.none();
     }
     return discountFactors.zeroRatePointSensitivity(payment.getDate()).multipliedBy(payment.getAmount());
+  }
+
+  public PointSensitivityBuilder presentValueSensitivity(Payment payment, DiscountFactors discountFactors,
+      double zSpread, boolean periodic, int periodPerYear) {
+    if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
+      return PointSensitivityBuilder.none();
+    }
+    ZeroRateSensitivity sensi =
+        discountFactors.zeroRatePointSensitivityWithSpread(payment.getDate(), zSpread, periodic, periodPerYear);
+    return sensi.multipliedBy(payment.getAmount());
   }
 
   /**

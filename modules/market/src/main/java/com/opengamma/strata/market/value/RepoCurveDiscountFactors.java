@@ -129,6 +129,22 @@ public final class RepoCurveDiscountFactors
   }
 
   /**
+   * Calculates the zero rate point sensitivity at the specified date.
+   * <p>
+   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
+   * used to determine the discount factor.
+   * The sensitivity typically has the value {@code (-discountFactor * relativeYearFraction)}.
+   * The sensitivity refers to the result of {@link #discountFactor(LocalDate)}.
+   * 
+   * @param date  the date to discount to
+   * @return the point sensitivity of the zero rate
+   * @throws RuntimeException if the result cannot be calculated
+   */
+  public RepoCurveZeroRateSensitivity zeroRatePointSensitivity(LocalDate date) {
+    return zeroRatePointSensitivity(date, getCurrency());
+  }
+
+  /**
    * Calculates the zero rate point sensitivity at the specified date specifying the currency of the sensitivity.
    * <p>
    * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
