@@ -134,6 +134,7 @@ public final class FixedCouponBond
           .notional(notional)
           .currency(currency)
           .fixedRate(fixedRate)
+          .yearFraction(period.yearFraction(dayCount, accrualSchedule))
           .build());
     }
     ImmutableList<FixedCouponBondPaymentPeriod> periodicPayments = accrualPeriods.build();

@@ -16,6 +16,7 @@ import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.basics.schedule.Schedule;
 import com.opengamma.strata.basics.schedule.SchedulePeriod;
+import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.collect.id.StandardId;
 import com.opengamma.strata.finance.rate.bond.ExpandedFixedCouponBond;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBond;
@@ -31,30 +32,63 @@ import com.opengamma.strata.pricer.DiscountingPaymentPricer;
 import com.opengamma.strata.pricer.impl.bond.DiscountingFixedCouponBondPaymentPeriodPricer;
 import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
 
+/**
+ * Pricer for for rate fixed coupon bond trades.
+ * <p>
+ * This function provides the ability to price a {@link FixedCouponBondTrade}.
+ */
 public class DiscountingFixedCouponBondTradePricer {
-  
-  private static final DiscountingPaymentPricer NOMINAL_PRICER = DiscountingPaymentPricer.DEFAULT;
-  
-  private static final DiscountingFixedCouponBondPaymentPeriodPricer PERIOD_PRICER =
-      DiscountingFixedCouponBondPaymentPeriodPricer.DEFAULT;
 
-  //  /**
-  //   * The root bracket used for yield finding.
-  //   */
-  //  private static final BracketRoot BRACKETER = new BracketRoot();
+  // TODO yield, duration, convexity computation.
+  // Core methods are dirtyPriceFromYield, yieldFromDirtyPrice, modifiedDurationFromYield, macaulayDurationFromYield, 
+  // and convexityFromYield. 
+
+  // TODO z-spread sensitivity computation, presentValueZSpreadSensitivity. 
+  // New sensitivity object? c.f. StringAmount in old code.  
+  
+  private final DiscountingPaymentPricer nominalPricer;
+  
+  private final DiscountingFixedCouponBondPaymentPeriodPricer periodPricer;
+
   /**
-   * The root finder used for yield finding.
+   * The root finder used for z-spread finding.
    */
   private static final RealSingleRootFinder ROOT_FINDER = new BrentSingleRootFinder();
+
   /**
    * Brackets a root
    */
   private static final BracketRoot ROOT_BRACKETER = new BracketRoot();
 
-  public DiscountingFixedCouponBondTradePricer() {
+  /**
+   * Default implementation.
+   */
+  public static final DiscountingFixedCouponBondTradePricer DEFAULT = new DiscountingFixedCouponBondTradePricer(
+      DiscountingPaymentPricer.DEFAULT, DiscountingFixedCouponBondPaymentPeriodPricer.DEFAULT);
+
+  /**
+   * Creates an instance.
+   * 
+   * @param nominalPricer  the pricer for {@link Payment}
+   * @param periodPricer  the pricer for {@link FixedCouponBondPaymentPeriod}
+   */
+  public DiscountingFixedCouponBondTradePricer(DiscountingPaymentPricer nominalPricer,
+      DiscountingFixedCouponBondPaymentPeriodPricer periodPricer) {
+    this.nominalPricer = ArgChecker.notNull(nominalPricer, "nominalPricer");
+    this.periodPricer = ArgChecker.notNull(periodPricer, "periodPricer");
   }
 
   //-------------------------------------------------------------------------
+  /**
+   * Calculates the present value of the fixed coupon bond trade.
+   * <p>
+   * The present value of the trade is the value on the valuation date.
+   * The result is expressed using the payment currency of the bond.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @return the present value of the fixed coupon bond trade
+   */
   public CurrencyAmount presentValue(FixedCouponBondTrade trade, LegalEntityDiscountingProvider provider) {
     ExpandedFixedCouponBond product = trade.getProduct().expand();
     IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(
@@ -64,6 +98,23 @@ public class DiscountingFixedCouponBondTradePricer {
     return pvNominal.plus(pvCoupon);
   }
 
+  /**
+   * Calculates the present value of the fixed coupon bond trade with z-spread.
+   * <p>
+   * The present value of the trade is the value on the valuation date.
+   * The result is expressed using the payment currency of the bond.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the issuer discounting curve. 
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the present value of the fixed coupon bond trade
+   */
   public CurrencyAmount presentValueWithZSpread(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider,
@@ -79,6 +130,17 @@ public class DiscountingFixedCouponBondTradePricer {
     return pvNominal.plus(pvCoupon);
   }
 
+  /**
+   * Calculates the present value of the fixed coupon bond trade from its clean price.
+   * <p>
+   * The present value of the trade is the value on the valuation date.
+   * The result is expressed using the payment currency of the bond.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param cleanPrice  the clean price.
+   * @return the present value of the fixed coupon bond trade
+   */
   public CurrencyAmount presentValueFromCleanPrice(FixedCouponBondTrade trade, LegalEntityDiscountingProvider provider,
       double cleanPrice) {
     FixedCouponBond product = trade.getProduct();
@@ -92,6 +154,16 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   //-------------------------------------------------------------------------
+  /**
+   * Calculates the dirty price of the fixed coupon bond trade.
+   * <p>
+   * This requires the trade information, {@code settlementDate}. Thus {@code tradeInfo} in the trade must not be empty.
+   * The result is based on the payment currency of the bond.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @return the dirty price of the fixed coupon bond trade
+   */
   public double dirtyPriceFromCurves(FixedCouponBondTrade trade, LegalEntityDiscountingProvider provider) {
     FixedCouponBond product = trade.getProduct();
     LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
@@ -104,6 +176,23 @@ public class DiscountingFixedCouponBondTradePricer {
     return pv.getAmount() / df / notional;
   }
 
+  /**
+   * Calculates the dirty price of the fixed coupon bond trade with z-spread.
+   * <p>
+   * This requires the trade information, {@code settlementDate}. Thus {@code tradeInfo} in the trade must not be empty.
+   * The result is based on the payment currency of the bond.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the issuer discounting curve. 
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the dirty price of the fixed coupon bond trade
+   */
   public double dirtyPriceFromCurvesWithZSpread(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider,
@@ -121,12 +210,26 @@ public class DiscountingFixedCouponBondTradePricer {
     return pv.getAmount() / df / notional;
   }
 
+  /**
+   * Calculates the dirty price of the fixed coupon bond trade from its clean price.
+   * 
+   * @param trade  the trade to price
+   * @param cleanPrice  the clean price
+   * @return the present value of the fixed coupon bond trade
+   */
   public double dirtyPriceFromCleanPrice(FixedCouponBondTrade trade, double cleanPrice) {
     double notional = trade.getProduct().getNotional();
     double accruedInterest = accruedInterest(trade);
     return cleanPrice + accruedInterest / notional;
   }
 
+  /**
+   * Calculates the clean price of the fixed coupon bond trade from its dirty price.
+   * 
+   * @param trade  the trade to price
+   * @param dirtyPrice  the dirty price
+   * @return the present value of the fixed coupon bond trade
+   */
   public double cleanPriceFromDirtyPrice(FixedCouponBondTrade trade, double dirtyPrice) {
     final double notional = trade.getProduct().getNotional();
     double accruedInterest = accruedInterest(trade);
@@ -134,34 +237,20 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   //-------------------------------------------------------------------------
-  // presentValueFromYield
-  // dirtyPriceFromYield
-  // dirtyPriceFromYieldStandard
-
-  // cleanPriceFromYield
-  // yieldFromDirtyPrice
-  // yieldFromCurves
-  // yieldFromCleanPrice
-
-  //-------------------------------------------------------------------------
-  // modifiedDurationFromYield
-  // modifiedDurationFromYieldStandard
-  // modifiedDurationFromCurves
-  // modifiedDurationFromDirtyPrice
-  // modifiedDurationFromCleanPrice
-  // macaulayDurationFromYield
-  // macaulayDurationFromCurves
-  // macaulayDurationFromCleanPrice
-  // macaulayDurationFromDirtyPrice
-
-  //-------------------------------------------------------------------------
-  // convexityFromYield
-  // convexityFromYieldStandard
-  // convexityFromCurves
-  // convexityFromDirtyPrice
-  // convexityFromCleanPrice
-
-  //-------------------------------------------------------------------------
+  /**
+   * Calculates the dirty price of the fixed coupon bond trade with z-spread.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates of 
+   * the discounting curve associated to the bond (Issuer Entity) to match the present value.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param pv  the present value
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the z-spread of the fixed coupon bond trade
+   */
   public double zSpreadFromCurvesAndPV(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider,
@@ -180,11 +269,16 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   //-------------------------------------------------------------------------
-  // presentValueZSpreadSensitivity
-  // presentValueZSpreadSensitivityFromCurvesAndPV
-  // presentValueZSpreadSensitivityFromCurvesAndClean
-
-  //-------------------------------------------------------------------------
+  /**
+   * Calculates the present value sensitivity of the fixed coupon bond trade.
+   * <p>
+   * The present value sensitivity of the trade is the sensitivity of the present value to
+   * the underlying curves.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @return the present value curve sensitivity of the trade
+   */
   public PointSensitivityBuilder presentValueSensitivity(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider) {
@@ -196,6 +290,23 @@ public class DiscountingFixedCouponBondTradePricer {
     return pvNominal.combinedWith(pvCoupon);
   }
 
+  /**
+   * Calculates the present value sensitivity of the fixed coupon bond trade with z-spread.
+   * <p>
+   * The present value sensitivity of the trade is the sensitivity of the present value to
+   * the underlying curves.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the issuer discounting curve. 
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the present value curve sensitivity of the trade
+   */
   public PointSensitivityBuilder presentValueSensitivityWithZSpread(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider,
@@ -212,6 +323,16 @@ public class DiscountingFixedCouponBondTradePricer {
     return pvNominal.combinedWith(pvCoupon);
   }
 
+  /**
+   * Calculates the dirty price sensitivity of the fixed coupon bond trade.
+   * <p>
+   * The dirty price sensitivity of the trade is the sensitivity of the present value to
+   * the underlying curves.
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @return the dirty price value curve sensitivity of the trade
+   */
   public PointSensitivityBuilder dirtyPriceSensitivity(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider) {
@@ -230,6 +351,23 @@ public class DiscountingFixedCouponBondTradePricer {
     return pvSensi.combinedWith(dfSensi);
   }
 
+  /**
+   * Calculates the dirty price sensitivity of the fixed coupon bond trade with z-spread.
+   * <p>
+   * The dirty price sensitivity of the trade is the sensitivity of the present value to
+   * the underlying curves.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the issuer discounting curve. 
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the dirty price curve sensitivity of the trade
+   */
   public PointSensitivityBuilder dirtyPriceSensitivityWithZspread(
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider,
@@ -253,86 +391,15 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   //-------------------------------------------------------------------------
-  private CurrencyAmount presentValueCoupon(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
-    double total = 0d;
-    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
-        total += PERIOD_PRICER.presentValue(period, discountFactors);
-      }
-    }
-    return CurrencyAmount.of(product.getCurrency(), total);
-  }
-
-  private CurrencyAmount presentValueCouponFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
-    double total = 0d;
-    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
-        total += PERIOD_PRICER.presentValue(period, discountFactors, zSpread, periodic, periodPerYear);
-      }
-    }
-    return CurrencyAmount.of(product.getCurrency(), total);
-  }
-
-  private CurrencyAmount presentValueNominal(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
-    Payment nominal = product.getNominalPayment();
-    return NOMINAL_PRICER.presentValue(nominal, discountFactors.getDiscountFactors());
-  }
-
-  private CurrencyAmount presentValueNominalFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
-    Payment nominal = product.getNominalPayment();
-    return NOMINAL_PRICER.presentValue(nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
-  }
-
-  //-------------------------------------------------------------------------
-  private PointSensitivityBuilder presentValueSensitivityCoupon(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors) {
-    PointSensitivityBuilder builder = PointSensitivityBuilder.none();
-    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
-        builder = builder.combinedWith(PERIOD_PRICER.presentValueSensitivity(period, discountFactors));
-      }
-    }
-    return builder;
-  }
-
-  private PointSensitivityBuilder presentValueSensitivityCouponFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
-    PointSensitivityBuilder builder = PointSensitivityBuilder.none();
-    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
-        builder = builder.combinedWith(
-            PERIOD_PRICER.presentValueSensitivity(period, discountFactors, zSpread, periodic, periodPerYear));
-      }
-    }
-    return builder;
-  }
-
-  private PointSensitivityBuilder presentValueSensitivityNominal(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors) {
-    Payment nominal = product.getNominalPayment();
-    PointSensitivityBuilder pt = NOMINAL_PRICER.presentValueSensitivity(nominal, discountFactors.getDiscountFactors());
-    if (pt instanceof ZeroRateSensitivity) {
-      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
-    }
-    return pt; // NoPointSensitivity
-  }
-
-  private PointSensitivityBuilder presentValueSensitivityNominalFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
-    Payment nominal = product.getNominalPayment();
-    PointSensitivityBuilder pt = NOMINAL_PRICER.presentValueSensitivity(
-        nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
-    if (pt instanceof ZeroRateSensitivity) {
-      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
-    }
-    return pt; // NoPointSensitivity
-  }
-
-  //-------------------------------------------------------------------------
+  /**
+   * Calculates the accrued interest of the fixed coupon bond trade.
+   * <p>
+   * This requires the trade information, {@code settlementDate}. 
+   * Thus {@code tradeInfo} in the trade must not be empty.
+   * 
+   * @param trade  the trade to price
+   * @return the accrued interest of the trade 
+   */
   public double accruedInterest(FixedCouponBondTrade trade) {
     FixedCouponBond product = trade.getProduct();
     Schedule schedule = product.getPeriodicSchedule().createSchedule();
@@ -350,21 +417,96 @@ public class DiscountingFixedCouponBondTradePricer {
     SchedulePeriod schedulePeriod = schedule.getPeriods().get(couponIndex);
     LocalDate previousAccrualDate = schedulePeriod.getStartDate();
     LocalDate nextAccrualDate = schedulePeriod.getEndDate();
-    Schedule scheduleNew = Schedule.builder()
-        .frequency(schedule.getFrequency())
-        .periods(schedulePeriod)
-        .rollConvention(schedule.getRollConvention())
-        .build();
     double fixedRate = product.getFixedRate();
-    double accruedInterest = product.getDayCount().yearFraction(previousAccrualDate, settlementDate, scheduleNew)
+    double accruedInterest = product.getDayCount().yearFraction(previousAccrualDate, settlementDate, schedule)
         * fixedRate * notional;
     int exCouponDays = product.getSettlementDateOffset().getDays();
     double result = 0d;
     if (exCouponDays != 0 && nextAccrualDate.minusDays(exCouponDays).isBefore(settlementDate)) {
-      result = accruedInterest - notional;
+      result = accruedInterest - notional * fixedRate * schedulePeriod.yearFraction(product.getDayCount(), schedule);
     } else {
       result = accruedInterest;
     }
     return result;
+  }
+
+  //-------------------------------------------------------------------------
+  private CurrencyAmount presentValueCoupon(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
+    double total = 0d;
+    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
+      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+        total += periodPricer.presentValue(period, discountFactors);
+      }
+    }
+    return CurrencyAmount.of(product.getCurrency(), total);
+  }
+
+  private CurrencyAmount presentValueCouponFromZSpread(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors,
+      double zSpread, boolean periodic, int periodPerYear) {
+    double total = 0d;
+    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
+      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+        total += periodPricer.presentValue(period, discountFactors, zSpread, periodic, periodPerYear);
+      }
+    }
+    return CurrencyAmount.of(product.getCurrency(), total);
+  }
+
+  private CurrencyAmount presentValueNominal(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
+    Payment nominal = product.getNominalPayment();
+    return nominalPricer.presentValue(nominal, discountFactors.getDiscountFactors());
+  }
+
+  private CurrencyAmount presentValueNominalFromZSpread(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors,
+      double zSpread, boolean periodic, int periodPerYear) {
+    Payment nominal = product.getNominalPayment();
+    return nominalPricer.presentValue(nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
+  }
+
+  //-------------------------------------------------------------------------
+  private PointSensitivityBuilder presentValueSensitivityCoupon(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors) {
+    PointSensitivityBuilder builder = PointSensitivityBuilder.none();
+    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
+      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+        builder = builder.combinedWith(periodPricer.presentValueSensitivity(period, discountFactors));
+      }
+    }
+    return builder;
+  }
+
+  private PointSensitivityBuilder presentValueSensitivityCouponFromZSpread(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
+    PointSensitivityBuilder builder = PointSensitivityBuilder.none();
+    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
+      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+        builder = builder.combinedWith(
+            periodPricer.presentValueSensitivity(period, discountFactors, zSpread, periodic, periodPerYear));
+      }
+    }
+    return builder;
+  }
+
+  private PointSensitivityBuilder presentValueSensitivityNominal(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors) {
+    Payment nominal = product.getNominalPayment();
+    PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(nominal, discountFactors.getDiscountFactors());
+    if (pt instanceof ZeroRateSensitivity) {
+      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+    }
+    return pt; // NoPointSensitivity
+  }
+
+  private PointSensitivityBuilder presentValueSensitivityNominalFromZSpread(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
+    Payment nominal = product.getNominalPayment();
+    PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(
+        nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
+    if (pt instanceof ZeroRateSensitivity) {
+      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+    }
+    return pt; // NoPointSensitivity
   }
 }

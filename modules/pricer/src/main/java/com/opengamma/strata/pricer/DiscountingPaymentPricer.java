@@ -48,6 +48,24 @@ public class DiscountingPaymentPricer {
     return payment.getValue().multipliedBy(discountFactors.discountFactor(payment.getDate()));
   }
 
+  /**
+   * Computes the present value of the payment with z-spread by discounting.
+   * <p>
+   * The present value is zero if the payment date is before the valuation date.
+   * <p>
+   * The specified discount factors should be for the payment currency, however this is not validated.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the discounting curve. 
+   * 
+   * @param payment  the payment to price
+   * @param discountFactors  the discount factors to price against
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the present value
+   */
   public CurrencyAmount presentValue(
       Payment payment,
       DiscountFactors discountFactors,
@@ -100,6 +118,26 @@ public class DiscountingPaymentPricer {
     return discountFactors.zeroRatePointSensitivity(payment.getDate()).multipliedBy(payment.getAmount());
   }
 
+  /**
+   * Compute the present value curve sensitivity of the payment with z-spread.
+   * <p>
+   * The present value sensitivity of the payment is the sensitivity of the
+   * present value to the discount factor curve.
+   * There is no sensitivity if the payment date is before the valuation date.
+   * <p>
+   * The specified discount factors should be for the payment currency, however this is not validated.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the discounting curve. 
+   * 
+   * @param payment  the payment to price
+   * @param discountFactors  the discount factors to price against
+   * @param zSpread  the z-spread
+   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * continuously compounded rates
+   * @param periodPerYear  the number of periods per year
+   * @return the point sensitivity of the present value
+   */
   public PointSensitivityBuilder presentValueSensitivity(
       Payment payment, 
       DiscountFactors discountFactors,

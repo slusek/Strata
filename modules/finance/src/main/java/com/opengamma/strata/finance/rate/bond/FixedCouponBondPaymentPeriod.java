@@ -29,6 +29,7 @@ import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
 import com.google.common.collect.ImmutableSet;
 import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
@@ -101,6 +102,15 @@ public final class FixedCouponBondPaymentPeriod
    */
   @PropertyDefinition
   private final double fixedRate;
+  /**
+   * The year fraction that the accrual period represents.
+   * <p>
+   * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+   * Typically the value will be close to 1 for one year and close to 0.5 for six months.
+   * The fraction may be greater than 1, but not less than 0.
+   */
+  @PropertyDefinition(validate = "ArgChecker.notNegative")
+  private final double yearFraction;
 
   //-------------------------------------------------------------------------
 
@@ -129,7 +139,8 @@ public final class FixedCouponBondPaymentPeriod
       LocalDate endDate,
       LocalDate unadjustedStartDate,
       LocalDate unadjustedEndDate,
-      double fixedRate) {
+      double fixedRate,
+      double yearFraction) {
     this.currency = ArgChecker.notNull(currency, "currency");
     this.notional = notional;
     this.startDate = ArgChecker.notNull(startDate, "startDate");
@@ -137,6 +148,7 @@ public final class FixedCouponBondPaymentPeriod
     this.unadjustedStartDate = firstNonNull(unadjustedStartDate, startDate);
     this.unadjustedEndDate = firstNonNull(unadjustedEndDate, endDate);
     this.fixedRate = fixedRate;
+    this.yearFraction = yearFraction;
     // check for unadjusted must be after firstNonNull
     ArgChecker.inOrderNotEqual(startDate, endDate, "startDate", "endDate");
     ArgChecker.inOrderNotEqual(
@@ -275,6 +287,19 @@ public final class FixedCouponBondPaymentPeriod
 
   //-----------------------------------------------------------------------
   /**
+   * Gets the year fraction that the accrual period represents.
+   * <p>
+   * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+   * Typically the value will be close to 1 for one year and close to 0.5 for six months.
+   * The fraction may be greater than 1, but not less than 0.
+   * @return the value of the property
+   */
+  public double getYearFraction() {
+    return yearFraction;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
    * Returns a builder that allows this bean to be mutated.
    * @return the mutable builder, not null
    */
@@ -295,7 +320,8 @@ public final class FixedCouponBondPaymentPeriod
           JodaBeanUtils.equal(getEndDate(), other.getEndDate()) &&
           JodaBeanUtils.equal(getUnadjustedStartDate(), other.getUnadjustedStartDate()) &&
           JodaBeanUtils.equal(getUnadjustedEndDate(), other.getUnadjustedEndDate()) &&
-          JodaBeanUtils.equal(getFixedRate(), other.getFixedRate());
+          JodaBeanUtils.equal(getFixedRate(), other.getFixedRate()) &&
+          JodaBeanUtils.equal(getYearFraction(), other.getYearFraction());
     }
     return false;
   }
@@ -310,12 +336,13 @@ public final class FixedCouponBondPaymentPeriod
     hash = hash * 31 + JodaBeanUtils.hashCode(getUnadjustedStartDate());
     hash = hash * 31 + JodaBeanUtils.hashCode(getUnadjustedEndDate());
     hash = hash * 31 + JodaBeanUtils.hashCode(getFixedRate());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getYearFraction());
     return hash;
   }
 
   @Override
   public String toString() {
-    StringBuilder buf = new StringBuilder(256);
+    StringBuilder buf = new StringBuilder(288);
     buf.append("FixedCouponBondPaymentPeriod{");
     buf.append("currency").append('=').append(getCurrency()).append(',').append(' ');
     buf.append("notional").append('=').append(getNotional()).append(',').append(' ');
@@ -323,7 +350,8 @@ public final class FixedCouponBondPaymentPeriod
     buf.append("endDate").append('=').append(getEndDate()).append(',').append(' ');
     buf.append("unadjustedStartDate").append('=').append(getUnadjustedStartDate()).append(',').append(' ');
     buf.append("unadjustedEndDate").append('=').append(getUnadjustedEndDate()).append(',').append(' ');
-    buf.append("fixedRate").append('=').append(JodaBeanUtils.toString(getFixedRate()));
+    buf.append("fixedRate").append('=').append(getFixedRate()).append(',').append(' ');
+    buf.append("yearFraction").append('=').append(JodaBeanUtils.toString(getYearFraction()));
     buf.append('}');
     return buf.toString();
   }
@@ -374,6 +402,11 @@ public final class FixedCouponBondPaymentPeriod
     private final MetaProperty<Double> fixedRate = DirectMetaProperty.ofImmutable(
         this, "fixedRate", FixedCouponBondPaymentPeriod.class, Double.TYPE);
     /**
+     * The meta-property for the {@code yearFraction} property.
+     */
+    private final MetaProperty<Double> yearFraction = DirectMetaProperty.ofImmutable(
+        this, "yearFraction", FixedCouponBondPaymentPeriod.class, Double.TYPE);
+    /**
      * The meta-properties.
      */
     private final Map<String, MetaProperty<?>> metaPropertyMap$ = new DirectMetaPropertyMap(
@@ -384,7 +417,8 @@ public final class FixedCouponBondPaymentPeriod
         "endDate",
         "unadjustedStartDate",
         "unadjustedEndDate",
-        "fixedRate");
+        "fixedRate",
+        "yearFraction");
 
     /**
      * Restricted constructor.
@@ -409,6 +443,8 @@ public final class FixedCouponBondPaymentPeriod
           return unadjustedEndDate;
         case 747425396:  // fixedRate
           return fixedRate;
+        case -1731780257:  // yearFraction
+          return yearFraction;
       }
       return super.metaPropertyGet(propertyName);
     }
@@ -485,6 +521,14 @@ public final class FixedCouponBondPaymentPeriod
       return fixedRate;
     }
 
+    /**
+     * The meta-property for the {@code yearFraction} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<Double> yearFraction() {
+      return yearFraction;
+    }
+
     //-----------------------------------------------------------------------
     @Override
     protected Object propertyGet(Bean bean, String propertyName, boolean quiet) {
@@ -503,6 +547,8 @@ public final class FixedCouponBondPaymentPeriod
           return ((FixedCouponBondPaymentPeriod) bean).getUnadjustedEndDate();
         case 747425396:  // fixedRate
           return ((FixedCouponBondPaymentPeriod) bean).getFixedRate();
+        case -1731780257:  // yearFraction
+          return ((FixedCouponBondPaymentPeriod) bean).getYearFraction();
       }
       return super.propertyGet(bean, propertyName, quiet);
     }
@@ -531,6 +577,7 @@ public final class FixedCouponBondPaymentPeriod
     private LocalDate unadjustedStartDate;
     private LocalDate unadjustedEndDate;
     private double fixedRate;
+    private double yearFraction;
 
     /**
      * Restricted constructor.
@@ -550,6 +597,7 @@ public final class FixedCouponBondPaymentPeriod
       this.unadjustedStartDate = beanToCopy.getUnadjustedStartDate();
       this.unadjustedEndDate = beanToCopy.getUnadjustedEndDate();
       this.fixedRate = beanToCopy.getFixedRate();
+      this.yearFraction = beanToCopy.getYearFraction();
     }
 
     //-----------------------------------------------------------------------
@@ -570,6 +618,8 @@ public final class FixedCouponBondPaymentPeriod
           return unadjustedEndDate;
         case 747425396:  // fixedRate
           return fixedRate;
+        case -1731780257:  // yearFraction
+          return yearFraction;
         default:
           throw new NoSuchElementException("Unknown property: " + propertyName);
       }
@@ -598,6 +648,9 @@ public final class FixedCouponBondPaymentPeriod
           break;
         case 747425396:  // fixedRate
           this.fixedRate = (Double) newValue;
+          break;
+        case -1731780257:  // yearFraction
+          this.yearFraction = (Double) newValue;
           break;
         default:
           throw new NoSuchElementException("Unknown property: " + propertyName);
@@ -638,7 +691,8 @@ public final class FixedCouponBondPaymentPeriod
           endDate,
           unadjustedStartDate,
           unadjustedEndDate,
-          fixedRate);
+          fixedRate,
+          yearFraction);
     }
 
     //-----------------------------------------------------------------------
@@ -740,10 +794,25 @@ public final class FixedCouponBondPaymentPeriod
       return this;
     }
 
+    /**
+     * Sets the year fraction that the accrual period represents.
+     * <p>
+     * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+     * Typically the value will be close to 1 for one year and close to 0.5 for six months.
+     * The fraction may be greater than 1, but not less than 0.
+     * @param yearFraction  the new value
+     * @return this, for chaining, not null
+     */
+    public Builder yearFraction(double yearFraction) {
+      ArgChecker.notNegative(yearFraction, "yearFraction");
+      this.yearFraction = yearFraction;
+      return this;
+    }
+
     //-----------------------------------------------------------------------
     @Override
     public String toString() {
-      StringBuilder buf = new StringBuilder(256);
+      StringBuilder buf = new StringBuilder(288);
       buf.append("FixedCouponBondPaymentPeriod.Builder{");
       buf.append("currency").append('=').append(JodaBeanUtils.toString(currency)).append(',').append(' ');
       buf.append("notional").append('=').append(JodaBeanUtils.toString(notional)).append(',').append(' ');
@@ -751,7 +820,8 @@ public final class FixedCouponBondPaymentPeriod
       buf.append("endDate").append('=').append(JodaBeanUtils.toString(endDate)).append(',').append(' ');
       buf.append("unadjustedStartDate").append('=').append(JodaBeanUtils.toString(unadjustedStartDate)).append(',').append(' ');
       buf.append("unadjustedEndDate").append('=').append(JodaBeanUtils.toString(unadjustedEndDate)).append(',').append(' ');
-      buf.append("fixedRate").append('=').append(JodaBeanUtils.toString(fixedRate));
+      buf.append("fixedRate").append('=').append(JodaBeanUtils.toString(fixedRate)).append(',').append(' ');
+      buf.append("yearFraction").append('=').append(JodaBeanUtils.toString(yearFraction));
       buf.append('}');
       return buf.toString();
     }
