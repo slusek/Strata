@@ -48,8 +48,12 @@ public class DiscountingPaymentPricer {
     return payment.getValue().multipliedBy(discountFactors.discountFactor(payment.getDate()));
   }
 
-  public CurrencyAmount presentValue(Payment payment, DiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
+  public CurrencyAmount presentValue(
+      Payment payment,
+      DiscountFactors discountFactors,
+      double zSpread,
+      boolean periodic,
+      int periodPerYear) {
     if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
       return CurrencyAmount.zero(payment.getCurrency());
     }
@@ -96,8 +100,12 @@ public class DiscountingPaymentPricer {
     return discountFactors.zeroRatePointSensitivity(payment.getDate()).multipliedBy(payment.getAmount());
   }
 
-  public PointSensitivityBuilder presentValueSensitivity(Payment payment, DiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
+  public PointSensitivityBuilder presentValueSensitivity(
+      Payment payment, 
+      DiscountFactors discountFactors,
+      double zSpread,
+      boolean periodic,
+      int periodPerYear) {
     if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
       return PointSensitivityBuilder.none();
     }

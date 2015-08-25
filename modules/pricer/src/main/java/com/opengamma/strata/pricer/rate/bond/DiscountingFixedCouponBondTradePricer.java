@@ -87,7 +87,7 @@ public class DiscountingFixedCouponBondTradePricer {
     StandardId legalEntityId = product.getLegalEntityId();
     double df = provider.repoCurveDiscountFactors(
         ImmutableList.<StandardId>of(legalEntityId, securityId), product.getCurrency()).discountFactor(settlementDate);
-    double pvPrice = (cleanPrice * product.getNotionalAmount().getAmount() + accruedInterest(trade)) * df;
+    double pvPrice = (cleanPrice * product.getNotional() + accruedInterest(trade)) * df;
     return CurrencyAmount.of(product.getCurrency(), pvPrice);
   }
 
@@ -100,7 +100,7 @@ public class DiscountingFixedCouponBondTradePricer {
     StandardId legalEntityId = product.getLegalEntityId();
     double df = provider.repoCurveDiscountFactors(
         ImmutableList.<StandardId>of(legalEntityId, securityId), product.getCurrency()).discountFactor(settlementDate);
-    double notional = product.getNotionalAmount().getAmount();
+    double notional = product.getNotional();
     return pv.getAmount() / df / notional;
   }
 
@@ -117,18 +117,18 @@ public class DiscountingFixedCouponBondTradePricer {
     StandardId legalEntityId = product.getLegalEntityId();
     double df = provider.repoCurveDiscountFactors(
         ImmutableList.<StandardId>of(legalEntityId, securityId), product.getCurrency()).discountFactor(settlementDate);
-    double notional = product.getNotionalAmount().getAmount();
+    double notional = product.getNotional();
     return pv.getAmount() / df / notional;
   }
 
   public double dirtyPriceFromCleanPrice(FixedCouponBondTrade trade, double cleanPrice) {
-    double notional = trade.getProduct().getNotionalAmount().getAmount();
+    double notional = trade.getProduct().getNotional();
     double accruedInterest = accruedInterest(trade);
     return cleanPrice + accruedInterest / notional;
   }
 
   public double cleanPriceFromDirtyPrice(FixedCouponBondTrade trade, double dirtyPrice) {
-    final double notional = trade.getProduct().getNotionalAmount().getAmount();
+    final double notional = trade.getProduct().getNotional();
     double accruedInterest = accruedInterest(trade);
     return dirtyPrice - accruedInterest / notional;
   }
@@ -223,7 +223,7 @@ public class DiscountingFixedCouponBondTradePricer {
         ImmutableList.<StandardId>of(legalEntityId, securityId), product.getCurrency());
     double df = discountFactors.discountFactor(settlementDate);
     CurrencyAmount pv = presentValue(trade, provider);
-    double notional = product.getNotionalAmount().getAmount();
+    double notional = product.getNotional();
     PointSensitivityBuilder pvSensi = presentValueSensitivity(trade, provider).multipliedBy(1d / df / notional);
     RepoCurveZeroRateSensitivity dfSensi = discountFactors.zeroRatePointSensitivity(settlementDate)
         .multipliedBy(-pv.getAmount() / df / df / notional);
@@ -244,7 +244,7 @@ public class DiscountingFixedCouponBondTradePricer {
         ImmutableList.<StandardId>of(legalEntityId, securityId), product.getCurrency());
     double df = discountFactors.discountFactor(settlementDate);
     CurrencyAmount pv = presentValueWithZSpread(trade, provider, zSpread, periodic, periodPerYear);
-    double notional = product.getNotionalAmount().getAmount();
+    double notional = product.getNotional();
     PointSensitivityBuilder pvSensi = presentValueSensitivityWithZSpread(
         trade, provider, zSpread, periodic, periodPerYear).multipliedBy(1d / df / notional);
     RepoCurveZeroRateSensitivity dfSensi = discountFactors.zeroRatePointSensitivity(settlementDate)
@@ -337,7 +337,7 @@ public class DiscountingFixedCouponBondTradePricer {
     FixedCouponBond product = trade.getProduct();
     Schedule schedule = product.getPeriodicSchedule().createSchedule();
     LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
-    double notional = product.getNotionalAmount().getAmount();
+    double notional = product.getNotional();
 
     int nbCoupon = schedule.getPeriods().size();
     int couponIndex = 0;
