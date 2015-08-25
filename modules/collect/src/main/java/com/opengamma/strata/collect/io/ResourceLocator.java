@@ -24,6 +24,7 @@ import com.google.common.io.CharSource;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.opengamma.strata.collect.ArgChecker;
+import com.opengamma.strata.collect.Unchecked;
 
 /**
  * A locator for a resource, specified as a file or classpath resource.
@@ -114,20 +115,21 @@ public final class ResourceLocator {
    * 
    * @param classpathResourceName  the classpath resource name
    * @return the resource locators
+   * @throws UncheckedIOException if an IO exception occurs
    */
   @FromString
   public static Stream<ResourceLocator> streamOfClasspathResources(String classpathResourceName) {
     ArgChecker.notNull(classpathResourceName, "classpathResourceName");
-    try {
-      ClassLoader classLoader = firstNonNull(
-          Thread.currentThread().getContextClassLoader(),
-          ResourceLocator.class.getClassLoader());
-      return Collections.list(classLoader.getResources(classpathResourceName)).stream()
-          .map(url -> ResourceLocator.ofClasspathUrl(url));
+    return Unchecked.wrap(() -> stream(classpathResourceName));
+  }
 
-    } catch (IOException ex) {
-      throw new UncheckedIOException(ex);
-    }
+  // break method out to avoid Eclipse compiler issues
+  private static Stream<ResourceLocator> stream(String classpathResourceName) throws IOException {
+    ClassLoader classLoader = firstNonNull(
+        Thread.currentThread().getContextClassLoader(),
+        ResourceLocator.class.getClassLoader());
+    return Collections.list(classLoader.getResources(classpathResourceName)).stream()
+        .map(url -> ResourceLocator.ofClasspathUrl(url));
   }
 
   //-------------------------------------------------------------------------

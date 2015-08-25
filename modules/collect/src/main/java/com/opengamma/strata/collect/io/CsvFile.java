@@ -5,21 +5,23 @@
  */
 package com.opengamma.strata.collect.io;
 
+import static com.opengamma.strata.collect.Guavate.toImmutableList;
 import static com.opengamma.strata.collect.Guavate.toImmutableMap;
+import static java.util.stream.Collectors.toCollection;
 
-import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharSource;
-import com.google.common.io.LineProcessor;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.collect.Messages;
+import com.opengamma.strata.collect.Unchecked;
 
 /**
  * A CSV file.
@@ -54,7 +56,7 @@ public final class CsvFile {
   /**
    * The data rows in the CSV file.
    */
-  private final ImmutableList<ImmutableList<String>> lines;
+  private final ImmutableList<ImmutableList<String>> rows;
 
   //------------------------------------------------------------------------
   /**
@@ -63,50 +65,35 @@ public final class CsvFile {
    * @param source  the CSV file resource
    * @param headerRow  whether the source has a header row
    * @return the CSV file
-   * @throws IllegalArgumentException if the file is invalid
+   * @throws UncheckedIOException if an IO exception occurs
+   * @throws IllegalArgumentException if the file cannot be parsed
    */
   public static CsvFile of(CharSource source, boolean headerRow) {
     ArgChecker.notNull(source, "source");
-    List<ImmutableList<String>> lines;
-    try {
-      lines = parse(source);
-    } catch (IOException ex) {
-      throw new UncheckedIOException(ex);
+    ImmutableList<String> lines = Unchecked.wrap(() -> source.readLines());
+    ArrayList<ImmutableList<String>> parsedCsv = parse(lines);
+    if (!headerRow) {
+      return new CsvFile(ImmutableList.of(), ImmutableList.copyOf(parsedCsv));
     }
-    if (headerRow) {
-      if (lines.isEmpty()) {
-        throw new IllegalArgumentException("Could not read header row from empty CSV file");
-      }
-      ImmutableList<String> headers = lines.remove(0);
-      ImmutableList<ImmutableList<String>> dataLines = ImmutableList.copyOf(lines);
-      return new CsvFile(headers, dataLines);
-    } else {
-      return new CsvFile(ImmutableList.of(), ImmutableList.copyOf(lines));
+    if (parsedCsv.isEmpty()) {
+      throw new IllegalArgumentException("Could not read header row from empty CSV file");
     }
+    ImmutableList<String> headers = parsedCsv.remove(0);
+    return new CsvFile(headers, ImmutableList.copyOf(parsedCsv));
   }
 
   //------------------------------------------------------------------------
   // parses the CSV file format
-  private static ArrayList<ImmutableList<String>> parse(CharSource source) throws IOException {
-    return source.readLines(new LineProcessor<ArrayList<ImmutableList<String>>>() {
-      private final ArrayList<ImmutableList<String>> result = new ArrayList<>();
-
-      @Override
-      public boolean processLine(String line) throws IOException {
-        parseLine(line.trim(), result);
-        return true;
-      }
-
-      @Override
-      public ArrayList<ImmutableList<String>> getResult() {
-        return result;
-      }
-    });
+  private static ArrayList<ImmutableList<String>> parse(ImmutableList<String> lines) {
+    return lines.stream()
+        .flatMap(line -> parseLine(line))
+        .collect(toCollection(ArrayList::new));
   }
 
-  private static void parseLine(String line, ArrayList<ImmutableList<String>> result) {
+  // return Stream rather than Optional as works better with flatMap
+  private static Stream<ImmutableList<String>> parseLine(String line) {
     if (line.length() == 0 || line.startsWith("#") || line.startsWith(";")) {
-      return;
+      return Stream.empty();
     }
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     int start = 0;
@@ -133,9 +120,10 @@ public final class CsvFile {
       nextComma = terminated.indexOf(',', start);
     }
     ImmutableList<String> fields = builder.build();
-    if (hasContent(fields)) {
-      result.add(fields);
+    if (!hasContent(fields)) {
+      return Stream.empty();
     }
+    return Stream.of(fields);
   }
 
   // determines whether there is any content on a line
@@ -151,17 +139,42 @@ public final class CsvFile {
 
   //------------------------------------------------------------------------
   /**
+   * Creates an instance from a list of headers and rows.
+   * <p>
+   * The headers may be an empty list.
+   * All the rows must contain a list of the same size, matching the header if present.
+   * 
+   * @param headers  the headers, empty if no headers
+   * @param rows  the data rows
+   * @return the CSV file
+   * @throws IllegalArgumentException if the rows do not match the headers
+   */
+  public static CsvFile of(List<String> headers, List<? extends List<String>> rows) {
+    ArgChecker.notNull(headers, "headers");
+    ArgChecker.notNull(rows, "rows");
+    int size = (headers.size() == 0 && rows.size() > 0 ? rows.get(0).size() : headers.size());
+    if (rows.stream().filter(row -> row.size() != size).findAny().isPresent()) {
+      throw new IllegalArgumentException("Invalid data rows, each row must have same columns as header row");
+    }
+    ImmutableList<ImmutableList<String>> copiedRows = rows.stream()
+        .map(row -> ImmutableList.copyOf(row))
+        .collect(toImmutableList());
+    return new CsvFile(ImmutableList.copyOf(headers), copiedRows);
+  }
+
+  //------------------------------------------------------------------------
+  /**
    * Restricted constructor.
    * 
    * @param headers  the header row
-   * @param lines  the data lines
+   * @param rows  the data rows
    */
-  private CsvFile(ImmutableList<String> headers, ImmutableList<ImmutableList<String>> lines) {
+  private CsvFile(ImmutableList<String> headers, ImmutableList<ImmutableList<String>> rows) {
     this.headers = headers;
     searchHeaders = IntStream.range(0, headers.size())
         .boxed()
         .collect(toImmutableMap(index -> headers.get(index).toLowerCase(Locale.ENGLISH)));
-    this.lines = lines;
+    this.rows = rows;
   }
 
   //------------------------------------------------------------------------
@@ -177,49 +190,49 @@ public final class CsvFile {
   }
 
   /**
-   * Gets all data lines in the file.
+   * Gets all data rows in the file.
    * 
-   * @return the data lines
+   * @return the data rows
    */
-  public ImmutableList<ImmutableList<String>> lines() {
-    return lines;
+  public ImmutableList<ImmutableList<String>> rows() {
+    return rows;
   }
 
   /**
-   * Gets the number of data lines.
+   * Gets the number of data rows.
    * 
-   * @return the number of data lines
+   * @return the number of data rows
    */
-  public int lineCount() {
-    return lines.size();
+  public int rowCount() {
+    return rows.size();
   }
 
   /**
-   * Gets a single line.
+   * Gets a single row.
    * 
-   * @param index  the line index
-   * @return the line
+   * @param index  the row index
+   * @return the row
    */
-  public ImmutableList<String> line(int index) {
-    return lines.get(index);
+  public ImmutableList<String> row(int index) {
+    return rows.get(index);
   }
 
   /**
-   * Gets a single field value from a line by column header.
+   * Gets a single field value from a row by column header.
    * <p>
-   * This is typically used by looping around each line by index.
+   * This is typically used by looping around each row by index.
    * 
-   * @param lineIndex  the line index
+   * @param rowIndex  the row index
    * @param header  the column header
    * @return the field value
    * @throws IllegalArgumentException if the header is not found
    */
-  public String field(int lineIndex, String header) {
+  public String field(int rowIndex, String header) {
     Integer headerIndex = searchHeaders.get(header.toLowerCase(Locale.ENGLISH));
     if (headerIndex == null) {
       throw new IllegalArgumentException(Messages.format("Header not found: {}", header));
     }
-    return line(lineIndex).get(headerIndex);
+    return row(rowIndex).get(headerIndex);
   }
 
   //-------------------------------------------------------------------------
@@ -238,7 +251,7 @@ public final class CsvFile {
     }
     if (obj instanceof CsvFile) {
       CsvFile other = (CsvFile) obj;
-      return headers.equals(other.headers) && lines.equals(other.lines);
+      return headers.equals(other.headers) && rows.equals(other.rows);
     }
     return false;
   }
@@ -250,7 +263,7 @@ public final class CsvFile {
    */
   @Override
   public int hashCode() {
-    return headers.hashCode() ^ lines.hashCode();
+    return headers.hashCode() ^ rows.hashCode();
   }
 
   /**
