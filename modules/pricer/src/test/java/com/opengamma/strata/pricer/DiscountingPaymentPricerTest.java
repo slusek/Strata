@@ -68,6 +68,18 @@ public class DiscountingPaymentPricerTest {
     assertEquals(computed, CurrencyAmount.zero(USD));
   }
 
+  //  //-------------------------------------------------------------------------
+  //  public void test_presentValue_df_spread() {
+  //    CurrencyAmount computed = PRICER.presentValue(PAYMENT, DISCOUNT_FACTORS);
+  //    double expected = NOTIONAL_USD * DF;
+  //    assertEquals(computed.getAmount(), expected, NOTIONAL_USD * TOL);
+  //  }
+  //
+  //  public void test_presentValue_df_ended_spread() {
+  //    CurrencyAmount computed = PRICER.presentValue(PAYMENT_PAST, DISCOUNT_FACTORS);
+  //    assertEquals(computed, CurrencyAmount.zero(USD));
+  //  }
+
   //-------------------------------------------------------------------------
   public void test_presentValueSensitivity_df() {
     PointSensitivities point = PRICER.presentValueSensitivity(PAYMENT, DISCOUNT_FACTORS).build();

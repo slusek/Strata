@@ -133,11 +133,11 @@ public final class SimpleDiscountFactors
       return factor;
     }
     if (periodic) {
-      factor = discountFactor(date) * Math.exp(-zSpread * yearFraction);
-    } else {
       double ratePeriodicAnnualPlusOne =
           Math.pow(discountFactor(date), -1.0 / periodPerYear / yearFraction) + zSpread / periodPerYear;
       factor = Math.pow(ratePeriodicAnnualPlusOne, -periodPerYear * yearFraction);
+    } else {
+      factor = discountFactor(date) * Math.exp(-zSpread * yearFraction);
     }
     return factor;
   }
@@ -175,11 +175,11 @@ public final class SimpleDiscountFactors
       return sensi;
     }
     if (periodic) {
-      factor = Math.exp(-zSpread * yearFraction);
-    } else {
       double df = discountFactor(date);
       double dfRoot = Math.pow(df, -1.0 / periodPerYear / yearFraction);
       factor = dfRoot / df / Math.pow(dfRoot + zSpread / periodPerYear, periodPerYear * yearFraction + 1);
+    } else {
+      factor = Math.exp(-zSpread * yearFraction);
     }
     return sensi.multipliedBy(factor);
   }

@@ -172,7 +172,8 @@ public interface DiscountFactors {
    * @return the point sensitivity of the zero rate
    * @throws RuntimeException if the result cannot be calculated
    */
-  public abstract ZeroRateSensitivity zeroRatePointSensitivityWithSpread(LocalDate date,
+  public abstract ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+      LocalDate date,
       Currency sensitivityCurrency,
       double zSpread,
       boolean periodic,
