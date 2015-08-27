@@ -119,10 +119,10 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @param discountFactors  the discount factor provider
    * @return the present value curve sensitivity of the period
    */
-  public PointSensitivityBuilder presentValueSensitivity(
+  public IssuerCurveZeroRateSensitivity presentValueSensitivity(
       FixedCouponBondPaymentPeriod period,
       IssuerCurveDiscountFactors discountFactors) {
-    PointSensitivityBuilder dscSensi = discountFactors.zeroRatePointSensitivity(period.getPaymentDate());
+    IssuerCurveZeroRateSensitivity dscSensi = discountFactors.zeroRatePointSensitivity(period.getPaymentDate());
     return dscSensi.multipliedBy(period.getFixedRate() * period.getNotional() * period.getYearFraction());
   }
 
@@ -143,7 +143,7 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @param periodPerYear  the number of periods per year
    * @return the present value curve sensitivity of the period
    */
-  public PointSensitivityBuilder presentValueSensitivity(
+  public IssuerCurveZeroRateSensitivity presentValueSensitivity(
       FixedCouponBondPaymentPeriod period,
       IssuerCurveDiscountFactors discountFactors,
       double zSpread,
@@ -180,9 +180,6 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * Explains the present value of a single fixed coupon payment period.
    * <p>
    * This adds information to the {@link ExplainMapBuilder} to aid understanding of the calculation.
-   * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
    * 
    * @param period  the period to price
    * @param discountFactors  the discount factor provider
@@ -217,6 +214,9 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * Explains the present value of a single fixed coupon payment period with z-spread.
    * <p>
    * This adds information to the {@link ExplainMapBuilder} to aid understanding of the calculation.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
+   * of the discounting curve. 
    * 
    * @param period  the period to price
    * @param discountFactors  the discount factor provider
@@ -248,7 +248,8 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
       builder.put(ExplainKey.FUTURE_VALUE, CurrencyAmount.zero(currency));
       builder.put(ExplainKey.PRESENT_VALUE, CurrencyAmount.zero(currency));
     } else {
-      builder.put(ExplainKey.DISCOUNT_FACTOR, discountFactors.discountFactor(paymentDate));
+      builder.put(ExplainKey.DISCOUNT_FACTOR,
+          discountFactors.getDiscountFactors().discountFactorWithSpread(paymentDate, zSpread, periodic, periodPerYear));
       builder.put(ExplainKey.FUTURE_VALUE, CurrencyAmount.of(currency, futureValue(period, discountFactors)));
       builder.put(ExplainKey.PRESENT_VALUE,
           CurrencyAmount.of(currency, presentValue(period, discountFactors, zSpread, periodic, periodPerYear)));
