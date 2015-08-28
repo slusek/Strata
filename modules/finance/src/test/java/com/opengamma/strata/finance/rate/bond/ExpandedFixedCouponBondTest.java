@@ -88,7 +88,8 @@ public class ExpandedFixedCouponBondTest {
   private static final StandardId LEGAL_ENTITY = StandardId.of("OG-Ticker", "BUN EUR");
   private static final HolidayCalendar EUR_CALENDAR = HolidayCalendars.EUTA;
   private static final DaysAdjustment DATE_OFFSET = DaysAdjustment.ofBusinessDays(3, EUR_CALENDAR);
-  private static final DayCount DAY_COUNT = DayCounts.ACT_ACT_ICMA;
+  private static final DayCount DAY_COUNT = DayCounts.ACT_365F;
+  private static final int EX_COUPON_DAYS = 5;
 
   public void test_of() {
     ExpandedFixedCouponBond testList = ExpandedFixedCouponBond.builder()
@@ -98,6 +99,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertEquals(testList.getCurrency(), EUR);
     assertEquals(testList.getDayCount(), DAY_COUNT);
@@ -108,6 +110,7 @@ public class ExpandedFixedCouponBondTest {
     assertEquals(testList.getSettlementDateOffset(), DATE_OFFSET);
     assertEquals(testList.getYieldConvention(), YIELD_CONVENTION);
     assertEquals(testList.getPeriodicPayments(), PERIODIC_PAYMENTS);
+    assertEquals(testList.getExCouponDays(), EX_COUPON_DAYS);
     ExpandedFixedCouponBond testElms = ExpandedFixedCouponBond.builder()
         .dayCount(DAY_COUNT)
         .legalEntityId(LEGAL_ENTITY)
@@ -115,6 +118,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PAYMENT_1, PAYMENT_2, PAYMENT_3, PAYMENT_4)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertEquals(testList, testElms);
   }
@@ -127,6 +131,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     ExpandedFixedCouponBond test = base.expand();
     assertEquals(test, base);
@@ -141,6 +146,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     coverImmutableBean(test1);
     BusinessDayAdjustment adj = BusinessDayAdjustment.of(
@@ -171,6 +177,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertSerialization(test);
   }

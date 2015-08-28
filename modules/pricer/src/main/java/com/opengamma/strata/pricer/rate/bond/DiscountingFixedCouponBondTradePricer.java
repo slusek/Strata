@@ -261,8 +261,7 @@ public class DiscountingFixedCouponBondTradePricer {
     final Function1D<Double, Double> residual = new Function1D<Double, Double>() {
       @Override
       public Double evaluate(final Double z) {
-        return presentValueWithZSpread(trade, provider, z, periodic, periodPerYear).getAmount() -
-            pv.getAmount();
+        return presentValueWithZSpread(trade, provider, z, periodic, periodPerYear).getAmount() - pv.getAmount();
       }
     };
     double[] range = ROOT_BRACKETER.getBracketedPoints(residual, -0.01, 0.01); // Starting range is [-1%, 1%]
@@ -416,7 +415,7 @@ public class DiscountingFixedCouponBondTradePricer {
     double fixedRate = product.getFixedRate();
     double accruedInterest = product.getDayCount().yearFraction(previousAccrualDate, settlementDate, schedule)
         * fixedRate * notional;
-    int exCouponDays = product.getSettlementDateOffset().getDays();
+    int exCouponDays = product.getExCouponDays();
     double result = 0d;
     if (exCouponDays != 0 && nextAccrualDate.minusDays(exCouponDays).isBefore(settlementDate)) {
       result = accruedInterest - notional * fixedRate * schedulePeriod.yearFraction(product.getDayCount(), schedule);

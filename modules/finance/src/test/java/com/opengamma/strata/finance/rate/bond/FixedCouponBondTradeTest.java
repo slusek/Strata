@@ -54,7 +54,7 @@ public class FixedCouponBondTradeTest {
   private static final double FIXED_RATE = 0.015;
   private static final HolidayCalendar EUR_CALENDAR = HolidayCalendars.EUTA;
   private static final DaysAdjustment DATE_OFFSET = DaysAdjustment.ofBusinessDays(3, EUR_CALENDAR);
-  private static final DayCount DAY_COUNT = DayCounts.ACT_ACT_ICMA;
+  private static final DayCount DAY_COUNT = DayCounts.ACT_365F;
   private static final LocalDate START_DATE = LocalDate.of(2015, 4, 12);
   private static final LocalDate END_DATE = LocalDate.of(2025, 4, 12);
   private static final BusinessDayAdjustment BUSINESS_ADJUST =

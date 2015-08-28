@@ -138,6 +138,7 @@ public final class ZeroRateDiscountFactors
       return factor;
     }
     if (periodic) {
+      ArgChecker.isTrue(periodPerYear > 0, "periodPerYear must be strictly positive");
       double ratePeriodicAnnualPlusOne =
           Math.pow(discountFactor(date), -1.0 / periodPerYear / yearFraction) + zSpread / periodPerYear;
       factor = Math.pow(ratePeriodicAnnualPlusOne, -periodPerYear * yearFraction);

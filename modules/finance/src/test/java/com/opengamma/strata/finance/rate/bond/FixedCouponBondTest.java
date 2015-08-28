@@ -43,13 +43,14 @@ public class FixedCouponBondTest {
   private static final double FIXED_RATE = 0.015;
   private static final HolidayCalendar EUR_CALENDAR = HolidayCalendars.EUTA;
   private static final DaysAdjustment DATE_OFFSET = DaysAdjustment.ofBusinessDays(3, EUR_CALENDAR);
-  private static final DayCount DAY_COUNT = DayCounts.ACT_ACT_ICMA;
+  private static final DayCount DAY_COUNT = DayCounts.ACT_365F;
   private static final LocalDate START_DATE = LocalDate.of(2015, 4, 12);
   private static final LocalDate END_DATE = LocalDate.of(2025, 4, 12);
   private static final BusinessDayAdjustment BUSINESS_ADJUST =
       BusinessDayAdjustment.of(BusinessDayConventions.MODIFIED_FOLLOWING, EUR_CALENDAR);
   private static final PeriodicSchedule PERIOD_SCHEDULE = PeriodicSchedule.of(
       START_DATE, END_DATE, Frequency.P6M, BUSINESS_ADJUST, StubConvention.SHORT_INITIAL, false);
+  private static final int EX_COUPON_DAYS = 5;
 
   public void test_of() {
     FixedCouponBond test = FixedCouponBond.builder()
@@ -61,6 +62,7 @@ public class FixedCouponBondTest {
         .periodicSchedule(PERIOD_SCHEDULE)
         .settlementDateOffset(DATE_OFFSET)
         .yieldConvention(YIELD_CONVENTION)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertEquals(test.getDayCount(), DAY_COUNT);
     assertEquals(test.getFixedRate(), FIXED_RATE);
@@ -70,6 +72,7 @@ public class FixedCouponBondTest {
     assertEquals(test.getPeriodicSchedule(), PERIOD_SCHEDULE);
     assertEquals(test.getSettlementDateOffset(), DATE_OFFSET);
     assertEquals(test.getYieldConvention(), YIELD_CONVENTION);
+    assertEquals(test.getExCouponDays(), EX_COUPON_DAYS);
   }
 
   public void test_expand() {
@@ -82,6 +85,7 @@ public class FixedCouponBondTest {
         .periodicSchedule(PERIOD_SCHEDULE)
         .settlementDateOffset(DATE_OFFSET)
         .yieldConvention(YIELD_CONVENTION)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     ExpandedFixedCouponBond expanded = base.expand();
     assertEquals(expanded.getDayCount(), DAY_COUNT);
@@ -109,6 +113,7 @@ public class FixedCouponBondTest {
     }
     Payment expectedPayment = Payment.of(CurrencyAmount.of(EUR, NOTIONAL), BUSINESS_ADJUST.adjust(END_DATE));
     assertEquals(expanded.getNominalPayment(), expectedPayment);
+    assertEquals(expanded.getExCouponDays(), EX_COUPON_DAYS);
   }
 
   //-------------------------------------------------------------------------
@@ -122,6 +127,7 @@ public class FixedCouponBondTest {
         .periodicSchedule(PERIOD_SCHEDULE)
         .settlementDateOffset(DATE_OFFSET)
         .yieldConvention(YIELD_CONVENTION)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     coverImmutableBean(test1);
     BusinessDayAdjustment adj = BusinessDayAdjustment.of(
@@ -151,6 +157,7 @@ public class FixedCouponBondTest {
         .periodicSchedule(PERIOD_SCHEDULE)
         .settlementDateOffset(DATE_OFFSET)
         .yieldConvention(YIELD_CONVENTION)
+        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertSerialization(test);
   }
