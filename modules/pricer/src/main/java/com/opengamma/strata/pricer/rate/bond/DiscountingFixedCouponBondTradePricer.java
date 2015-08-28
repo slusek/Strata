@@ -40,6 +40,7 @@ import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
  * This function provides the ability to price a {@link FixedCouponBondTrade}.
  */
 public class DiscountingFixedCouponBondTradePricer {
+  //TODO quantity is not handled
 
   /**
    * The root finder.
@@ -139,7 +140,9 @@ public class DiscountingFixedCouponBondTradePricer {
    * @param cleanPrice  the clean price.
    * @return the present value of the fixed coupon bond trade
    */
-  public CurrencyAmount presentValueFromCleanPrice(FixedCouponBondTrade trade, LegalEntityDiscountingProvider provider,
+  public CurrencyAmount presentValueFromCleanPrice(
+      FixedCouponBondTrade trade,
+      LegalEntityDiscountingProvider provider,
       double cleanPrice) {
     FixedCouponBond product = trade.getProduct();
     LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
@@ -402,6 +405,9 @@ public class DiscountingFixedCouponBondTradePricer {
     FixedCouponBond product = trade.getProduct();
     Schedule schedule = product.getPeriodicSchedule().createSchedule();
     LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
+    if (schedule.getPeriods().get(0).getStartDate().isAfter(settlementDate)) {
+      return 0d;
+    }
     double notional = product.getNotional();
     int couponIndex = couponIndex(schedule, settlementDate);
     SchedulePeriod schedulePeriod = schedule.getPeriods().get(couponIndex);

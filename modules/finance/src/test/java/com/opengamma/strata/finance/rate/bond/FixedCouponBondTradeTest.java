@@ -42,6 +42,11 @@ import com.opengamma.strata.finance.UnitSecurity;
 @Test
 public class FixedCouponBondTradeTest {
   private static final StandardId SECURITY_ID = StandardId.of("OG-Ticker", "GOVT1-BOND1");
+  private static final TradeInfo TRADE_INFO = TradeInfo.builder()
+      .tradeDate(date(2015, 3, 25))
+      .settlementDate(date(2015, 3, 30))
+      .build();
+  private static final long QUANTITY = 10;
 
   private static final YieldConvention YIELD_CONVENTION = YieldConvention.GERMAN_BONDS;
   private static final StandardId LEGAL_ENTITY = StandardId.of("OG-Ticker", "GOVT1");
@@ -72,13 +77,6 @@ public class FixedCouponBondTradeTest {
   private static final SecurityLink<FixedCouponBond> SECURITY_LINK_RESOLVED = SecurityLink.resolved(BOND_SECURITY);
   private static final SecurityLink<FixedCouponBond> SECURITY_LINK_RESOLVABLE =
       SecurityLink.resolvable(SECURITY_ID, FixedCouponBond.class);
-
-  private static final TradeInfo TRADE_INFO = TradeInfo.builder()
-      .tradeDate(date(2015, 3, 25))
-      .settlementDate(date(2015, 3, 30))
-      .build();
-
-  private static final long QUANTITY = 10;
 
   private static final LinkResolver RESOLVER = new LinkResolver() {
     @SuppressWarnings("unchecked")
