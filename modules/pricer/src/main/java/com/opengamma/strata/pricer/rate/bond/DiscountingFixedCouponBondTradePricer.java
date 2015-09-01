@@ -15,6 +15,7 @@ import com.opengamma.analytics.math.rootfinding.RealSingleRootFinder;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.basics.date.DayCounts;
+import com.opengamma.strata.basics.date.DaysAdjustment;
 import com.opengamma.strata.basics.schedule.Schedule;
 import com.opengamma.strata.basics.schedule.SchedulePeriod;
 import com.opengamma.strata.collect.ArgChecker;
@@ -90,10 +91,11 @@ public class DiscountingFixedCouponBondTradePricer {
    */
   public CurrencyAmount presentValue(FixedCouponBondTrade trade, LegalEntityDiscountingProvider provider) {
     ExpandedFixedCouponBond product = trade.getProduct().expand();
+    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
     IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(
         product.getLegalEntityId(), product.getCurrency());
-    CurrencyAmount pvNominal = presentValueNominal(product, discountFactors);
-    CurrencyAmount pvCoupon = presentValueCoupon(product, discountFactors);
+    CurrencyAmount pvNominal = presentValueNominal(product, discountFactors, settlementDate);
+    CurrencyAmount pvCoupon = presentValueCoupon(product, discountFactors, settlementDate);
     return pvNominal.plus(pvCoupon);
   }
 
@@ -121,11 +123,13 @@ public class DiscountingFixedCouponBondTradePricer {
       boolean periodic,
       int periodPerYear) {
     ExpandedFixedCouponBond product = trade.getProduct().expand();
+    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
     IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(
         product.getLegalEntityId(), product.getCurrency());
-    CurrencyAmount pvNominal = presentValueNominalFromZSpread(product, discountFactors, zSpread, periodic,
-        periodPerYear);
-    CurrencyAmount pvCoupon = presentValueCouponFromZSpread(product, discountFactors, zSpread, periodic, periodPerYear);
+    CurrencyAmount pvNominal = presentValueNominalFromZSpread(
+        product, discountFactors, zSpread, periodic, periodPerYear, settlementDate);
+    CurrencyAmount pvCoupon = presentValueCouponFromZSpread(
+        product, discountFactors, zSpread, periodic, periodPerYear, settlementDate);
     return pvNominal.plus(pvCoupon);
   }
 
@@ -283,10 +287,11 @@ public class DiscountingFixedCouponBondTradePricer {
       FixedCouponBondTrade trade,
       LegalEntityDiscountingProvider provider) {
     ExpandedFixedCouponBond product = trade.getProduct().expand();
+    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
     IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(
         product.getLegalEntityId(), product.getCurrency());
-    PointSensitivityBuilder pvNominal = presentValueSensitivityNominal(product, discountFactors);
-    PointSensitivityBuilder pvCoupon = presentValueSensitivityCoupon(product, discountFactors);
+    PointSensitivityBuilder pvNominal = presentValueSensitivityNominal(product, discountFactors, settlementDate);
+    PointSensitivityBuilder pvCoupon = presentValueSensitivityCoupon(product, discountFactors, settlementDate);
     return pvNominal.combinedWith(pvCoupon);
   }
 
@@ -314,12 +319,13 @@ public class DiscountingFixedCouponBondTradePricer {
       boolean periodic,
       int periodPerYear) {
     ExpandedFixedCouponBond product = trade.getProduct().expand();
+    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
     IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(
         product.getLegalEntityId(), product.getCurrency());
     PointSensitivityBuilder pvNominal = presentValueSensitivityNominalFromZSpread(product, discountFactors, zSpread,
-        periodic, periodPerYear);
+        periodic, periodPerYear, settlementDate);
     PointSensitivityBuilder pvCoupon = presentValueSensitivityCouponFromZSpread(product, discountFactors, zSpread,
-        periodic, periodPerYear);
+        periodic, periodPerYear, settlementDate);
     return pvNominal.combinedWith(pvCoupon);
   }
 
@@ -402,23 +408,27 @@ public class DiscountingFixedCouponBondTradePricer {
    */
   public double accruedInterest(FixedCouponBondTrade trade) {
     FixedCouponBond product = trade.getProduct();
-    Schedule schedule = product.getPeriodicSchedule().createSchedule();
+    Schedule scheduleAdjusted = product.getPeriodicSchedule().createSchedule();
+    Schedule scheduleUnadjusted = product.createUnadjustedSchedule(scheduleAdjusted);
     LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
-    if (schedule.getPeriods().get(0).getStartDate().isAfter(settlementDate)) {
+    if (scheduleUnadjusted.getPeriods().get(0).getStartDate().isAfter(settlementDate)) {
       return 0d;
     }
     double notional = product.getNotional();
-    int couponIndex = couponIndex(schedule, settlementDate);
-    SchedulePeriod schedulePeriod = schedule.getPeriods().get(couponIndex);
+    int couponIndex = couponIndex(scheduleUnadjusted, settlementDate);
+    SchedulePeriod schedulePeriod = scheduleUnadjusted.getPeriod(couponIndex);
     LocalDate previousAccrualDate = schedulePeriod.getStartDate();
-    LocalDate nextAccrualDate = schedulePeriod.getEndDate();
+    LocalDate paymentDate = scheduleAdjusted.getPeriod(couponIndex).getEndDate();
     double fixedRate = product.getFixedRate();
-    double accruedInterest = product.getDayCount().yearFraction(previousAccrualDate, settlementDate, schedule)
-        * fixedRate * notional;
-    int exCouponDays = product.getExCouponDays();
+    double accruedInterest = product.getDayCount()
+        .yearFraction(previousAccrualDate, settlementDate, scheduleUnadjusted) * fixedRate * notional;
+    DaysAdjustment exCouponDays = product.getExCouponPeriod();
     double result = 0d;
-    if (exCouponDays != 0 && nextAccrualDate.minusDays(exCouponDays).isBefore(settlementDate)) {
-      result = accruedInterest - notional * fixedRate * schedulePeriod.yearFraction(product.getDayCount(), schedule);
+    // TODO in 2.x exCouponDays is used without the calendar for accruedInterest computation, 
+    // whereas with the calendar for toDerivative, i.e., creating "schedule". Confirm this logic. 
+    if (exCouponDays.getDays() != 0 && settlementDate.isAfter(exCouponDays.adjust(paymentDate))) {
+      result = accruedInterest - notional * fixedRate *
+          schedulePeriod.yearFraction(product.getDayCount(), scheduleUnadjusted);
     } else {
       result = accruedInterest;
     }
@@ -432,8 +442,8 @@ public class DiscountingFixedCouponBondTradePricer {
     if (expanded.getPeriodicPayments().get(0).getStartDate().isAfter(settlementDate)) {
       return 0d;
     }
-    double factorSpot = accruedInterest(trade);
     int couponIndex = couponIndex(product.getPeriodicSchedule().createSchedule(), settlementDate);
+    double factorSpot = accruedInterest(trade) / product.getFixedRate() / product.getNotional();
     double factorPeriod = expanded.getPeriodicPayments().get(couponIndex).getYearFraction();
     return (factorPeriod - factorSpot) / factorPeriod;
   }
@@ -443,6 +453,18 @@ public class DiscountingFixedCouponBondTradePricer {
     int couponIndex = 0;
     for (int loopcpn = 0; loopcpn < nbCoupon; loopcpn++) {
       if (schedule.getPeriods().get(loopcpn).getEndDate().isAfter(date)) {
+        couponIndex = loopcpn;
+        break;
+      }
+    }
+    return couponIndex;
+  }
+
+  private int couponIndex(ImmutableList<FixedCouponBondPaymentPeriod> list, LocalDate date) {
+    int nbCoupon = list.size();
+    int couponIndex = 0;
+    for (int loopcpn = 0; loopcpn < nbCoupon; loopcpn++) {
+      if (list.get(loopcpn).getEndDate().isAfter(date)) {
         couponIndex = loopcpn;
         break;
       }
@@ -462,13 +484,15 @@ public class DiscountingFixedCouponBondTradePricer {
    * @return the dirty price of the trade 
    */
   public double dirtyPriceFromYield(FixedCouponBondTrade trade, double yield) {
+    // TODO calls expand() several times, need review. 
     FixedCouponBond product = trade.getProduct();
-    ExpandedFixedCouponBond expanded = product.expand();
-    int nbCoupon = expanded.getPeriodicPayments().size();
-    YieldConvention yieldConvention = expanded.getYieldConvention();
-    if (nbCoupon == 1) {
+    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
+    ImmutableList<FixedCouponBondPaymentPeriod> payments = product.expand().getPeriodicPayments();
+    int nCoupon = payments.size() - couponIndex(payments, settlementDate);
+    YieldConvention yieldConvention = product.getYieldConvention();
+    if (nCoupon == 1) {
       if (yieldConvention.equals(YieldConvention.US_STREET) || yieldConvention.equals(YieldConvention.GERMAN_BONDS)) {
-        FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(0);
+        FixedCouponBondPaymentPeriod payment = payments.get(payments.size() - 1);
         return (1d + payment.getFixedRate() * payment.getYearFraction()) / (1d + factorToNextCoupon(trade)
             * yield / ((double) product.getPeriodicSchedule().getFrequency().eventsPerYear()));
       }
@@ -478,8 +502,10 @@ public class DiscountingFixedCouponBondTradePricer {
       return dirtyPriceFromYieldStandard(trade, yield);
     }
     if (yieldConvention.equals(YieldConvention.JAPAN_SIMPLE)) {
-      LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
       LocalDate maturityDate = product.getPeriodicSchedule().getAdjustedEndDate();
+      if (settlementDate.isAfter(maturityDate)) {
+        return 0d;
+      }
       double maturity = DayCounts.ACT_365F.relativeYearFraction(settlementDate, maturityDate); // TODO check dayCount
       double cleanPrice = (1d + product.getFixedRate() * maturity) / (1d + yield * maturity);
       return dirtyPriceFromCleanPrice(trade, cleanPrice);
@@ -495,11 +521,15 @@ public class DiscountingFixedCouponBondTradePricer {
     double factorOnPeriod = 1 + yield / ((double) product.getPeriodicSchedule().getFrequency().eventsPerYear());
     double fixedRate = product.getFixedRate();
     double pvAtFirstCoupon = 0;
+    int pow = 0;
     for (int loopcpn = 0; loopcpn < nbCoupon; loopcpn++) {
       FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(loopcpn);
-      pvAtFirstCoupon += fixedRate * payment.getYearFraction() / Math.pow(factorOnPeriod, loopcpn);
+      if (!trade.getTradeInfo().getSettlementDate().get().isAfter(payment.getDetachmentDate())) {
+        pvAtFirstCoupon += fixedRate * payment.getYearFraction() / Math.pow(factorOnPeriod, pow);
+        ++pow;
+      }
     }
-    pvAtFirstCoupon += 1d / Math.pow(factorOnPeriod, nbCoupon - 1);
+    pvAtFirstCoupon += 1d / Math.pow(factorOnPeriod, pow - 1);
     return pvAtFirstCoupon * Math.pow(factorOnPeriod, -factorToNextCoupon(trade));
   }
 
@@ -708,10 +738,11 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   //-------------------------------------------------------------------------
-  private CurrencyAmount presentValueCoupon(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
+  private CurrencyAmount presentValueCoupon(ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors, LocalDate settlementDate) {
     double total = 0d;
     for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      if (!settlementDate.isAfter(period.getDetachmentDate())) {
         total += periodPricer.presentValue(period, discountFactors);
       }
     }
@@ -719,35 +750,45 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   private CurrencyAmount presentValueCouponFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear,
+      LocalDate settlementDate) {
     double total = 0d;
     for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      if (!settlementDate.isAfter(period.getDetachmentDate())) {
         total += periodPricer.presentValue(period, discountFactors, zSpread, periodic, periodPerYear);
       }
     }
     return CurrencyAmount.of(product.getCurrency(), total);
   }
 
-  private CurrencyAmount presentValueNominal(ExpandedFixedCouponBond product, IssuerCurveDiscountFactors discountFactors) {
+  private CurrencyAmount presentValueNominal(
+      ExpandedFixedCouponBond product,
+      IssuerCurveDiscountFactors discountFactors,
+      LocalDate settlementDate) {
     Payment nominal = product.getNominalPayment();
-    return nominalPricer.presentValue(nominal, discountFactors.getDiscountFactors());
+    if (!settlementDate.isAfter(nominal.getDate())) {
+      return nominalPricer.presentValue(nominal, discountFactors.getDiscountFactors());
+    }
+    return CurrencyAmount.zero(nominal.getCurrency());
   }
 
   private CurrencyAmount presentValueNominalFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors,
-      double zSpread, boolean periodic, int periodPerYear) {
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear,
+      LocalDate settlementDate) {
     Payment nominal = product.getNominalPayment();
-    return nominalPricer.presentValue(nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
+    if (!settlementDate.isAfter(nominal.getDate())) {
+      return nominalPricer.presentValue(
+          nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
+    }
+    return CurrencyAmount.zero(nominal.getCurrency());
   }
 
   //-------------------------------------------------------------------------
   private PointSensitivityBuilder presentValueSensitivityCoupon(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors) {
+      IssuerCurveDiscountFactors discountFactors, LocalDate settlementDate) {
     PointSensitivityBuilder builder = PointSensitivityBuilder.none();
     for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      if (!settlementDate.isAfter(period.getDetachmentDate())) {
         builder = builder.combinedWith(periodPricer.presentValueSensitivity(period, discountFactors));
       }
     }
@@ -755,10 +796,11 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   private PointSensitivityBuilder presentValueSensitivityCouponFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear,
+      LocalDate settlementDate) {
     PointSensitivityBuilder builder = PointSensitivityBuilder.none();
     for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
-      if (!period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      if (!settlementDate.isAfter(period.getDetachmentDate())) {
         builder = builder.combinedWith(
             periodPricer.presentValueSensitivity(period, discountFactors, zSpread, periodic, periodPerYear));
       }
@@ -767,23 +809,30 @@ public class DiscountingFixedCouponBondTradePricer {
   }
 
   private PointSensitivityBuilder presentValueSensitivityNominal(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors) {
+      IssuerCurveDiscountFactors discountFactors, LocalDate settlementDate) {
     Payment nominal = product.getNominalPayment();
-    PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(nominal, discountFactors.getDiscountFactors());
-    if (pt instanceof ZeroRateSensitivity) {
-      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+    if (!settlementDate.isAfter(nominal.getDate())) {
+      PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(nominal, discountFactors.getDiscountFactors());
+      if (pt instanceof ZeroRateSensitivity) {
+        return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+      }
+      return pt; // NoPointSensitivity
     }
-    return pt; // NoPointSensitivity
+    return PointSensitivityBuilder.none();
   }
 
   private PointSensitivityBuilder presentValueSensitivityNominalFromZSpread(ExpandedFixedCouponBond product,
-      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear) {
+      IssuerCurveDiscountFactors discountFactors, double zSpread, boolean periodic, int periodPerYear,
+      LocalDate settlementDate) {
     Payment nominal = product.getNominalPayment();
-    PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(
-        nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
-    if (pt instanceof ZeroRateSensitivity) {
-      return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+    if (!settlementDate.isAfter(nominal.getDate())) {
+      PointSensitivityBuilder pt = nominalPricer.presentValueSensitivity(
+          nominal, discountFactors.getDiscountFactors(), zSpread, periodic, periodPerYear);
+      if (pt instanceof ZeroRateSensitivity) {
+        return IssuerCurveZeroRateSensitivity.of((ZeroRateSensitivity) pt, discountFactors.getLegalEntityGroup());
+      }
+      return pt; // NoPointSensitivity
     }
-    return pt; // NoPointSensitivity
+    return PointSensitivityBuilder.none();
   }
 }

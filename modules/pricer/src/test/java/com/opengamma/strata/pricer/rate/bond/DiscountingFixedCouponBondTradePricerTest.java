@@ -89,7 +89,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
       BusinessDayAdjustment.of(BusinessDayConventions.MODIFIED_FOLLOWING, EUR_CALENDAR);
   private static final PeriodicSchedule PERIOD_SCHEDULE = PeriodicSchedule.of(
       START_DATE, END_DATE, Frequency.P6M, BUSINESS_ADJUST, StubConvention.SHORT_INITIAL, false);
-  private static final int EX_COUPON_DAYS = 5;
+  private static final DaysAdjustment EX_COUPON = DaysAdjustment.ofBusinessDays(-5, EUR_CALENDAR, BUSINESS_ADJUST);
   private static final FixedCouponBond PRODUCT = FixedCouponBond.builder()
       .dayCount(DAY_COUNT)
       .fixedRate(FIXED_RATE)
@@ -99,7 +99,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .periodicSchedule(PERIOD_SCHEDULE)
       .settlementDateOffset(DATE_OFFSET)
       .yieldConvention(YIELD_CONVENTION)
-      .exCouponDays(EX_COUPON_DAYS)
+      .exCouponPeriod(EX_COUPON)
       .build();
   private static final Security<FixedCouponBond> BOND_SECURITY =
       UnitSecurity.builder(PRODUCT).standardId(SECURITY_ID).build();
@@ -194,7 +194,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
     CurrencyAmount computed = PRICER.presentValueFromCleanPrice(TRADE, PROVIDER, cleanPrice);
     double df = DSC_FACTORS_REPO.discountFactor(SETTLEMENT);
     double accruedInterest = PRICER.accruedInterest(TRADE);
-    double expected = cleanPrice * df * NOTIONAL + accruedInterest * df; // zero accrued
+    double expected = cleanPrice * df * NOTIONAL + accruedInterest * df;
     assertEquals(computed.getCurrency(), EUR);
     assertEquals(computed.getAmount(), expected, NOTIONAL * TOL);
   }
@@ -366,9 +366,9 @@ public class DiscountingFixedCouponBondTradePricerTest {
         .build();
     double accruedInterest2 = PRICER.accruedInterest(trade2);
     assertEquals(accruedInterest2, -4.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
-    // normal, but start date is adjusted
+    // normal
     LocalDate valDate3 = date(2015, 4, 16);
-    LocalDate settleDate3 = date(2015, 4, 18);
+    LocalDate settleDate3 = date(2015, 4, 18); // not adjusted
     TradeInfo tradeInfo3 = TradeInfo.builder().tradeDate(valDate3).settlementDate(settleDate3).build();
     FixedCouponBond product = FixedCouponBond.builder()
         .dayCount(DAY_COUNT)
@@ -379,6 +379,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
         .periodicSchedule(PERIOD_SCHEDULE)
         .settlementDateOffset(DATE_OFFSET)
         .yieldConvention(YIELD_CONVENTION)
+        .exCouponPeriod(DaysAdjustment.NONE)
         .build();
     Security<FixedCouponBond> security =
         UnitSecurity.builder(product).standardId(SECURITY_ID).build();
@@ -389,10 +390,124 @@ public class DiscountingFixedCouponBondTradePricerTest {
         .quantity(QUANTITY)
         .build();
     double accruedInterest3 = PRICER.accruedInterest(trade3);
-    assertEquals(accruedInterest3, 5.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
+    assertEquals(accruedInterest3, 6.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
   }
 
-  // TODO test yield, duration, convexity
+  /* US Street convention */
+  private static final LocalDate START_US = date(2006, 11, 15);
+  private static final LocalDate END_US = START_US.plusYears(10);
+  private static final PeriodicSchedule SCHEDULE_US = PeriodicSchedule.of(START_US, END_US, Frequency.P6M,
+      BusinessDayAdjustment.of(BusinessDayConventions.FOLLOWING, HolidayCalendars.SAT_SUN),
+      StubConvention.SHORT_INITIAL, false);
+  private static final FixedCouponBond PRODUCT_US = FixedCouponBond.builder()
+      .dayCount(DayCounts.ACT_ACT_ICMA)
+      .fixedRate(0.04625)
+      .legalEntityId(ISSUER_ID)
+      .currency(Currency.USD)
+      .notional(100)
+      .periodicSchedule(SCHEDULE_US)
+      .settlementDateOffset(DaysAdjustment.ofBusinessDays(3, HolidayCalendars.SAT_SUN))
+      .yieldConvention(YieldConvention.US_STREET)
+      .exCouponPeriod(DaysAdjustment.NONE)
+      .build();
+  private static final Security<FixedCouponBond> SECURITY_US =
+      UnitSecurity.builder(PRODUCT_US).standardId(SECURITY_ID).build();
+  private static final SecurityLink<FixedCouponBond> SECURITY_LINK_US = SecurityLink.resolved(SECURITY_US);
+
+  private static final LocalDate VALUATION_US = date(2011, 8, 18);
+  private static final TradeInfo TRADE_INFO_US = TradeInfo.builder()
+      .tradeDate(VALUATION_US)
+      .settlementDate(PRODUCT_US.getSettlementDateOffset().adjust(VALUATION_US))
+      .build();
+  private static final FixedCouponBondTrade TRADE_US = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_US)
+      .tradeInfo(TRADE_INFO_US)
+      .quantity(100)
+      .build();
+
+  @Test
+  public void dirtyPriceFromYieldUSStreet() {
+    double yield = 0.04;
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_US, yield);
+    assertEquals(dirtyPrice, 1.0417352500524246, TOL); // 2.x.
+  }
+
+  @Test
+  public void dirtyPriceFromYieldUSStreetLastPeriod() {
+    LocalDate valuation = date(2016, 6, 3);
+    TradeInfo tradeInfo = TradeInfo.builder()
+        .tradeDate(valuation)
+        .settlementDate(PRODUCT_US.getSettlementDateOffset().adjust(valuation))
+        .build();
+    FixedCouponBondTrade trade = FixedCouponBondTrade.builder()
+        .securityLink(SECURITY_LINK_US)
+        .tradeInfo(tradeInfo)
+        .quantity(100)
+        .build();
+    final double yield = 0.04;
+    double dirtyPrice = PRICER.dirtyPriceFromYield(trade, yield);
+    assertEquals(dirtyPrice, 1.005635683760684, TOL);
+  }
+
+  /* UK BUMP/DMO convention */
+  private static final LocalDate START_UK = date(2002, 9, 7);
+  private static final LocalDate END_UK = START_UK.plusYears(12);
+  private static final PeriodicSchedule SCHEDULE_UK = PeriodicSchedule.of(START_UK, END_UK, Frequency.P6M,
+      BusinessDayAdjustment.of(BusinessDayConventions.FOLLOWING, HolidayCalendars.SAT_SUN),
+      StubConvention.SHORT_INITIAL, false);
+  private static final FixedCouponBond PRODUCT_UK = FixedCouponBond.builder()
+      .dayCount(DayCounts.ACT_ACT_ICMA)
+      .fixedRate(0.05)
+      .legalEntityId(ISSUER_ID)
+      .currency(Currency.GBP)
+      .notional(100)
+      .periodicSchedule(SCHEDULE_UK)
+      .settlementDateOffset(DaysAdjustment.ofBusinessDays(1, HolidayCalendars.SAT_SUN))
+      .yieldConvention(YieldConvention.UK_BUMP_DMO)
+      .exCouponPeriod(DaysAdjustment.ofBusinessDays(-7, HolidayCalendars.SAT_SUN))
+      .build();
+  private static final Security<FixedCouponBond> SECURITY_UK =
+      UnitSecurity.builder(PRODUCT_UK).standardId(SECURITY_ID).build();
+  private static final SecurityLink<FixedCouponBond> SECURITY_LINK_UK = SecurityLink.resolved(SECURITY_UK);
+
+  private static final LocalDate VALUATION_UK = date(2011, 9, 2);
+  private static final TradeInfo TRADE_INFO_UK = TradeInfo.builder()
+      .tradeDate(VALUATION_UK)
+      .settlementDate(PRODUCT_UK.getSettlementDateOffset().adjust(VALUATION_UK))
+      .build();
+  private static final FixedCouponBondTrade TRADE_UK = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_UK)
+      .tradeInfo(TRADE_INFO_UK)
+      .quantity(100)
+      .build();
+
+  @Test
+  public void dirtyPriceFromYieldUKExDividend() {
+    final double yield = 0.04;
+    final double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_UK, yield);
+    assertEquals(dirtyPrice, 1.0277859038905428, TOL); // 2.x.
+  }
+
+  @Test
+  public void dirtyPriceFromYieldUKLastPeriod() {
+    LocalDate valuation = date(2014, 6, 3);
+    TradeInfo tradeInfo = TradeInfo.builder()
+        .tradeDate(valuation)
+        .settlementDate(PRODUCT_UK.getSettlementDateOffset().adjust(valuation))
+        .build();
+    FixedCouponBondTrade trade = FixedCouponBondTrade.builder()
+        .securityLink(SECURITY_LINK_UK)
+        .tradeInfo(tradeInfo)
+        .quantity(100)
+        .build();
+    final double yield = 0.04;
+    double dirtyPrice = PRICER.dirtyPriceFromYield(trade, yield);
+    assertEquals(dirtyPrice, 1.0145736043763598, TOL);
+  }
+
+  // TODO test german - same as uk, japan
+
+  // TODO test duration, convexity
 
   // TODO look at BondSecurityDiscountingMethodTest.
 }

@@ -31,6 +31,7 @@ public class FixedCouponBondPaymentPeriodTest {
   private static final LocalDate END = LocalDate.of(2015, 8, 2);
   private static final LocalDate START_ADJUSTED = LocalDate.of(2015, 2, 2);
   private static final LocalDate END_ADJUSTED = LocalDate.of(2015, 8, 3);
+  private static final LocalDate DETACHMENT_DATE = LocalDate.of(2015, 7, 27);
   private static final double FIXED_RATE = 0.025;
   private static final double NOTIONAL = 1.0e7;
   private static final double YEAR_FRACTION = 0.5;
@@ -42,6 +43,7 @@ public class FixedCouponBondPaymentPeriodTest {
         .unadjustedStartDate(START)
         .endDate(END_ADJUSTED)
         .unadjustedEndDate(END)
+        .detachmentDate(DETACHMENT_DATE)
         .notional(NOTIONAL)
         .fixedRate(FIXED_RATE)
         .yearFraction(YEAR_FRACTION)
@@ -52,6 +54,7 @@ public class FixedCouponBondPaymentPeriodTest {
     assertEquals(test.getUnadjustedEndDate(), END);
     assertEquals(test.getEndDate(), END_ADJUSTED);
     assertEquals(test.getPaymentDate(), END_ADJUSTED);
+    assertEquals(test.getDetachmentDate(), DETACHMENT_DATE);
     assertEquals(test.getFixedRate(), FIXED_RATE);
     assertEquals(test.getNotional(), NOTIONAL);
     assertEquals(test.getYearFraction(), YEAR_FRACTION);
@@ -66,6 +69,7 @@ public class FixedCouponBondPaymentPeriodTest {
     assertEquals(test.getUnadjustedEndDate(), END);
     assertEquals(test.getEndDate(), END_ADJUSTED);
     assertEquals(test.getPaymentDate(), END_ADJUSTED);
+    assertEquals(test.getDetachmentDate(), DETACHMENT_DATE);
     assertEquals(test.getFixedRate(), FIXED_RATE);
     assertEquals(test.getNotional(), NOTIONAL);
     assertEquals(test.getYearFraction(), YEAR_FRACTION);
@@ -92,6 +96,17 @@ public class FixedCouponBondPaymentPeriodTest {
         .fixedRate(FIXED_RATE)
         .yearFraction(YEAR_FRACTION)
         .build());
+    assertThrowsIllegalArg(() -> FixedCouponBondPaymentPeriod.builder()
+        .currency(USD)
+        .startDate(START_ADJUSTED)
+        .unadjustedStartDate(START)
+        .endDate(END_ADJUSTED)
+        .unadjustedEndDate(END)
+        .detachmentDate(LocalDate.of(2015, 8, 6))
+        .notional(NOTIONAL)
+        .fixedRate(FIXED_RATE)
+        .yearFraction(YEAR_FRACTION)
+        .build());
   }
 
   //-------------------------------------------------------------------------
@@ -102,6 +117,7 @@ public class FixedCouponBondPaymentPeriodTest {
         .unadjustedStartDate(START)
         .endDate(END_ADJUSTED)
         .unadjustedEndDate(END)
+        .detachmentDate(DETACHMENT_DATE)
         .notional(NOTIONAL)
         .fixedRate(FIXED_RATE)
         .yearFraction(YEAR_FRACTION)
@@ -127,6 +143,7 @@ public class FixedCouponBondPaymentPeriodTest {
         .unadjustedStartDate(START)
         .endDate(END_ADJUSTED)
         .unadjustedEndDate(END)
+        .detachmentDate(DETACHMENT_DATE)
         .notional(NOTIONAL)
         .fixedRate(FIXED_RATE)
         .yearFraction(YEAR_FRACTION)

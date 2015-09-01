@@ -48,6 +48,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2015, 4, 12))
       .endDate(LocalDate.of(2015, 10, 12))
       .unadjustedEndDate(LocalDate.of(2015, 10, 12))
+      .detachmentDate(LocalDate.of(2015, 10, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_2 = FixedCouponBondPaymentPeriod.builder()
@@ -57,6 +58,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2015, 10, 12))
       .endDate(LocalDate.of(2016, 4, 12))
       .unadjustedEndDate(LocalDate.of(2016, 4, 12))
+      .detachmentDate(LocalDate.of(2016, 4, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_3 = FixedCouponBondPaymentPeriod.builder()
@@ -66,6 +68,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2016, 4, 12))
       .endDate(LocalDate.of(2016, 10, 12))
       .unadjustedEndDate(LocalDate.of(2016, 10, 12))
+      .detachmentDate(LocalDate.of(2016, 10, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_4 = FixedCouponBondPaymentPeriod.builder()
@@ -75,6 +78,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2016, 10, 12))
       .endDate(LocalDate.of(2017, 4, 12))
       .unadjustedEndDate(LocalDate.of(2017, 4, 12))
+      .detachmentDate(LocalDate.of(2017, 4, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final ImmutableList<FixedCouponBondPaymentPeriod> PERIODIC_PAYMENTS =
@@ -99,7 +103,6 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
-        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertEquals(testList.getCurrency(), EUR);
     assertEquals(testList.getDayCount(), DAY_COUNT);
@@ -110,7 +113,6 @@ public class ExpandedFixedCouponBondTest {
     assertEquals(testList.getSettlementDateOffset(), DATE_OFFSET);
     assertEquals(testList.getYieldConvention(), YIELD_CONVENTION);
     assertEquals(testList.getPeriodicPayments(), PERIODIC_PAYMENTS);
-    assertEquals(testList.getExCouponDays(), EX_COUPON_DAYS);
     ExpandedFixedCouponBond testElms = ExpandedFixedCouponBond.builder()
         .dayCount(DAY_COUNT)
         .legalEntityId(LEGAL_ENTITY)
@@ -118,7 +120,6 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PAYMENT_1, PAYMENT_2, PAYMENT_3, PAYMENT_4)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
-        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertEquals(testList, testElms);
   }
@@ -131,7 +132,6 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
-        .exCouponDays(EX_COUPON_DAYS)
         .build();
     ExpandedFixedCouponBond test = base.expand();
     assertEquals(test, base);
@@ -146,7 +146,6 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
-        .exCouponDays(EX_COUPON_DAYS)
         .build();
     coverImmutableBean(test1);
     BusinessDayAdjustment adj = BusinessDayAdjustment.of(
@@ -164,6 +163,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicSchedule(sche)
         .settlementDateOffset(DaysAdjustment.ofBusinessDays(2, HolidayCalendars.SAT_SUN))
         .yieldConvention(YieldConvention.UK_BUMP_DMO)
+        .exCouponPeriod(DaysAdjustment.NONE)
         .build()
         .expand();
     coverBeanEquals(test1, test2);
@@ -177,7 +177,6 @@ public class ExpandedFixedCouponBondTest {
         .periodicPayments(PERIODIC_PAYMENTS)
         .yieldConvention(YIELD_CONVENTION)
         .settlementDateOffset(DATE_OFFSET)
-        .exCouponDays(EX_COUPON_DAYS)
         .build();
     assertSerialization(test);
   }
