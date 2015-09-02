@@ -130,7 +130,7 @@ public final class FixedCouponBond
    * the payment date but to the owner of the bond on the detachment date. The difference between the two is the
    * ex-coupon period (measured in days).
    * <p>
-   * Because the detachment date is not after the coupon date, the number of days stored in this field should zero or 
+   * Because the detachment date is not after the coupon date, the number of days stored in this field should be zero or 
    * negative. 
    */
   @PropertyDefinition(validate = "notNull")
@@ -192,7 +192,7 @@ public final class FixedCouponBond
    * The start date and end date are unadjusted in the resulting {@code Schedule}, i.e., the {@code unadjustedStartDate} 
    * and {@code unadjustedEndDate} coincide with {@code startDate} and {@code endDate}, respectively. 
    * <p>
-   * The year fraction for a periodic coupon payment of the fixed coupon bond is computed based on unadjusted dates. 
+   * The year fraction for a coupon payment of the fixed coupon bond is computed based on unadjusted dates. 
    * Thus {@link DayCount}, and accordingly {@link SchedulePeriod}, require this schedule to compute year fraction for 
    * the bond.  
    * 
@@ -389,7 +389,7 @@ public final class FixedCouponBond
    * the payment date but to the owner of the bond on the detachment date. The difference between the two is the
    * ex-coupon period (measured in days).
    * <p>
-   * Because the detachment date is not after the coupon date, the number of days stored in this field should zero or
+   * Because the detachment date is not after the coupon date, the number of days stored in this field should be zero or
    * negative.
    * @return the value of the property, not null
    */
@@ -942,7 +942,7 @@ public final class FixedCouponBond
      * the payment date but to the owner of the bond on the detachment date. The difference between the two is the
      * ex-coupon period (measured in days).
      * <p>
-     * Because the detachment date is not after the coupon date, the number of days stored in this field should zero or
+     * Because the detachment date is not after the coupon date, the number of days stored in this field should be zero or
      * negative.
      * @param exCouponPeriod  the new value, not null
      * @return this, for chaining, not null
