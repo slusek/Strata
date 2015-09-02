@@ -129,6 +129,24 @@ public final class ZeroRateDiscountFactors
     return discountFactor(relativeYearFraction);
   }
 
+  @Override
+  public double discountFactorWithSpread(LocalDate date, double zSpread, boolean periodic, int periodPerYear) {
+    double yearFraction = relativeYearFraction(date);
+    double factor = 1d;
+    if (Math.abs(yearFraction) < 1.0E-10) {
+      return factor;
+    }
+    if (periodic) {
+      ArgChecker.isTrue(periodPerYear > 0, "periodPerYear must be strictly positive");
+      double ratePeriodicAnnualPlusOne =
+          Math.pow(discountFactor(date), -1.0 / periodPerYear / yearFraction) + zSpread / periodPerYear;
+      factor = Math.pow(ratePeriodicAnnualPlusOne, -periodPerYear * yearFraction);
+    } else {
+      factor = discountFactor(date) * Math.exp(-zSpread * yearFraction);
+    }
+    return factor;
+  }
+
   // calculates the discount factor at a given time
   private double discountFactor(double relativeYearFraction) {
     // convert zero rate to discount factor
@@ -146,6 +164,29 @@ public final class ZeroRateDiscountFactors
     double relativeYearFraction = relativeYearFraction(date);
     double discountFactor = discountFactor(relativeYearFraction);
     return ZeroRateSensitivity.of(currency, date, sensitivityCurrency, -discountFactor * relativeYearFraction);
+  }
+
+  @Override
+  public ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+      LocalDate date,
+      Currency sensitivityCurrency,
+      double zSpread,
+      boolean periodic,
+      int periodPerYear) {
+    double yearFraction = relativeYearFraction(date);
+    ZeroRateSensitivity sensi = zeroRatePointSensitivity(date, sensitivityCurrency);
+    double factor = 1d;
+    if (Math.abs(yearFraction) < 1.0E-10) {
+      return sensi;
+    }
+    if (periodic) {
+      double df = discountFactor(date);
+      double dfRoot = Math.pow(df, -1d / periodPerYear / yearFraction);
+      factor = dfRoot / df / Math.pow(dfRoot + zSpread / periodPerYear, periodPerYear * yearFraction + 1d);
+    } else {
+      factor = Math.exp(-zSpread * yearFraction);
+    }
+    return sensi.multipliedBy(factor);
   }
 
   @Override
