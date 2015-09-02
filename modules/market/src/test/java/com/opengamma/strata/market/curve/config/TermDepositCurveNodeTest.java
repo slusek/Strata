@@ -9,6 +9,7 @@ import static com.opengamma.strata.basics.currency.Currency.EUR;
 import static com.opengamma.strata.basics.date.BusinessDayConventions.MODIFIED_FOLLOWING;
 import static com.opengamma.strata.basics.date.DayCounts.ACT_360;
 import static com.opengamma.strata.basics.date.HolidayCalendars.EUTA;
+import static com.opengamma.strata.collect.TestHelper.assertSerialization;
 import static com.opengamma.strata.collect.TestHelper.assertThrowsIllegalArg;
 import static com.opengamma.strata.collect.TestHelper.coverBeanEquals;
 import static com.opengamma.strata.collect.TestHelper.coverImmutableBean;
@@ -129,11 +130,16 @@ public class TermDepositCurveNodeTest {
 
   //-------------------------------------------------------------------------
   public void coverage() {
-    TermDepositCurveNode test1 = TermDepositCurveNode.of(TEMPLATE, QUOTE_KEY, SPREAD);
-    coverImmutableBean(test1);
+    TermDepositCurveNode test = TermDepositCurveNode.of(TEMPLATE, QUOTE_KEY, SPREAD);
+    coverImmutableBean(test);
     TermDepositCurveNode test2 = TermDepositCurveNode.of(
         TermDepositTemplate.of(Period.ofMonths(1), CONVENTION), QuoteKey.of(StandardId.of("OG-Ticker", "Deposit2")));
-    coverBeanEquals(test1, test2);
+    coverBeanEquals(test, test2);
+  }
+
+  public void test_serialization() {
+    TermDepositCurveNode test = TermDepositCurveNode.of(TEMPLATE, QUOTE_KEY, SPREAD);
+    assertSerialization(test);
   }
 
 }

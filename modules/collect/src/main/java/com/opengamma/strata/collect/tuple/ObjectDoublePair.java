@@ -28,14 +28,16 @@ import com.google.common.collect.ImmutableList;
 import com.opengamma.strata.collect.ArgChecker;
 
 /**
- * An immutable pair consisting of an {@code Object} and {@code double}.
+ * An immutable pair consisting of an {@code Object} and a {@code double}.
  * <p>
  * This class is similar to {@link Pair} but includes a primitive element.
  * <p>
  * This class is immutable and thread-safe.
  * 
  * @param <A> the type of the object
+ * @deprecated Use {@link ObjDoublePair}
  */
+@Deprecated
 @BeanDefinition(builderScope = "private")
 public final class ObjectDoublePair<A>
     implements ImmutableBean, Tuple, Comparable<ObjectDoublePair<A>>, Serializable {

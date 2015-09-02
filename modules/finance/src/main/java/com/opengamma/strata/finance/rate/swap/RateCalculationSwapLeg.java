@@ -25,7 +25,6 @@ import org.joda.beans.impl.direct.DirectMetaBean;
 import org.joda.beans.impl.direct.DirectMetaProperty;
 import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.opengamma.strata.basics.PayReceive;
 import com.opengamma.strata.basics.currency.Currency;
@@ -169,7 +168,7 @@ public final class RateCalculationSwapLeg
     return ExpandedSwapLeg.builder()
         .type(getType())
         .payReceive(payReceive)
-        .paymentPeriods(ImmutableList.copyOf(payPeriods))  // copyOf changes generics of list without an actual copy
+        .paymentPeriods(payPeriods)
         .paymentEvents(notionalSchedule.createEvents(payPeriods, getStartDate()))
         .build();
   }

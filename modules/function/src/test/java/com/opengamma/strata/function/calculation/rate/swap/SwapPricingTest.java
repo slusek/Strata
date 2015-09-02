@@ -9,6 +9,7 @@ import static com.opengamma.strata.basics.PayReceive.RECEIVE;
 import static com.opengamma.strata.basics.currency.Currency.USD;
 import static com.opengamma.strata.basics.date.DayCounts.THIRTY_U_360;
 import static com.opengamma.strata.collect.CollectProjectAssertions.assertThat;
+import static com.opengamma.strata.collect.Guavate.toImmutableMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
-import org.jooq.lambda.Seq;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -31,7 +31,6 @@ import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
 import com.opengamma.strata.basics.date.BusinessDayConventions;
-import com.opengamma.strata.basics.date.DayCounts;
 import com.opengamma.strata.basics.date.DaysAdjustment;
 import com.opengamma.strata.basics.index.IborIndex;
 import com.opengamma.strata.basics.index.IborIndices;
@@ -41,7 +40,6 @@ import com.opengamma.strata.basics.market.ObservableId;
 import com.opengamma.strata.basics.schedule.Frequency;
 import com.opengamma.strata.basics.schedule.PeriodicSchedule;
 import com.opengamma.strata.basics.schedule.StubConvention;
-import com.opengamma.strata.basics.value.ValueSchedule;
 import com.opengamma.strata.collect.result.Result;
 import com.opengamma.strata.collect.timeseries.LocalDateDoubleTimeSeries;
 import com.opengamma.strata.engine.Column;
@@ -73,6 +71,7 @@ import com.opengamma.strata.finance.rate.swap.NotionalSchedule;
 import com.opengamma.strata.finance.rate.swap.PaymentSchedule;
 import com.opengamma.strata.finance.rate.swap.RateCalculationSwapLeg;
 import com.opengamma.strata.finance.rate.swap.Swap;
+import com.opengamma.strata.finance.rate.swap.SwapLeg;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
 import com.opengamma.strata.function.marketdata.curve.DiscountCurveMarketDataFunction;
 import com.opengamma.strata.function.marketdata.curve.DiscountFactorsMarketDataFunction;
@@ -108,30 +107,26 @@ public class SwapPricingTest {
 
   //-------------------------------------------------------------------------
   public void presentValueVanillaFixedVsLibor1mSwap() {
-    RateCalculationSwapLeg payLeg = fixedLeg(
+    SwapLeg payLeg = fixedLeg(
         LocalDate.of(2014, 9, 12), LocalDate.of(2016, 9, 12), Frequency.P6M, PayReceive.PAY, NOTIONAL, 0.0125, null);
 
-    RateCalculationSwapLeg receiveLeg = RateCalculationSwapLeg.builder()
+    SwapLeg receiveLeg = RateCalculationSwapLeg.builder()
         .payReceive(RECEIVE)
-        .accrualSchedule(
-            PeriodicSchedule.builder()
-                .startDate(LocalDate.of(2014, 9, 12))
-                .endDate(LocalDate.of(2016, 9, 12))
-                .frequency(Frequency.P1M)
-                .businessDayAdjustment(BDA_MF)
-                .build())
-        .paymentSchedule(
-            PaymentSchedule.builder()
-                .paymentFrequency(Frequency.P1M)
-                .paymentDateOffset(DaysAdjustment.NONE)
-                .build())
+        .accrualSchedule(PeriodicSchedule.builder()
+            .startDate(LocalDate.of(2014, 9, 12))
+            .endDate(LocalDate.of(2016, 9, 12))
+            .frequency(Frequency.P1M)
+            .businessDayAdjustment(BDA_MF)
+            .build())
+        .paymentSchedule(PaymentSchedule.builder()
+            .paymentFrequency(Frequency.P1M)
+            .paymentDateOffset(DaysAdjustment.NONE)
+            .build())
         .notionalSchedule(NOTIONAL)
-        .calculation(
-            IborRateCalculation.builder()
-                .dayCount(DayCounts.ACT_360)
-                .index(USD_LIBOR_1M)
-                .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, CalendarUSD.NYC, BDA_P))
-                .build())
+        .calculation(IborRateCalculation.builder()
+            .index(USD_LIBOR_1M)
+            .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, CalendarUSD.NYC, BDA_P))
+            .build())
         .build();
 
     SwapTrade trade = SwapTrade.builder()
@@ -192,31 +187,25 @@ public class SwapPricingTest {
     assertThat(pv.getAmount()).isCloseTo(-1003684.8402, offset(TOLERANCE_PV));
   }
 
-  private static RateCalculationSwapLeg fixedLeg(
+  private static SwapLeg fixedLeg(
       LocalDate start, LocalDate end, Frequency frequency,
       PayReceive payReceive, NotionalSchedule notional, double fixedRate, StubConvention stubConvention) {
 
     return RateCalculationSwapLeg.builder()
         .payReceive(payReceive)
-        .accrualSchedule(
-            PeriodicSchedule.builder()
-                .startDate(start)
-                .endDate(end)
-                .frequency(frequency)
-                .businessDayAdjustment(BDA_MF)
-                .stubConvention(stubConvention)
-                .build())
-        .paymentSchedule(
-            PaymentSchedule.builder()
-                .paymentFrequency(frequency)
-                .paymentDateOffset(DaysAdjustment.NONE)
-                .build())
+        .accrualSchedule(PeriodicSchedule.builder()
+            .startDate(start)
+            .endDate(end)
+            .frequency(frequency)
+            .businessDayAdjustment(BDA_MF)
+            .stubConvention(stubConvention)
+            .build())
+        .paymentSchedule(PaymentSchedule.builder()
+            .paymentFrequency(frequency)
+            .paymentDateOffset(DaysAdjustment.NONE)
+            .build())
         .notionalSchedule(notional)
-        .calculation(
-            FixedRateCalculation.builder()
-                .dayCount(THIRTY_U_360)
-                .rate(ValueSchedule.of(fixedRate))
-                .build())
+        .calculation(FixedRateCalculation.of(fixedRate, THIRTY_U_360))
         .build();
   }
 
@@ -227,14 +216,14 @@ public class SwapPricingTest {
         multicurve.getForwardIborCurves();
     Map<IndexON, YieldAndDiscountCurve> legacyOvernightCurves = multicurve.getForwardONCurves();
 
-    Map<Currency, Curve> discountCurves =
-        Seq.seq(legacyDiscountCurves).toMap(tp -> tp.v1, tp -> Legacy.curve(tp.v2));
+    Map<Currency, Curve> discountCurves = legacyDiscountCurves.entrySet().stream()
+        .collect(toImmutableMap(tp -> tp.getKey(), tp -> Legacy.curve(tp.getValue())));
 
-    Map<Index, Curve> iborCurves =
-        Seq.seq(legacyIborCurves).toMap(tp -> Legacy.iborIndex(tp.v1), tp -> Legacy.curve(tp.v2));
+    Map<Index, Curve> iborCurves = legacyIborCurves.entrySet().stream()
+        .collect(toImmutableMap(tp -> Legacy.iborIndex(tp.getKey()), tp -> Legacy.curve(tp.getValue())));
 
-    Map<Index, Curve> overnightCurves =
-        Seq.seq(legacyOvernightCurves).toMap(tp -> Legacy.overnightIndex(tp.v1), tp -> Legacy.curve(tp.v2));
+    Map<Index, Curve> overnightCurves = legacyOvernightCurves.entrySet().stream()
+        .collect(toImmutableMap(tp -> Legacy.overnightIndex(tp.getKey()), tp -> Legacy.curve(tp.getValue())));
 
     Map<Index, Curve> forwardCurves = ImmutableMap.<Index, Curve>builder()
         .putAll(iborCurves)

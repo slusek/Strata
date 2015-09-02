@@ -20,7 +20,6 @@ import com.opengamma.strata.basics.value.ValueAdjustment;
  * Test {@link ConstantNodalCurve}.
  */
 @Test
-@SuppressWarnings("deprecation")
 public class ConstantNodalCurveTest {
 
   private static final String NAME = "TestCurve";
@@ -63,9 +62,9 @@ public class ConstantNodalCurveTest {
     assertThat(test.yValue(-10d)).isEqualTo(VALUE);
     assertThat(test.yValue(100d)).isEqualTo(VALUE);
 
-    assertThat(test.yValueParameterSensitivity(0d)).containsExactly(1d);
-    assertThat(test.yValueParameterSensitivity(-10d)).containsExactly(1d);
-    assertThat(test.yValueParameterSensitivity(100d)).containsExactly(1d);
+    assertThat(test.yValueParameterSensitivity(0d).getSensitivity()).containsExactly(1d);
+    assertThat(test.yValueParameterSensitivity(-10d).getSensitivity()).containsExactly(1d);
+    assertThat(test.yValueParameterSensitivity(100d).getSensitivity()).containsExactly(1d);
 
     assertThat(test.firstDerivative(0d)).isEqualTo(0d);
     assertThat(test.firstDerivative(-10d)).isEqualTo(0d);
