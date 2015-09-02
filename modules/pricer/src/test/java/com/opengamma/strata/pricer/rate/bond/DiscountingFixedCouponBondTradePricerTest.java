@@ -7,6 +7,7 @@ package com.opengamma.strata.pricer.rate.bond;
 
 import static com.opengamma.strata.basics.currency.Currency.EUR;
 import static com.opengamma.strata.basics.date.DayCounts.ACT_365F;
+import static com.opengamma.strata.collect.TestHelper.assertThrows;
 import static com.opengamma.strata.collect.TestHelper.date;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -73,8 +74,8 @@ public class DiscountingFixedCouponBondTradePricerTest {
   // fixed coupon bond
   private static final StandardId SECURITY_ID = StandardId.of("OG-Ticker", "GOVT1-BOND1");
   private static final StandardId ISSUER_ID = StandardId.of("OG-Ticker", "GOVT1");
-  private static final LocalDate SETTLEMENT = date(2015, 4, 30);
-  private static final LocalDate VALUATION = date(2015, 4, 25);
+  private static final LocalDate SETTLEMENT = date(2016, 4, 30);
+  private static final LocalDate VALUATION = date(2016, 4, 25);
   private static final TradeInfo TRADE_INFO = TradeInfo.builder().tradeDate(VALUATION).settlementDate(SETTLEMENT).build();
   private static final long QUANTITY = 1;
   private static final YieldConvention YIELD_CONVENTION = YieldConvention.GERMAN_BONDS;
@@ -104,11 +105,42 @@ public class DiscountingFixedCouponBondTradePricerTest {
   private static final Security<FixedCouponBond> BOND_SECURITY =
       UnitSecurity.builder(PRODUCT).standardId(SECURITY_ID).build();
   private static final SecurityLink<FixedCouponBond> SECURITY_LINK = SecurityLink.resolved(BOND_SECURITY);
+  /** nonzero ex-coupon period */
   private static final FixedCouponBondTrade TRADE = FixedCouponBondTrade.builder()
       .securityLink(SECURITY_LINK)
       .tradeInfo(TRADE_INFO)
       .quantity(QUANTITY)
       .build();
+  private static final LocalDate VALUATION_ENDED = END_DATE.minusDays(2); // computation is based on settlement date
+  private static final TradeInfo TRADE_INFO_ENDED = TradeInfo.builder().tradeDate(VALUATION_ENDED)
+      .settlementDate(PRODUCT.getSettlementDateOffset().adjust(VALUATION_ENDED)).build();
+  /** expired */
+  private static final FixedCouponBondTrade TRADE_ENDED = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK)
+      .tradeInfo(TRADE_INFO_ENDED)
+      .quantity(QUANTITY)
+      .build();
+  private static final FixedCouponBond PRODUCT_NO_EXCOUPON = FixedCouponBond.builder()
+      .dayCount(DAY_COUNT)
+      .fixedRate(FIXED_RATE)
+      .legalEntityId(ISSUER_ID)
+      .currency(EUR)
+      .notional(NOTIONAL)
+      .periodicSchedule(PERIOD_SCHEDULE)
+      .settlementDateOffset(DATE_OFFSET)
+      .yieldConvention(YIELD_CONVENTION)
+      .build();
+  private static final Security<FixedCouponBond> BOND_SECURITY_NO_EXCOUPON =
+      UnitSecurity.builder(PRODUCT_NO_EXCOUPON).standardId(SECURITY_ID).build();
+  private static final SecurityLink<FixedCouponBond> SECURITY_LINK_NO_EXCOUPON =
+      SecurityLink.resolved(BOND_SECURITY_NO_EXCOUPON);
+  /** no ex-coupon period */
+  private static final FixedCouponBondTrade TRADE_NO_EXCOUPON = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_NO_EXCOUPON)
+      .tradeInfo(TRADE_INFO)
+      .quantity(QUANTITY)
+      .build();
+
   // rates provider
   private static final CurveInterpolator INTERPOLATOR = Interpolator1DFactory.LINEAR_INSTANCE;
   private static final CurveName NAME_REPO = CurveName.of("TestRepoCurve");
@@ -133,6 +165,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .BondMap(ImmutableMap.<List<StandardId>, BondGroup>of(LIST_REPO, GROUP_REPO))
       .valuationDate(VALUATION)
       .build();
+
   // pricers
   private static final DiscountingFixedCouponBondTradePricer PRICER = DiscountingFixedCouponBondTradePricer.DEFAULT;
   private static final DiscountingPaymentPricer PRICER_NOMINAL = DiscountingPaymentPricer.DEFAULT;
@@ -149,8 +182,10 @@ public class DiscountingFixedCouponBondTradePricerTest {
     CurrencyAmount computed = PRICER.presentValue(TRADE, PROVIDER);
     ExpandedFixedCouponBond expanded = PRODUCT.expand();
     CurrencyAmount expected = PRICER_NOMINAL.presentValue(expanded.getNominalPayment(), DSC_FACTORS_ISSUER);
+    int size = expanded.getPeriodicPayments().size();
     double pvcCupon = 0d;
-    for (FixedCouponBondPaymentPeriod payment : expanded.getPeriodicPayments()) {
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
       pvcCupon += PRICER_COUPON.presentValue(payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER));
     }
     expected = expected.plus(pvcCupon);
@@ -163,8 +198,10 @@ public class DiscountingFixedCouponBondTradePricerTest {
     ExpandedFixedCouponBond expanded = PRODUCT.expand();
     CurrencyAmount expected = PRICER_NOMINAL.presentValue(
         expanded.getNominalPayment(), DSC_FACTORS_ISSUER, Z_SPREAD, false, 0);
+    int size = expanded.getPeriodicPayments().size();
     double pvcCupon = 0d;
-    for (FixedCouponBondPaymentPeriod payment : expanded.getPeriodicPayments()) {
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
       pvcCupon += PRICER_COUPON.presentValue(
           payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER), Z_SPREAD, false, 0);
     }
@@ -178,14 +215,81 @@ public class DiscountingFixedCouponBondTradePricerTest {
     ExpandedFixedCouponBond expanded = PRODUCT.expand();
     CurrencyAmount expected = PRICER_NOMINAL.presentValue(
         expanded.getNominalPayment(), DSC_FACTORS_ISSUER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    int size = expanded.getPeriodicPayments().size();
     double pvcCupon = 0d;
-    for (FixedCouponBondPaymentPeriod payment : expanded.getPeriodicPayments()) {
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
       pvcCupon += PRICER_COUPON.presentValue(
           payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER), Z_SPREAD, true, PERIOD_PER_YEAR);
     }
     expected = expected.plus(pvcCupon);
     assertEquals(computed.getCurrency(), EUR);
     assertEquals(computed.getAmount(), expected.getAmount(), NOTIONAL * TOL);
+  }
+
+  public void test_presentValue_noExcoupon() {
+    CurrencyAmount computed = PRICER.presentValue(TRADE_NO_EXCOUPON, PROVIDER);
+    ExpandedFixedCouponBond expanded = PRODUCT.expand();
+    CurrencyAmount expected = PRICER_NOMINAL.presentValue(expanded.getNominalPayment(), DSC_FACTORS_ISSUER);
+    int size = expanded.getPeriodicPayments().size();
+    double pvcCupon = 0d;
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
+      pvcCupon += PRICER_COUPON.presentValue(payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER));
+    }
+    expected = expected.plus(pvcCupon);
+    assertEquals(computed.getCurrency(), EUR);
+    assertEquals(computed.getAmount(), expected.getAmount(), NOTIONAL * TOL);
+  }
+
+  public void test_presentValueWithZSpread_continuous_noExcoupon() {
+    CurrencyAmount computed = PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD, false, 0);
+    ExpandedFixedCouponBond expanded = PRODUCT.expand();
+    CurrencyAmount expected = PRICER_NOMINAL.presentValue(
+        expanded.getNominalPayment(), DSC_FACTORS_ISSUER, Z_SPREAD, false, 0);
+    int size = expanded.getPeriodicPayments().size();
+    double pvcCupon = 0d;
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
+      pvcCupon += PRICER_COUPON.presentValue(
+          payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER), Z_SPREAD, false, 0);
+    }
+    expected = expected.plus(pvcCupon);
+    assertEquals(computed.getCurrency(), EUR);
+    assertEquals(computed.getAmount(), expected.getAmount(), NOTIONAL * TOL);
+  }
+
+  public void test_presentValueWithZSpread_periodic_noExcoupon() {
+    CurrencyAmount computed = PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD, true,
+        PERIOD_PER_YEAR);
+    ExpandedFixedCouponBond expanded = PRODUCT.expand();
+    CurrencyAmount expected = PRICER_NOMINAL.presentValue(
+        expanded.getNominalPayment(), DSC_FACTORS_ISSUER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    int size = expanded.getPeriodicPayments().size();
+    double pvcCupon = 0d;
+    for (int i = 2; i < size; ++i) {
+      FixedCouponBondPaymentPeriod payment = expanded.getPeriodicPayments().get(i);
+      pvcCupon += PRICER_COUPON.presentValue(
+          payment, IssuerCurveDiscountFactors.of(DSC_FACTORS_ISSUER, GROUP_ISSUER), Z_SPREAD, true, PERIOD_PER_YEAR);
+    }
+    expected = expected.plus(pvcCupon);
+    assertEquals(computed.getCurrency(), EUR);
+    assertEquals(computed.getAmount(), expected.getAmount(), NOTIONAL * TOL);
+  }
+
+  public void test_presentValue_Ended() {
+    CurrencyAmount computed = PRICER.presentValue(TRADE_ENDED, PROVIDER);
+    assertEquals(computed, CurrencyAmount.zero(EUR));
+  }
+
+  public void test_presentValueWithZSpread_continuous_Ended() {
+    CurrencyAmount computed = PRICER.presentValueWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, false, 0);
+    assertEquals(computed, CurrencyAmount.zero(EUR));
+  }
+
+  public void test_presentValueWithZSpread_periodic_Ended() {
+    CurrencyAmount computed = PRICER.presentValueWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    assertEquals(computed, CurrencyAmount.zero(EUR));
   }
 
   //-------------------------------------------------------------------------
@@ -267,6 +371,49 @@ public class DiscountingFixedCouponBondTradePricerTest {
     CurveCurrencyParameterSensitivities expected = sensitivity(
         PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE, (p), Z_SPREAD, true, PERIOD_PER_YEAR), EPS);
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
+  }
+
+  public void test_presentValueSensitivity_noExcoupon() {
+    PointSensitivityBuilder point = PRICER.presentValueSensitivity(TRADE_NO_EXCOUPON, PROVIDER);
+    CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
+    CurveCurrencyParameterSensitivities expected = sensitivity(
+        PROVIDER, (p) -> PRICER.presentValue(TRADE_NO_EXCOUPON, (p)), EPS);
+    assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
+  }
+
+  public void test_presentValueSensitivityWithZSpread_continuous_noExcoupon() {
+    PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD,
+        false, 0);
+    CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
+    CurveCurrencyParameterSensitivities expected = sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, false, 0), EPS);
+    assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
+  }
+
+  public void test_presentValueSensitivityWithZSpread_periodic_noExcoupon() {
+    PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(
+        TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
+    CurveCurrencyParameterSensitivities expected = sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, true, PERIOD_PER_YEAR), EPS);
+    assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
+  }
+
+  public void test_presentValueSensitivity_Ended() {
+    PointSensitivityBuilder computed = PRICER.presentValueSensitivity(TRADE_ENDED, PROVIDER);
+    assertEquals(computed, PointSensitivityBuilder.none());
+  }
+
+  public void test_presentValueSensitivityWithZSpread_continuous_Ended() {
+    PointSensitivityBuilder computed = PRICER.presentValueSensitivityWithZSpread(
+        TRADE_ENDED, PROVIDER, Z_SPREAD, false, 0);
+    assertEquals(computed, PointSensitivityBuilder.none());
+  }
+
+  public void test_ppresentValueSensitivityWithZSpread_periodic_Ended() {
+    PointSensitivityBuilder computed = PRICER.presentValueSensitivityWithZSpread(
+        TRADE_ENDED, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    assertEquals(computed, PointSensitivityBuilder.none());
   }
 
   public void test_dirtyPriceSensitivity() {
@@ -393,6 +540,7 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(accruedInterest3, 6.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
   }
 
+  //-------------------------------------------------------------------------
   /* US Street convention */
   private static final LocalDate START_US = date(2006, 11, 15);
   private static final LocalDate END_US = START_US.plusYears(10);
@@ -424,29 +572,84 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .tradeInfo(TRADE_INFO_US)
       .quantity(100)
       .build();
+  private static final LocalDate VALUATION_LAST_US = date(2016, 6, 3);
+  private static final TradeInfo TRADE_INFO_LAST_US = TradeInfo.builder()
+      .tradeDate(VALUATION_LAST_US)
+      .settlementDate(PRODUCT_US.getSettlementDateOffset().adjust(VALUATION_LAST_US))
+      .build();
+  private static final FixedCouponBondTrade TRADE_LAST_US = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_US)
+      .tradeInfo(TRADE_INFO_LAST_US)
+      .quantity(100)
+      .build();
+  private static final double YIELD_US = 0.04;
 
   @Test
-  public void dirtyPriceFromYieldUSStreet() {
-    double yield = 0.04;
-    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_US, yield);
+  public void dirtyPriceFromYieldUS() {
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US);
     assertEquals(dirtyPrice, 1.0417352500524246, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_US, dirtyPrice);
+    assertEquals(yield, YIELD_US, TOL);
   }
 
   @Test
-  public void dirtyPriceFromYieldUSStreetLastPeriod() {
-    LocalDate valuation = date(2016, 6, 3);
-    TradeInfo tradeInfo = TradeInfo.builder()
-        .tradeDate(valuation)
-        .settlementDate(PRODUCT_US.getSettlementDateOffset().adjust(valuation))
-        .build();
-    FixedCouponBondTrade trade = FixedCouponBondTrade.builder()
-        .securityLink(SECURITY_LINK_US)
-        .tradeInfo(tradeInfo)
-        .quantity(100)
-        .build();
-    final double yield = 0.04;
-    double dirtyPrice = PRICER.dirtyPriceFromYield(trade, yield);
-    assertEquals(dirtyPrice, 1.005635683760684, TOL);
+  public void dirtyPriceFromYieldUSLastPeriod() {
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US);
+    assertEquals(dirtyPrice, 1.005635683760684, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_LAST_US, dirtyPrice);
+    assertEquals(yield, YIELD_US, TOL);
+  }
+
+  @Test
+  public void modifiedDurationFromYieldUS() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US);
+    double price = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void modifiedDurationFromYieldUSLastPeriod() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US);
+    double price = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldUS() {
+    double computed = PRICER.convexityFromYield(TRADE_US, YIELD_US);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldUSLastPeriod() {
+    double computed = PRICER.convexityFromYield(TRADE_LAST_US, YIELD_US);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void macaulayDurationFromYieldUS() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_US, YIELD_US);
+    assertEquals(duration, 4.6575232098896215, TOL); // 2.x.
+  }
+
+  @Test
+  public void macaulayDurationFromYieldUSLastPeriod() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_US, YIELD_US);
+    assertEquals(duration, 0.43478260869565216, TOL); // 2.x.
   }
 
   /* UK BUMP/DMO convention */
@@ -480,34 +683,333 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .tradeInfo(TRADE_INFO_UK)
       .quantity(100)
       .build();
+  private static final LocalDate VALUATION_LAST_UK = date(2014, 6, 3);
+  private static final TradeInfo TRADE_INFO_LAST_UK = TradeInfo.builder()
+      .tradeDate(VALUATION_LAST_UK)
+      .settlementDate(PRODUCT_UK.getSettlementDateOffset().adjust(VALUATION_LAST_UK))
+      .build();
+  private static final FixedCouponBondTrade TRADE_LAST_UK = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_UK)
+      .tradeInfo(TRADE_INFO_LAST_UK)
+      .quantity(100)
+      .build();
+  private static final double YIELD_UK = 0.04;
 
   @Test
-  public void dirtyPriceFromYieldUKExDividend() {
-    final double yield = 0.04;
-    final double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_UK, yield);
+  public void dirtyPriceFromYieldUK() {
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK);
     assertEquals(dirtyPrice, 1.0277859038905428, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_UK, dirtyPrice);
+    assertEquals(yield, YIELD_UK, TOL);
   }
 
   @Test
   public void dirtyPriceFromYieldUKLastPeriod() {
-    LocalDate valuation = date(2014, 6, 3);
-    TradeInfo tradeInfo = TradeInfo.builder()
-        .tradeDate(valuation)
-        .settlementDate(PRODUCT_UK.getSettlementDateOffset().adjust(valuation))
-        .build();
-    FixedCouponBondTrade trade = FixedCouponBondTrade.builder()
-        .securityLink(SECURITY_LINK_UK)
-        .tradeInfo(tradeInfo)
-        .quantity(100)
-        .build();
-    final double yield = 0.04;
-    double dirtyPrice = PRICER.dirtyPriceFromYield(trade, yield);
-    assertEquals(dirtyPrice, 1.0145736043763598, TOL);
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK);
+    assertEquals(dirtyPrice, 1.0145736043763598, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_LAST_UK, dirtyPrice);
+    assertEquals(yield, YIELD_UK, TOL);
   }
 
-  // TODO test german - same as uk, japan
+  @Test
+  public void modifiedDurationFromYieldUK() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK);
+    double price = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
 
-  // TODO test duration, convexity
+  @Test
+  public void modifiedDurationFromYieldUKLastPeriod() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK);
+    double price = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
 
-  // TODO look at BondSecurityDiscountingMethodTest.
+  @Test
+  public void convexityFromYieldUK() {
+    double computed = PRICER.convexityFromYield(TRADE_UK, YIELD_UK);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldUKLastPeriod() {
+    double computed = PRICER.convexityFromYield(TRADE_LAST_UK, YIELD_UK);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void macaulayDurationFromYieldUK() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_UK, YIELD_UK);
+    assertEquals(duration, 2.8312260658609163, TOL); // 2.x.
+  }
+
+  @Test
+  public void macaulayDurationFromYieldUKLastPeriod() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_UK, YIELD_UK);
+    assertEquals(duration, 0.25815217391304346, TOL); // 2.x.
+  }
+
+  /* German bond convention */
+  private static final LocalDate START_GER = date(2002, 9, 7);
+  private static final LocalDate END_GER = START_GER.plusYears(12);
+  private static final PeriodicSchedule SCHEDULE_GER = PeriodicSchedule.of(START_GER, END_GER, Frequency.P12M,
+      BusinessDayAdjustment.of(BusinessDayConventions.FOLLOWING, HolidayCalendars.SAT_SUN),
+      StubConvention.SHORT_INITIAL, false);
+  private static final FixedCouponBond PRODUCT_GER = FixedCouponBond.builder()
+      .dayCount(DayCounts.ACT_ACT_ICMA)
+      .fixedRate(0.05)
+      .legalEntityId(ISSUER_ID)
+      .currency(Currency.EUR)
+      .notional(100)
+      .periodicSchedule(SCHEDULE_GER)
+      .settlementDateOffset(DaysAdjustment.ofBusinessDays(3, HolidayCalendars.SAT_SUN))
+      .yieldConvention(YieldConvention.GERMAN_BONDS)
+      .exCouponPeriod(DaysAdjustment.NONE)
+      .build();
+  private static final Security<FixedCouponBond> SECURITY_GER =
+      UnitSecurity.builder(PRODUCT_GER).standardId(SECURITY_ID).build();
+  private static final SecurityLink<FixedCouponBond> SECURITY_LINK_GER = SecurityLink.resolved(SECURITY_GER);
+
+  private static final LocalDate VALUATION_GER = date(2011, 9, 2);
+  private static final TradeInfo TRADE_INFO_GER = TradeInfo.builder()
+      .tradeDate(VALUATION_GER)
+      .settlementDate(PRODUCT_GER.getSettlementDateOffset().adjust(VALUATION_GER))
+      .build();
+  private static final FixedCouponBondTrade TRADE_GER = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_GER)
+      .tradeInfo(TRADE_INFO_GER)
+      .quantity(100)
+      .build();
+  private static final LocalDate VALUATION_LAST_GER = date(2014, 6, 3);
+  private static final TradeInfo TRADE_INFO_LAST_GER = TradeInfo.builder()
+      .tradeDate(VALUATION_LAST_GER)
+      .settlementDate(PRODUCT_GER.getSettlementDateOffset().adjust(VALUATION_LAST_GER))
+      .build();
+  private static final FixedCouponBondTrade TRADE_LAST_GER = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_GER)
+      .tradeInfo(TRADE_INFO_LAST_GER)
+      .quantity(100)
+      .build();
+  private static final double YIELD_GER = 0.04;
+
+  @Test
+  public void dirtyPriceFromYieldGerman() {
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER);
+    assertEquals(dirtyPrice, 1.027750910332271, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_GER, dirtyPrice);
+    assertEquals(yield, YIELD_GER, TOL);
+  }
+
+  @Test
+  public void dirtyPriceFromYieldGermanLastPeriod() {
+    double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER);
+    assertEquals(dirtyPrice, 1.039406595790844, TOL); // 2.x.
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_LAST_GER, dirtyPrice);
+    assertEquals(yield, YIELD_GER, TOL);
+  }
+
+  @Test
+  public void modifiedDurationFromYieldGER() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER);
+    double price = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void modifiedDurationFromYieldGERLastPeriod() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER);
+    double price = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldGER() {
+    double computed = PRICER.convexityFromYield(TRADE_GER, YIELD_GER);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldGERLastPeriod() {
+    double computed = PRICER.convexityFromYield(TRADE_LAST_GER, YIELD_GER);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void macaulayDurationFromYieldGER() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_GER, YIELD_GER);
+    assertEquals(duration, 2.861462874541554, TOL); // 2.x.
+  }
+
+  @Test
+  public void macaulayDurationFromYieldGERLastPeriod() {
+    double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_GER, YIELD_GER);
+    assertEquals(duration, 0.26231286613148186, TOL); // 2.x.
+  }
+
+  /* Japan simple convention */
+  private static final LocalDate START_JP = date(2002, 9, 7);
+  private static final LocalDate END_JP = START_JP.plusYears(20);
+  private static final PeriodicSchedule SCHEDULE_JP = PeriodicSchedule.of(START_JP, END_JP, Frequency.P6M,
+      BusinessDayAdjustment.of(BusinessDayConventions.FOLLOWING, HolidayCalendars.SAT_SUN),
+      StubConvention.SHORT_INITIAL, false);
+  private static final double RATE_JP = 0.04;
+  private static final FixedCouponBond PRODUCT_JP = FixedCouponBond.builder()
+      .dayCount(DayCounts.ACT_ACT_ICMA)
+      .fixedRate(RATE_JP)
+      .legalEntityId(ISSUER_ID)
+      .currency(Currency.EUR)
+      .notional(100)
+      .periodicSchedule(SCHEDULE_JP)
+      .settlementDateOffset(DaysAdjustment.ofBusinessDays(3, HolidayCalendars.SAT_SUN))
+      .yieldConvention(YieldConvention.JAPAN_SIMPLE)
+      .exCouponPeriod(DaysAdjustment.NONE)
+      .build();
+  private static final Security<FixedCouponBond> SECURITY_JP =
+      UnitSecurity.builder(PRODUCT_JP).standardId(SECURITY_ID).build();
+  private static final SecurityLink<FixedCouponBond> SECURITY_LINK_JP = SecurityLink.resolved(SECURITY_JP);
+
+  private static final LocalDate VALUATION_JP = date(2011, 9, 2);
+  private static final TradeInfo TRADE_INFO_JP = TradeInfo.builder()
+      .tradeDate(VALUATION_JP)
+      .settlementDate(PRODUCT_JP.getSettlementDateOffset().adjust(VALUATION_JP))
+      .build();
+  private static final FixedCouponBondTrade TRADE_JP = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_JP)
+      .tradeInfo(TRADE_INFO_JP)
+      .quantity(100)
+      .build();
+  private static final LocalDate VALUATION_LAST_JP = date(2022, 6, 3);
+  private static final TradeInfo TRADE_INFO_LAST_JP = TradeInfo.builder()
+      .tradeDate(VALUATION_LAST_JP)
+      .settlementDate(PRODUCT_JP.getSettlementDateOffset().adjust(VALUATION_LAST_JP))
+      .build();
+  private static final FixedCouponBondTrade TRADE_LAST_JP = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_JP)
+      .tradeInfo(TRADE_INFO_LAST_JP)
+      .quantity(100)
+      .build();
+  private static final LocalDate VALUATION_ENDED_JP = date(2023, 8, 3);
+  private static final TradeInfo TRADE_INFO_ENDED_JP = TradeInfo.builder()
+      .tradeDate(VALUATION_ENDED_JP)
+      .settlementDate(PRODUCT_JP.getSettlementDateOffset().adjust(VALUATION_ENDED_JP))
+      .build();
+  private static final FixedCouponBondTrade TRADE_ENDED_JP = FixedCouponBondTrade.builder()
+      .securityLink(SECURITY_LINK_JP)
+      .tradeInfo(TRADE_INFO_ENDED_JP)
+      .quantity(100)
+      .build();
+  private static final double YIELD_JP = 0.035;
+
+  @Test
+  public void dirtyPriceFromYieldJP() {
+    double computed = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP);
+    double maturity = DayCounts.ACT_365F.relativeYearFraction(TRADE_INFO_JP.getSettlementDate().get(), END_JP);
+    double expected = PRICER.dirtyPriceFromCleanPrice(TRADE_JP, (1d + RATE_JP * maturity) / (1d + YIELD_JP * maturity));
+    assertEquals(computed, expected, TOL);
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_JP, computed);
+    assertEquals(yield, YIELD_JP, TOL);
+  }
+
+  @Test
+  public void dirtyPriceFromYieldJPLastPeriod() {
+    double computed = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP);
+    double maturity = DayCounts.ACT_365F.relativeYearFraction(TRADE_INFO_LAST_JP.getSettlementDate().get(), END_JP);
+    double expected = PRICER.dirtyPriceFromCleanPrice(
+        TRADE_LAST_JP, (1d + RATE_JP * maturity) / (1d + YIELD_JP * maturity));
+    assertEquals(computed, expected, TOL);
+    double yield = PRICER.yieldFromDirtyPrice(TRADE_LAST_JP, computed);
+    assertEquals(yield, YIELD_JP, TOL);
+  }
+
+  @Test
+  public void dirtyPriceFromYieldJPEnded() {
+    double computed = PRICER.dirtyPriceFromYield(TRADE_ENDED_JP, YIELD_JP);
+    assertEquals(computed, 0d, TOL);
+  }
+
+  @Test
+  public void modifiedDurationFromYielddJP() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP);
+    double price = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void modifiedDurationFromYieldJPLastPeriod() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP);
+    double price = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP);
+    double priceUp = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP + EPS);
+    double priceDw = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP - EPS);
+    double expected = 0.5 * (priceDw - priceUp) / price / EPS;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void modifiedDurationFromYielddJPEnded() {
+    double computed = PRICER.modifiedDurationFromYield(TRADE_ENDED_JP, YIELD_JP);
+    assertEquals(computed, 0d, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldJP() {
+    double computed = PRICER.convexityFromYield(TRADE_JP, YIELD_JP);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldJPLastPeriod() {
+    double computed = PRICER.convexityFromYield(TRADE_LAST_JP, YIELD_JP);
+    double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP);
+    double durationUp = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP + EPS);
+    double durationDw = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP - EPS);
+    double expected = 0.5 * (durationDw - durationUp) / EPS + duration * duration;
+    assertEquals(computed, expected, EPS);
+  }
+
+  @Test
+  public void convexityFromYieldJPEnded() {
+    double computed = PRICER.convexityFromYield(TRADE_ENDED_JP, YIELD_JP);
+    assertEquals(computed, 0d, EPS);
+  }
+
+  @Test
+  public void macaulayDurationFromYieldYieldJP() {
+    assertThrows(() -> PRICER.macaulayDurationFromYield(TRADE_JP, YIELD_JP),
+        UnsupportedOperationException.class, "The convention JAPAN_SIMPLE is not supported.");
+  }
 }
