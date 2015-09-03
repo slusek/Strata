@@ -46,6 +46,7 @@ import com.opengamma.strata.collect.id.StandardId;
  * The legal entity of this fixed coupon bond is identified by {@link StandardId}. The enum, {@link YieldConvention}, 
  * specifies the yield computation convention, and {@link DaysAdjustment} does the number of days between valuation 
  * date and settlement date. 
+ * {@code exCouponDays} represent the ex-coupon period measured in days. 
  * </ul>
  */
 @BeanDefinition
