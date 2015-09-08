@@ -48,6 +48,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2015, 4, 12))
       .endDate(LocalDate.of(2015, 10, 12))
       .unadjustedEndDate(LocalDate.of(2015, 10, 12))
+      .detachmentDate(LocalDate.of(2015, 10, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_2 = FixedCouponBondPaymentPeriod.builder()
@@ -57,6 +58,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2015, 10, 12))
       .endDate(LocalDate.of(2016, 4, 12))
       .unadjustedEndDate(LocalDate.of(2016, 4, 12))
+      .detachmentDate(LocalDate.of(2016, 4, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_3 = FixedCouponBondPaymentPeriod.builder()
@@ -66,6 +68,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2016, 4, 12))
       .endDate(LocalDate.of(2016, 10, 12))
       .unadjustedEndDate(LocalDate.of(2016, 10, 12))
+      .detachmentDate(LocalDate.of(2016, 10, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final FixedCouponBondPaymentPeriod PAYMENT_4 = FixedCouponBondPaymentPeriod.builder()
@@ -75,6 +78,7 @@ public class ExpandedFixedCouponBondTest {
       .unadjustedStartDate(LocalDate.of(2016, 10, 12))
       .endDate(LocalDate.of(2017, 4, 12))
       .unadjustedEndDate(LocalDate.of(2017, 4, 12))
+      .detachmentDate(LocalDate.of(2017, 4, 5))
       .fixedRate(FIXED_RATE)
       .build();
   private static final ImmutableList<FixedCouponBondPaymentPeriod> PERIODIC_PAYMENTS =
@@ -88,7 +92,8 @@ public class ExpandedFixedCouponBondTest {
   private static final StandardId LEGAL_ENTITY = StandardId.of("OG-Ticker", "BUN EUR");
   private static final HolidayCalendar EUR_CALENDAR = HolidayCalendars.EUTA;
   private static final DaysAdjustment DATE_OFFSET = DaysAdjustment.ofBusinessDays(3, EUR_CALENDAR);
-  private static final DayCount DAY_COUNT = DayCounts.ACT_ACT_ICMA;
+  private static final DayCount DAY_COUNT = DayCounts.ACT_365F;
+  private static final int EX_COUPON_DAYS = 5;
 
   public void test_of() {
     ExpandedFixedCouponBond testList = ExpandedFixedCouponBond.builder()
@@ -158,6 +163,7 @@ public class ExpandedFixedCouponBondTest {
         .periodicSchedule(sche)
         .settlementDateOffset(DaysAdjustment.ofBusinessDays(2, HolidayCalendars.SAT_SUN))
         .yieldConvention(YieldConvention.UK_BUMP_DMO)
+        .exCouponPeriod(DaysAdjustment.NONE)
         .build()
         .expand();
     coverBeanEquals(test1, test2);

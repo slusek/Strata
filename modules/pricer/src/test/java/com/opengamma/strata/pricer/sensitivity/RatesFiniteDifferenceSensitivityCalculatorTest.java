@@ -17,11 +17,19 @@ import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.collect.ArgChecker;
+import com.opengamma.strata.collect.tuple.Pair;
 import com.opengamma.strata.market.curve.Curve;
 import com.opengamma.strata.market.curve.InterpolatedNodalCurve;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
+import com.opengamma.strata.market.value.BondGroup;
+import com.opengamma.strata.market.value.DiscountFactors;
+import com.opengamma.strata.market.value.LegalEntityGroup;
+import com.opengamma.strata.market.value.SimpleDiscountFactors;
+import com.opengamma.strata.market.value.ZeroRateDiscountFactors;
+import com.opengamma.strata.pricer.datasets.LegalEntityDiscountingProviderDataSets;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
+import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
 
 /**
  * Tests {@link RatesFiniteDifferenceSensitivityCalculator}.
@@ -105,4 +113,74 @@ public class RatesFiniteDifferenceSensitivityCalculatorTest {
     return (InterpolatedNodalCurve) curve;
   }
 
+  //-------------------------------------------------------------------------
+  @Test
+  public void sensitivity_legalEntity_Zero() {
+    CurveCurrencyParameterSensitivities sensiComputed = FD_CALCULATOR.sensitivity(
+        LegalEntityDiscountingProviderDataSets.ISSUER_REPO_ZERO, this::fn);
+    double[] timeIssuer = LegalEntityDiscountingProviderDataSets.ISSUER_TIME;
+    double[] timesRepo = LegalEntityDiscountingProviderDataSets.REPO_TIME;
+    assertEquals(sensiComputed.size(), 2);
+    double[] sensiIssuer = sensiComputed.getSensitivity(
+        LegalEntityDiscountingProviderDataSets.META_ZERO_ISSUER.getCurveName(), USD).getSensitivity();
+    assertEquals(sensiIssuer.length, timeIssuer.length);
+    for (int i = 0; i < timeIssuer.length; i++) {
+      assertEquals(timeIssuer[i], sensiIssuer[i], TOLERANCE_DELTA);
+    }
+    double[] sensiRepo = sensiComputed.getSensitivity(
+        LegalEntityDiscountingProviderDataSets.META_ZERO_REPO.getCurveName(), USD).getSensitivity();
+    assertEquals(sensiRepo.length, timesRepo.length);
+    for (int i = 0; i < timesRepo.length; i++) {
+      assertEquals(timesRepo[i], sensiRepo[i], TOLERANCE_DELTA);
+    }
+  }
+
+  @Test
+  public void sensitivity_legalEntity_Simple() {
+    CurveCurrencyParameterSensitivities sensiComputed = FD_CALCULATOR.sensitivity(
+        LegalEntityDiscountingProviderDataSets.ISSUER_REPO_SIMPLE, this::fn);
+    double[] timeIssuer = LegalEntityDiscountingProviderDataSets.ISSUER_TIME;
+    double[] timesRepo = LegalEntityDiscountingProviderDataSets.REPO_TIME;
+    assertEquals(sensiComputed.size(), 2);
+    double[] sensiIssuer = sensiComputed.getSensitivity(
+        LegalEntityDiscountingProviderDataSets.META_SIMPLE_ISSUER.getCurveName(), USD).getSensitivity();
+    assertEquals(sensiIssuer.length, timeIssuer.length);
+    for (int i = 0; i < timeIssuer.length; i++) {
+      assertEquals(timeIssuer[i], sensiIssuer[i], TOLERANCE_DELTA);
+    }
+    double[] sensiRepo = sensiComputed.getSensitivity(
+        LegalEntityDiscountingProviderDataSets.META_SIMPLE_REPO.getCurveName(), USD).getSensitivity();
+    assertEquals(sensiRepo.length, timesRepo.length);
+    for (int i = 0; i < timesRepo.length; i++) {
+      assertEquals(timesRepo[i], sensiRepo[i], TOLERANCE_DELTA);
+    }
+  }
+
+  // private function for testing. Returns the sum of rates multiplied by time
+  private CurrencyAmount fn(LegalEntityDiscountingProvider provider) {
+    double result = 0.0;
+    // issuer curve
+    ImmutableMap<Pair<LegalEntityGroup, Currency>, DiscountFactors> mapLegal = provider.metaBean().issuerCurves()
+        .get(provider);
+    for (Entry<Pair<LegalEntityGroup, Currency>, DiscountFactors> entry : mapLegal.entrySet()) {
+      InterpolatedNodalCurve curveInt = checkInterpolated(checkDiscountFactors(entry.getValue()));
+      result += sumProduct(curveInt);
+    }
+    // repo curve
+    ImmutableMap<Pair<BondGroup, Currency>, DiscountFactors> mapRepo = provider.metaBean().repoCurves().get(provider);
+    for (Entry<Pair<BondGroup, Currency>, DiscountFactors> entry : mapRepo.entrySet()) {
+      InterpolatedNodalCurve curveInt = checkInterpolated(checkDiscountFactors(entry.getValue()));
+      result += sumProduct(curveInt);
+    }
+    return CurrencyAmount.of(USD, result);
+  }
+
+  private Curve checkDiscountFactors(DiscountFactors discountFactors) {
+    if (discountFactors instanceof ZeroRateDiscountFactors) {
+      return ((ZeroRateDiscountFactors) discountFactors).getCurve();
+    } else if (discountFactors instanceof SimpleDiscountFactors) {
+      return ((SimpleDiscountFactors) discountFactors).getCurve();
+    }
+    throw new IllegalArgumentException("Not supported");
+  }
 }
