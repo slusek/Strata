@@ -13,12 +13,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
-import org.joda.beans.MetaProperty;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
@@ -48,14 +44,11 @@ import com.opengamma.strata.finance.rate.bond.FixedCouponBond;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBondPaymentPeriod;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBondTrade;
 import com.opengamma.strata.finance.rate.bond.YieldConvention;
-import com.opengamma.strata.market.curve.Curve;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
 import com.opengamma.strata.market.curve.Curves;
 import com.opengamma.strata.market.curve.InterpolatedNodalCurve;
-import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
-import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivity;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.value.BondGroup;
 import com.opengamma.strata.market.value.DiscountFactors;
@@ -65,6 +58,7 @@ import com.opengamma.strata.market.value.ZeroRateDiscountFactors;
 import com.opengamma.strata.pricer.DiscountingPaymentPricer;
 import com.opengamma.strata.pricer.impl.bond.DiscountingFixedCouponBondPaymentPeriodPricer;
 import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
+import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityCalculator;
 
 /**
  * Test {@link DiscountingFixedCouponBondTradePricer}.
@@ -176,6 +170,8 @@ public class DiscountingFixedCouponBondTradePricerTest {
   private static final int PERIOD_PER_YEAR = 4;
   private static final double TOL = 1.0e-12;
   private static final double EPS = 1.0e-6;
+  private static final RatesFiniteDifferenceSensitivityCalculator FD_CAL =
+      new RatesFiniteDifferenceSensitivityCalculator(EPS);
 
   //-------------------------------------------------------------------------
   public void test_presentValue() {
@@ -352,15 +348,15 @@ public class DiscountingFixedCouponBondTradePricerTest {
   public void test_presentValueSensitivity() {
     PointSensitivityBuilder point = PRICER.presentValueSensitivity(TRADE, PROVIDER);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(PROVIDER, (p) -> PRICER.presentValue(TRADE, (p)), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(PROVIDER, (p) -> PRICER.presentValue(TRADE, (p)));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
   public void test_presentValueSensitivityWithZSpread_continuous() {
     PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(TRADE, PROVIDER, Z_SPREAD, false, 0);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE, (p), Z_SPREAD, false, 0), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE, (p), Z_SPREAD, false, 0));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
@@ -368,16 +364,16 @@ public class DiscountingFixedCouponBondTradePricerTest {
     PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(
         TRADE, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE, (p), Z_SPREAD, true, PERIOD_PER_YEAR), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE, (p), Z_SPREAD, true, PERIOD_PER_YEAR));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
   public void test_presentValueSensitivity_noExcoupon() {
     PointSensitivityBuilder point = PRICER.presentValueSensitivity(TRADE_NO_EXCOUPON, PROVIDER);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> PRICER.presentValue(TRADE_NO_EXCOUPON, (p)), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> PRICER.presentValue(TRADE_NO_EXCOUPON, (p)));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
@@ -385,8 +381,8 @@ public class DiscountingFixedCouponBondTradePricerTest {
     PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD,
         false, 0);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, false, 0), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, false, 0));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
@@ -394,8 +390,8 @@ public class DiscountingFixedCouponBondTradePricerTest {
     PointSensitivityBuilder point = PRICER.presentValueSensitivityWithZSpread(
         TRADE_NO_EXCOUPON, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, true, PERIOD_PER_YEAR), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> PRICER.presentValueWithZSpread(TRADE_NO_EXCOUPON, (p), Z_SPREAD, true, PERIOD_PER_YEAR));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
@@ -419,16 +415,16 @@ public class DiscountingFixedCouponBondTradePricerTest {
   public void test_dirtyPriceSensitivity() {
     PointSensitivityBuilder point = PRICER.dirtyPriceSensitivity(TRADE, PROVIDER);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(
-        PROVIDER, (p) -> CurrencyAmount.of(EUR, PRICER.dirtyPriceFromCurves(TRADE, (p))), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(
+        PROVIDER, (p) -> CurrencyAmount.of(EUR, PRICER.dirtyPriceFromCurves(TRADE, (p))));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
   public void test_dirtyPriceSensitivityWithZspread_continuous() {
     PointSensitivityBuilder point = PRICER.dirtyPriceSensitivityWithZspread(TRADE, PROVIDER, Z_SPREAD, false, 0);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(PROVIDER,
-        (p) -> CurrencyAmount.of(EUR, PRICER.dirtyPriceFromCurvesWithZSpread(TRADE, (p), Z_SPREAD, false, 0)), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(PROVIDER,
+        (p) -> CurrencyAmount.of(EUR, PRICER.dirtyPriceFromCurvesWithZSpread(TRADE, (p), Z_SPREAD, false, 0)));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
@@ -436,57 +432,9 @@ public class DiscountingFixedCouponBondTradePricerTest {
     PointSensitivityBuilder point = PRICER.dirtyPriceSensitivityWithZspread(
         TRADE, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
-    CurveCurrencyParameterSensitivities expected = sensitivity(PROVIDER, (p) -> CurrencyAmount.of(
-        EUR, PRICER.dirtyPriceFromCurvesWithZSpread(TRADE, (p), Z_SPREAD, true, PERIOD_PER_YEAR)), EPS);
+    CurveCurrencyParameterSensitivities expected = FD_CAL.sensitivity(PROVIDER, (p) -> CurrencyAmount.of(
+        EUR, PRICER.dirtyPriceFromCurvesWithZSpread(TRADE, (p), Z_SPREAD, true, PERIOD_PER_YEAR)));
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
-  }
-
-  private CurveCurrencyParameterSensitivities sensitivity(
-      LegalEntityDiscountingProvider provider,
-      Function<LegalEntityDiscountingProvider, CurrencyAmount> valueFn, double shift) {
-
-    CurrencyAmount valueInit = valueFn.apply(provider);
-    CurveCurrencyParameterSensitivities discounting = sensitivity(
-        provider, valueFn, LegalEntityDiscountingProvider.meta().repoCurves(), valueInit, shift);
-    CurveCurrencyParameterSensitivities forward = sensitivity(
-        provider, valueFn, LegalEntityDiscountingProvider.meta().issuerCurves(), valueInit, shift);
-    return discounting.combinedWith(forward);
-  }
-
-  private <T> CurveCurrencyParameterSensitivities sensitivity(
-      LegalEntityDiscountingProvider provider,
-      Function<LegalEntityDiscountingProvider, CurrencyAmount> valueFn,
-      MetaProperty<ImmutableMap<Pair<T, Currency>, DiscountFactors>> metaProperty,
-      CurrencyAmount valueInit,
-      double shift) {
-
-    ImmutableMap<Pair<T, Currency>, DiscountFactors> baseCurves = metaProperty.get(provider);
-    CurveCurrencyParameterSensitivities result = CurveCurrencyParameterSensitivities.empty();
-    for (Pair<T, Currency> key : baseCurves.keySet()) {
-      DiscountFactors discountFactors = baseCurves.get(key);
-      // Assume underlying object is ZeroRateDiscountFactors 
-      NodalCurve curveInt = (NodalCurve) ((ZeroRateDiscountFactors) discountFactors).getCurve();
-      int nbNodePoint = curveInt.getXValues().length;
-      double[] sensitivity = new double[nbNodePoint];
-      for (int i = 0; i < nbNodePoint; i++) {
-        Curve dscBumped = bumpedCurve(curveInt, i, shift);
-        Map<Pair<T, Currency>, DiscountFactors> mapBumped = new HashMap<>(baseCurves);
-        mapBumped.put(key, ZeroRateDiscountFactors.of(
-            discountFactors.getCurrency(), discountFactors.getValuationDate(), dscBumped));
-        LegalEntityDiscountingProvider providerDscBumped = provider.toBuilder().set(metaProperty, mapBumped).build();
-        sensitivity[i] = (valueFn.apply(providerDscBumped).getAmount() - valueInit.getAmount()) / shift;
-      }
-      CurveMetadata metadata = curveInt.getMetadata();
-      result = result.combinedWith(
-          CurveCurrencyParameterSensitivity.of(metadata, valueInit.getCurrency(), sensitivity));
-    }
-    return result;
-  }
-
-  private NodalCurve bumpedCurve(NodalCurve curveInt, int loopnode, double shift) {
-    double[] yieldBumped = curveInt.getYValues();
-    yieldBumped[loopnode] += shift;
-    return curveInt.withYValues(yieldBumped);
   }
 
   //-------------------------------------------------------------------------
@@ -584,7 +532,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .build();
   private static final double YIELD_US = 0.04;
 
-  @Test
   public void dirtyPriceFromYieldUS() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US);
     assertEquals(dirtyPrice, 1.0417352500524246, TOL); // 2.x.
@@ -592,7 +539,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_US, TOL);
   }
 
-  @Test
   public void dirtyPriceFromYieldUSLastPeriod() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US);
     assertEquals(dirtyPrice, 1.005635683760684, TOL); // 2.x.
@@ -600,7 +546,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_US, TOL);
   }
 
-  @Test
   public void modifiedDurationFromYieldUS() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US);
     double price = PRICER.dirtyPriceFromYield(TRADE_US, YIELD_US);
@@ -610,7 +555,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void modifiedDurationFromYieldUSLastPeriod() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US);
     double price = PRICER.dirtyPriceFromYield(TRADE_LAST_US, YIELD_US);
@@ -620,7 +564,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldUS() {
     double computed = PRICER.convexityFromYield(TRADE_US, YIELD_US);
     double duration = PRICER.modifiedDurationFromYield(TRADE_US, YIELD_US);
@@ -630,7 +573,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldUSLastPeriod() {
     double computed = PRICER.convexityFromYield(TRADE_LAST_US, YIELD_US);
     double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_US, YIELD_US);
@@ -640,13 +582,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void macaulayDurationFromYieldUS() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_US, YIELD_US);
     assertEquals(duration, 4.6575232098896215, TOL); // 2.x.
   }
 
-  @Test
   public void macaulayDurationFromYieldUSLastPeriod() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_US, YIELD_US);
     assertEquals(duration, 0.43478260869565216, TOL); // 2.x.
@@ -695,7 +635,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .build();
   private static final double YIELD_UK = 0.04;
 
-  @Test
   public void dirtyPriceFromYieldUK() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK);
     assertEquals(dirtyPrice, 1.0277859038905428, TOL); // 2.x.
@@ -703,7 +642,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_UK, TOL);
   }
 
-  @Test
   public void dirtyPriceFromYieldUKLastPeriod() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK);
     assertEquals(dirtyPrice, 1.0145736043763598, TOL); // 2.x.
@@ -711,7 +649,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_UK, TOL);
   }
 
-  @Test
   public void modifiedDurationFromYieldUK() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK);
     double price = PRICER.dirtyPriceFromYield(TRADE_UK, YIELD_UK);
@@ -721,7 +658,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void modifiedDurationFromYieldUKLastPeriod() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK);
     double price = PRICER.dirtyPriceFromYield(TRADE_LAST_UK, YIELD_UK);
@@ -731,7 +667,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldUK() {
     double computed = PRICER.convexityFromYield(TRADE_UK, YIELD_UK);
     double duration = PRICER.modifiedDurationFromYield(TRADE_UK, YIELD_UK);
@@ -741,7 +676,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldUKLastPeriod() {
     double computed = PRICER.convexityFromYield(TRADE_LAST_UK, YIELD_UK);
     double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_UK, YIELD_UK);
@@ -751,13 +685,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void macaulayDurationFromYieldUK() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_UK, YIELD_UK);
     assertEquals(duration, 2.8312260658609163, TOL); // 2.x.
   }
 
-  @Test
   public void macaulayDurationFromYieldUKLastPeriod() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_UK, YIELD_UK);
     assertEquals(duration, 0.25815217391304346, TOL); // 2.x.
@@ -806,7 +738,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .build();
   private static final double YIELD_GER = 0.04;
 
-  @Test
   public void dirtyPriceFromYieldGerman() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER);
     assertEquals(dirtyPrice, 1.027750910332271, TOL); // 2.x.
@@ -814,7 +745,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_GER, TOL);
   }
 
-  @Test
   public void dirtyPriceFromYieldGermanLastPeriod() {
     double dirtyPrice = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER);
     assertEquals(dirtyPrice, 1.039406595790844, TOL); // 2.x.
@@ -822,7 +752,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_GER, TOL);
   }
 
-  @Test
   public void modifiedDurationFromYieldGER() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER);
     double price = PRICER.dirtyPriceFromYield(TRADE_GER, YIELD_GER);
@@ -832,7 +761,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void modifiedDurationFromYieldGERLastPeriod() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER);
     double price = PRICER.dirtyPriceFromYield(TRADE_LAST_GER, YIELD_GER);
@@ -842,7 +770,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldGER() {
     double computed = PRICER.convexityFromYield(TRADE_GER, YIELD_GER);
     double duration = PRICER.modifiedDurationFromYield(TRADE_GER, YIELD_GER);
@@ -852,7 +779,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldGERLastPeriod() {
     double computed = PRICER.convexityFromYield(TRADE_LAST_GER, YIELD_GER);
     double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_GER, YIELD_GER);
@@ -862,13 +788,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void macaulayDurationFromYieldGER() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_GER, YIELD_GER);
     assertEquals(duration, 2.861462874541554, TOL); // 2.x.
   }
 
-  @Test
   public void macaulayDurationFromYieldGERLastPeriod() {
     double duration = PRICER.macaulayDurationFromYield(TRADE_LAST_GER, YIELD_GER);
     assertEquals(duration, 0.26231286613148186, TOL); // 2.x.
@@ -928,7 +852,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
       .build();
   private static final double YIELD_JP = 0.035;
 
-  @Test
   public void dirtyPriceFromYieldJP() {
     double computed = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP);
     double maturity = DayCounts.ACT_365F.relativeYearFraction(TRADE_INFO_JP.getSettlementDate().get(), END_JP);
@@ -938,7 +861,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_JP, TOL);
   }
 
-  @Test
   public void dirtyPriceFromYieldJPLastPeriod() {
     double computed = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP);
     double maturity = DayCounts.ACT_365F.relativeYearFraction(TRADE_INFO_LAST_JP.getSettlementDate().get(), END_JP);
@@ -949,13 +871,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(yield, YIELD_JP, TOL);
   }
 
-  @Test
   public void dirtyPriceFromYieldJPEnded() {
     double computed = PRICER.dirtyPriceFromYield(TRADE_ENDED_JP, YIELD_JP);
     assertEquals(computed, 0d, TOL);
   }
 
-  @Test
   public void modifiedDurationFromYielddJP() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP);
     double price = PRICER.dirtyPriceFromYield(TRADE_JP, YIELD_JP);
@@ -965,7 +885,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void modifiedDurationFromYieldJPLastPeriod() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP);
     double price = PRICER.dirtyPriceFromYield(TRADE_LAST_JP, YIELD_JP);
@@ -975,13 +894,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void modifiedDurationFromYielddJPEnded() {
     double computed = PRICER.modifiedDurationFromYield(TRADE_ENDED_JP, YIELD_JP);
     assertEquals(computed, 0d, EPS);
   }
 
-  @Test
   public void convexityFromYieldJP() {
     double computed = PRICER.convexityFromYield(TRADE_JP, YIELD_JP);
     double duration = PRICER.modifiedDurationFromYield(TRADE_JP, YIELD_JP);
@@ -991,7 +908,6 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldJPLastPeriod() {
     double computed = PRICER.convexityFromYield(TRADE_LAST_JP, YIELD_JP);
     double duration = PRICER.modifiedDurationFromYield(TRADE_LAST_JP, YIELD_JP);
@@ -1001,13 +917,11 @@ public class DiscountingFixedCouponBondTradePricerTest {
     assertEquals(computed, expected, EPS);
   }
 
-  @Test
   public void convexityFromYieldJPEnded() {
     double computed = PRICER.convexityFromYield(TRADE_ENDED_JP, YIELD_JP);
     assertEquals(computed, 0d, EPS);
   }
 
-  @Test
   public void macaulayDurationFromYieldYieldJP() {
     assertThrows(() -> PRICER.macaulayDurationFromYield(TRADE_JP, YIELD_JP),
         UnsupportedOperationException.class, "The convention JAPAN_SIMPLE is not supported.");

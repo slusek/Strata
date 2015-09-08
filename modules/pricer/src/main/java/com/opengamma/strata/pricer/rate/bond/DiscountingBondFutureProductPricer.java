@@ -1,8 +1,12 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ *
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.pricer.rate.bond;
 
-import org.apache.commons.math3.stat.descriptive.rank.Min;
-
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Doubles;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.finance.rate.bond.BondFuture;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBondTrade;
@@ -26,10 +30,6 @@ public final class DiscountingBondFutureProductPricer extends AbstractBondFuture
    * Underlying pricer.
    */
   private final DiscountingFixedCouponBondTradePricer bondPricer;
-  /**
-   * Function to compute the minimum of arrays. 
-   */
-  private static final Min MIN_FUNCTION = new Min();
 
   /**
    * Creates an instance. 
@@ -59,7 +59,7 @@ public final class DiscountingBondFutureProductPricer extends AbstractBondFuture
       double dirtyPrice = bondPricer.dirtyPriceFromCurves(bond, provider);
       priceBonds[i] = bondPricer.cleanPriceFromDirtyPrice(bond, dirtyPrice) / future.getConversionFactor().get(i);
     }
-    final double priceFuture = MIN_FUNCTION.evaluate(priceBonds);
+    final double priceFuture = Doubles.min(priceBonds);
     return priceFuture;
   }
 
@@ -79,7 +79,7 @@ public final class DiscountingBondFutureProductPricer extends AbstractBondFuture
    * @param periodPerYear  the number of periods per year
    * @return the price of the product, in decimal form
    */
-  public double priceWithSpread(
+  public double priceWithZSpread(
       BondFuture future,
       LegalEntityDiscountingProvider provider,
       double zSpread,
@@ -93,7 +93,7 @@ public final class DiscountingBondFutureProductPricer extends AbstractBondFuture
       double dirtyPrice = bondPricer.dirtyPriceFromCurvesWithZSpread(bond, provider, zSpread, periodic, periodPerYear);
       priceBonds[i] = bondPricer.cleanPriceFromDirtyPrice(bond, dirtyPrice) / future.getConversionFactor().get(i);
     }
-    double priceFuture = MIN_FUNCTION.evaluate(priceBonds);
+    double priceFuture = Doubles.min(priceBonds);
     return priceFuture;
   }
 
@@ -145,7 +145,7 @@ public final class DiscountingBondFutureProductPricer extends AbstractBondFuture
    * @param periodPerYear  the number of periods per year
    * @return the price curve sensitivity of the product
    */
-  public PointSensitivities priceSensitivityWithSpread(
+  public PointSensitivities priceSensitivityWithZSpread(
       BondFuture future,
       LegalEntityDiscountingProvider provider,
       double zSpread,

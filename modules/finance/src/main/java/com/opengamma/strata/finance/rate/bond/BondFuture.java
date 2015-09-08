@@ -16,6 +16,7 @@ import java.util.Set;
 import org.joda.beans.Bean;
 import org.joda.beans.BeanDefinition;
 import org.joda.beans.ImmutableBean;
+import org.joda.beans.ImmutableDefaults;
 import org.joda.beans.ImmutablePreBuild;
 import org.joda.beans.ImmutableValidator;
 import org.joda.beans.JodaBeanUtils;
@@ -42,6 +43,7 @@ import com.opengamma.strata.finance.TradeInfo;
  * a basket of fixed coupon bonds. The profit or loss of a bond future is settled daily.
  * This class represents the structure of a single futures contract.
  */
+@SuppressWarnings("unchecked")
 @BeanDefinition
 public final class BondFuture
     implements Product, ImmutableBean, Serializable {
@@ -54,10 +56,12 @@ public final class BondFuture
   @PropertyDefinition(validate = "notEmpty")
   private final ImmutableList<SecurityLink<FixedCouponBond>> deliveryBasket;
   /**
-   * The conversion factor of each bond in the basket.
+   * The conversion factor for each bond in the basket.
    * <p>
    * The price of each underlying security in the basket is rescaled by the conversion factor.
    * This must not be empty, and its size must be the same as the size of {@code deliveryBasket}.
+   * <p>
+   * All of the underlying bonds must have the same notional and currency.
    */
   @PropertyDefinition(validate = "notEmpty")
   private final ImmutableList<Double> conversionFactor;
@@ -113,13 +117,32 @@ public final class BondFuture
   private final Rounding rounding;
 
   //-------------------------------------------------------------------------
+  @ImmutableDefaults
+  private static void applyDefaults(Builder builder) {
+    builder.rounding(Rounding.none());
+  }
+
+  @ImmutablePreBuild
+  private static void preBuild(Builder builder) {
+    if (!builder.deliveryBasket.isEmpty()) {
+      if (builder.firstNoticeDate != null && builder.firstDeliveryDate == null) {
+        FixedCouponBond product = builder.deliveryBasket.get(0).resolvedTarget().getProduct();
+        builder.firstDeliveryDate = product.getSettlementDateOffset().adjust(builder.firstNoticeDate);
+      }
+      if (builder.lastNoticeDate != null && builder.lastDeliveryDate == null) {
+        FixedCouponBond product = builder.deliveryBasket.get(0).resolvedTarget().getProduct();
+        builder.lastDeliveryDate = product.getSettlementDateOffset().adjust(builder.lastNoticeDate);
+      }
+    }
+  }
+
   @ImmutableValidator
   private void validate() {
     int size = deliveryBasket.size();
     ArgChecker.isTrue(size == conversionFactor.size(),
-        "The delivery basket size should be the same conversion factor size");
-    ArgChecker.inOrderOrEqual(lastTradeDate, firstNoticeDate, "lastTradeDate", "firstNoticeDate");
+        "The delivery basket size should be the same as the conversion factor size");
     ArgChecker.inOrderOrEqual(firstNoticeDate, lastNoticeDate, "firstNoticeDate", "lastNoticeDate");
+    ArgChecker.inOrderOrEqual(firstDeliveryDate, lastDeliveryDate, "firstDeliveryDate", "lastDeliveryDate");
     ArgChecker.inOrderOrEqual(firstNoticeDate, firstDeliveryDate, "firstNoticeDate", "firstDeliveryDate");
     ArgChecker.inOrderOrEqual(lastNoticeDate, lastDeliveryDate, "lastNoticeDate", "lastDeliveryDate");
     if (size > 1) {
@@ -133,25 +156,11 @@ public final class BondFuture
     }
   }
 
-  @ImmutablePreBuild
-  private static void preBuild(Builder builder) {
-    if (builder.deliveryBasket != null && !builder.deliveryBasket.isEmpty()) {
-      if (builder.firstNoticeDate != null && builder.firstDeliveryDate == null) {
-        FixedCouponBond product = builder.deliveryBasket.get(0).resolvedTarget().getProduct();
-        builder.firstDeliveryDate = product.getSettlementDateOffset().adjust(builder.firstNoticeDate);
-      }
-      if (builder.lastNoticeDate != null && builder.lastDeliveryDate == null) {
-        FixedCouponBond product = builder.deliveryBasket.get(0).resolvedTarget().getProduct();
-        builder.lastDeliveryDate = product.getSettlementDateOffset().adjust(builder.lastNoticeDate);
-      }
-    }
-  }
-
   //-------------------------------------------------------------------------
   /**
    * Obtains the notional of underlying fixed coupon bonds. 
    * <p>
-   * All of the elements in the delivery basket have the same notional, see {@link #validate()}.
+   * All of the bonds in the delivery basket have the same notional, see {@code validate()}.
    * 
    * @return the notional
    */
@@ -162,7 +171,7 @@ public final class BondFuture
   /**
    * Obtains the currency of the underlying fixed coupon bonds. 
    * <p>
-   * All of the elements in the delivery basket have the same currency, see {@link #validate()}.
+   * All of the bonds in the delivery basket have the same currency, see {@code validate()}.
    * 
    * @return the currency
    */
@@ -186,7 +195,7 @@ public final class BondFuture
   /**
    * Creates the bond trades from the delivery basket by specifying trade date. 
    * <p>
-   * This method sets the settlement date of the trades to be the last delivery date. 
+   * This method sets the settlement date of the trades to be the last delivery date, and the quantity to be unity.
    * 
    * @param tradeDate  the trade date
    * @return  the trades
@@ -200,7 +209,7 @@ public final class BondFuture
     List<FixedCouponBondTrade> list = new ArrayList<FixedCouponBondTrade>();
     for (SecurityLink<FixedCouponBond> securityLink : deliveryBasket) {
       FixedCouponBondTrade trade = FixedCouponBondTrade.builder()
-          .quantity(1)
+          .quantity(1L)
           .securityLink(securityLink)
           .tradeInfo(tradeInfo)
           .build();
@@ -293,10 +302,12 @@ public final class BondFuture
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the conversion factor of each bond in the basket.
+   * Gets the conversion factor for each bond in the basket.
    * <p>
    * The price of each underlying security in the basket is rescaled by the conversion factor.
    * This must not be empty, and its size must be the same as the size of {@code deliveryBasket}.
+   * <p>
+   * All of the underlying bonds must have the same notional and currency.
    * @return the value of the property, not empty
    */
   public ImmutableList<Double> getConversionFactor() {
@@ -663,6 +674,7 @@ public final class BondFuture
      * Restricted constructor.
      */
     private Builder() {
+      applyDefaults(this);
     }
 
     /**
@@ -803,10 +815,12 @@ public final class BondFuture
     }
 
     /**
-     * Sets the conversion factor of each bond in the basket.
+     * Sets the conversion factor for each bond in the basket.
      * <p>
      * The price of each underlying security in the basket is rescaled by the conversion factor.
      * This must not be empty, and its size must be the same as the size of {@code deliveryBasket}.
+     * <p>
+     * All of the underlying bonds must have the same notional and currency.
      * @param conversionFactor  the new value, not empty
      * @return this, for chaining, not null
      */

@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ *
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.pricer.rate.bond;
 
 import com.opengamma.strata.basics.currency.CurrencyAmount;
@@ -12,13 +17,13 @@ import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
  * <p>
  * This function provides the ability to price a {@link BondFutureTrade}.
  */
-public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureTradePricer {
+public final class DiscountingBondFutureTradePricer extends AbstractBondFutureTradePricer {
 
   /**
    * Default implementation.
    */
-  public static final DiscountingBondFutureTradetPricer DEFAULT =
-      new DiscountingBondFutureTradetPricer(DiscountingBondFutureProductPricer.DEFAULT);
+  public static final DiscountingBondFutureTradePricer DEFAULT =
+      new DiscountingBondFutureTradePricer(DiscountingBondFutureProductPricer.DEFAULT);
 
   /**
    * Underlying pricer.
@@ -30,7 +35,7 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * 
    * @param productPricer  the pricer for {@link BondFuture}
    */
-  public DiscountingBondFutureTradetPricer(DiscountingBondFutureProductPricer productPricer) {
+  public DiscountingBondFutureTradePricer(DiscountingBondFutureProductPricer productPricer) {
     this.productPricer = ArgChecker.notNull(productPricer, "productPricer");
   }
 
@@ -70,13 +75,13 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * @param periodPerYear  the number of periods per year
    * @return the price of the trade, in decimal form
    */
-  public double priceWithSpread(
+  public double priceWithZSpread(
       BondFutureTrade trade,
       LegalEntityDiscountingProvider provider,
       double zSpread,
       boolean periodic,
       int periodPerYear) {
-    return productPricer.priceWithSpread(trade.getSecurity().getProduct(), provider, zSpread, periodic, periodPerYear);
+    return productPricer.priceWithZSpread(trade.getSecurity().getProduct(), provider, zSpread, periodic, periodPerYear);
   }
 
   /**
@@ -114,14 +119,14 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * @param periodPerYear  the number of periods per year
    * @return the present value
    */
-  public CurrencyAmount presentValueWithSpread(
+  public CurrencyAmount presentValueWithZSpread(
       BondFutureTrade trade,
       LegalEntityDiscountingProvider provider,
       double referencePrice,
       double zSpread,
       boolean periodic,
       int periodPerYear) {
-    double price = priceWithSpread(trade, provider, zSpread, periodic, periodPerYear);
+    double price = priceWithZSpread(trade, provider, zSpread, periodic, periodPerYear);
     return presentValue(trade, price, referencePrice);
   }
 
@@ -159,7 +164,7 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * @param periodPerYear  the number of periods per year
    * @return the present value curve sensitivity of the trade
    */
-  public PointSensitivities presentValueSensitivityWithSpread(
+  public PointSensitivities presentValueSensitivityWithZSpread(
       BondFutureTrade trade,
       LegalEntityDiscountingProvider provider,
       double zSpread,
@@ -167,7 +172,7 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
       int periodPerYear) {
     BondFuture product = trade.getSecurity().getProduct();
     PointSensitivities priceSensi =
-        productPricer.priceSensitivityWithSpread(product, provider, zSpread, periodic, periodPerYear);
+        productPricer.priceSensitivityWithZSpread(product, provider, zSpread, periodic, periodPerYear);
     PointSensitivities marginIndexSensi = productPricer.marginIndexSensitivity(product, priceSensi);
     return marginIndexSensi.multipliedBy(trade.getQuantity());
   }
@@ -208,14 +213,14 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * @param periodPerYear  the number of periods per year
    * @return the par spread.
    */
-  public double parSpreadWithSpread(
+  public double parSpreadWithZSpread(
       BondFutureTrade trade,
       LegalEntityDiscountingProvider provider,
       double referencePrice,
       double zSpread,
       boolean periodic,
       int periodPerYear) {
-    return priceWithSpread(trade, provider, zSpread, periodic, periodPerYear) - referencePrice;
+    return priceWithZSpread(trade, provider, zSpread, periodic, periodPerYear) - referencePrice;
   }
 
   /**
@@ -249,13 +254,13 @@ public final class DiscountingBondFutureTradetPricer extends AbstractBondFutureT
    * @param periodPerYear  the number of periods per year
    * @return the par spread curve sensitivity of the trade
    */
-  public PointSensitivities parSpreadSensitivityWithSpread(
+  public PointSensitivities parSpreadSensitivityWithZSpread(
       BondFutureTrade trade,
       LegalEntityDiscountingProvider provider,
       double zSpread,
       boolean periodic,
       int periodPerYear) {
-    return productPricer.priceSensitivityWithSpread(
+    return productPricer.priceSensitivityWithZSpread(
         trade.getSecurity().getProduct(), provider, zSpread, periodic, periodPerYear);
   }
 
