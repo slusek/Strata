@@ -149,7 +149,6 @@ public class DiscountingBondFutureProductPricerTest {
    // curve parameter sensitivity is not supported for continuous z-spread in 2.x. 
   }
 
-
   public void regression_withZSpread_periodic() {
     double price = FUTURE_PRICER.priceWithZSpread(FUTURE_PRODUCT, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
     assertEquals(price, 1.1720190529653407, TOL);
@@ -164,4 +163,5 @@ public class DiscountingBondFutureProductPricerTest {
     sensiOld = sensiOld.combinedWith(CurveCurrencyParameterSensitivity.of(METADATA_REPO, USD, sensiRepo));
     assertTrue(sensiNew.equalWithTolerance(sensiOld, TOL));
   }
+
 }
