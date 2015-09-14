@@ -30,6 +30,7 @@ import com.opengamma.strata.market.value.BondGroup;
  */
 @Test
 public class RepoCurveZeroRateSensitivityTest {
+
   private static final LocalDate DATE = date(2015, 8, 27);
   private static final double VALUE = 32d;
   private static final Currency CURRENCY = USD;
@@ -164,8 +165,8 @@ public class RepoCurveZeroRateSensitivityTest {
   public void coverage() {
     RepoCurveZeroRateSensitivity test1 = RepoCurveZeroRateSensitivity.of(CURRENCY, DATE, GROUP, VALUE);
     coverImmutableBean(test1);
-    RepoCurveZeroRateSensitivity test2 = RepoCurveZeroRateSensitivity.of(GBP, date(2014, 3, 24),
-        BondGroup.of("ISSUER2 BND 5Y"), 12d);
+    RepoCurveZeroRateSensitivity test2 =
+        RepoCurveZeroRateSensitivity.of(GBP, date(2014, 3, 24), BondGroup.of("ISSUER2 BND 5Y"), 12d);
     coverBeanEquals(test1, test2);
   }
 
@@ -173,4 +174,5 @@ public class RepoCurveZeroRateSensitivityTest {
     RepoCurveZeroRateSensitivity test = RepoCurveZeroRateSensitivity.of(CURRENCY, DATE, GROUP, VALUE);
     assertSerialization(test);
   }
+
 }

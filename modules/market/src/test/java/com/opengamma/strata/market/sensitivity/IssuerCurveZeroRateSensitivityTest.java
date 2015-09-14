@@ -30,6 +30,7 @@ import com.opengamma.strata.market.value.LegalEntityGroup;
  */
 @Test
 public class IssuerCurveZeroRateSensitivityTest {
+
   private static final LocalDate DATE = date(2015, 8, 27);
   private static final double VALUE = 32d;
   private static final Currency CURRENCY = USD;
@@ -37,8 +38,7 @@ public class IssuerCurveZeroRateSensitivityTest {
 
   public void test_of_withSensitivityCurrency() {
     Currency sensiCurrency = GBP;
-    IssuerCurveZeroRateSensitivity test =
-        IssuerCurveZeroRateSensitivity.of(CURRENCY, DATE, sensiCurrency, GROUP, VALUE);
+    IssuerCurveZeroRateSensitivity test = IssuerCurveZeroRateSensitivity.of(CURRENCY, DATE, sensiCurrency, GROUP, VALUE);
     assertEquals(test.getLegalEntityGroup(), GROUP);
     assertEquals(test.getCurveCurrency(), CURRENCY);
     assertEquals(test.getCurrency(), sensiCurrency);
@@ -114,8 +114,7 @@ public class IssuerCurveZeroRateSensitivityTest {
     IssuerCurveZeroRateSensitivity test1 = base.convertedTo(USD, matrix);
     assertEquals(test1, base);
     IssuerCurveZeroRateSensitivity test2 = base.convertedTo(GBP, matrix);
-    IssuerCurveZeroRateSensitivity expected = IssuerCurveZeroRateSensitivity.of(CURRENCY, DATE, GBP, GROUP, VALUE /
-        rate);
+    IssuerCurveZeroRateSensitivity expected = IssuerCurveZeroRateSensitivity.of(CURRENCY, DATE, GBP, GROUP, VALUE / rate);
     assertEquals(test2, expected);
   }
 
@@ -166,8 +165,8 @@ public class IssuerCurveZeroRateSensitivityTest {
   public void coverage() {
     IssuerCurveZeroRateSensitivity test1 = IssuerCurveZeroRateSensitivity.of(CURRENCY, DATE, GROUP, VALUE);
     coverImmutableBean(test1);
-    IssuerCurveZeroRateSensitivity test2 = IssuerCurveZeroRateSensitivity.of(
-        GBP, date(2014, 3, 24), LegalEntityGroup.of("ISSUER1"), 12d);
+    IssuerCurveZeroRateSensitivity test2 =
+        IssuerCurveZeroRateSensitivity.of(GBP, date(2014, 3, 24), LegalEntityGroup.of("ISSUER1"), 12d);
     coverBeanEquals(test1, test2);
   }
 

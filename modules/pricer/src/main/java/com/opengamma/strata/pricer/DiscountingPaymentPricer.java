@@ -56,8 +56,8 @@ public class DiscountingPaymentPricer {
    * <p>
    * The specified discount factors should be for the payment currency, however this is not validated.
    * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve. 
    * 
    * @param payment  the payment to price
    * @param discountFactors  the discount factors to price against
@@ -128,14 +128,13 @@ public class DiscountingPaymentPricer {
    * <p>
    * The specified discount factors should be for the payment currency, however this is not validated.
    * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve. 
    * 
    * @param payment  the payment to price
    * @param discountFactors  the discount factors to price against
    * @param zSpread  the z-spread
    * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
-   * continuously compounded rates
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the point sensitivity of the present value

@@ -163,4 +163,5 @@ public class FixedCouponBondTradeTest {
         .build();
     assertSerialization(test);
   }
+
 }

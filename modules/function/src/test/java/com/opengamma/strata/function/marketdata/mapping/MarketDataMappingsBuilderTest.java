@@ -14,7 +14,7 @@ import com.opengamma.strata.basics.index.IborIndices;
 import com.opengamma.strata.basics.index.PriceIndices;
 import com.opengamma.strata.basics.market.MarketDataFeed;
 import com.opengamma.strata.basics.market.MarketDataId;
-import com.opengamma.strata.engine.calculations.MissingMappingId;
+import com.opengamma.strata.engine.calculation.MissingMappingId;
 import com.opengamma.strata.engine.marketdata.mapping.MarketDataMappings;
 import com.opengamma.strata.market.curve.Curve;
 import com.opengamma.strata.market.curve.CurveGroupName;
@@ -25,6 +25,9 @@ import com.opengamma.strata.market.key.IndexRateKey;
 import com.opengamma.strata.market.key.PriceIndexValuesKey;
 import com.opengamma.strata.market.value.PriceIndexValues;
 
+/**
+ * Test {@link MarketDataMappingsBuilder}.
+ */
 @Test
 public class MarketDataMappingsBuilderTest {
 
@@ -87,4 +90,5 @@ public class MarketDataMappingsBuilderTest {
     MarketDataId<Double> id = mappings.getIdForObservableKey(IndexRateKey.of(IborIndices.CHF_LIBOR_12M));
     assertThat(id).isEqualTo(IndexRateId.of(IborIndices.CHF_LIBOR_12M, MarketDataFeed.NONE));
   }
+
 }

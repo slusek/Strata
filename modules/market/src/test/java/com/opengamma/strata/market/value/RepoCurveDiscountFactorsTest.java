@@ -55,6 +55,15 @@ public class RepoCurveDiscountFactorsTest {
   public void test_zeroRatePointSensitivity() {
     RepoCurveDiscountFactors base = RepoCurveDiscountFactors.of(DSC_FACTORS, GROUP);
     RepoCurveZeroRateSensitivity expected =
+
+        RepoCurveZeroRateSensitivity.of(DSC_FACTORS.zeroRatePointSensitivity(DATE_AFTER), GROUP);
+    RepoCurveZeroRateSensitivity computed = base.zeroRatePointSensitivity(DATE_AFTER);
+    assertEquals(computed, expected);
+  }
+
+  public void test_zeroRatePointSensitivity_USD() {
+    RepoCurveDiscountFactors base = RepoCurveDiscountFactors.of(DSC_FACTORS, GROUP);
+    RepoCurveZeroRateSensitivity expected =
         RepoCurveZeroRateSensitivity.of(DSC_FACTORS.zeroRatePointSensitivity(DATE_AFTER, USD), GROUP);
     RepoCurveZeroRateSensitivity computed = base.zeroRatePointSensitivity(DATE_AFTER, USD);
     assertEquals(computed, expected);

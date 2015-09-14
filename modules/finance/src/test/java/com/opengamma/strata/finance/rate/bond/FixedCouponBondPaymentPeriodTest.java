@@ -19,6 +19,7 @@ import java.time.temporal.TemporalAdjusters;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
+import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.index.Index;
 
 /**
@@ -58,6 +59,7 @@ public class FixedCouponBondPaymentPeriodTest {
     assertEquals(test.getFixedRate(), FIXED_RATE);
     assertEquals(test.getNotional(), NOTIONAL);
     assertEquals(test.getYearFraction(), YEAR_FRACTION);
+    assertEquals(test.getNotionalAmount(), CurrencyAmount.of(USD, NOTIONAL));
 
     // the object is not changed
     assertEquals(test.adjustPaymentDate(TemporalAdjusters.ofDateAdjuster(d -> d.plusDays(2))), test);

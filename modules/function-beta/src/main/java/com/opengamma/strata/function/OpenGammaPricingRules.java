@@ -11,13 +11,15 @@ import com.opengamma.strata.engine.config.pricing.PricingRules;
 import com.opengamma.strata.finance.credit.CdsTrade;
 import com.opengamma.strata.finance.future.GenericFutureOptionTrade;
 import com.opengamma.strata.finance.future.GenericFutureTrade;
+import com.opengamma.strata.finance.rate.deposit.TermDepositTrade;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
 import com.opengamma.strata.function.calculation.credit.CdsFunctionGroups;
 import com.opengamma.strata.function.calculation.future.GenericFutureFunctionGroups;
 import com.opengamma.strata.function.calculation.future.GenericFutureOptionFunctionGroups;
+import com.opengamma.strata.function.calculation.rate.deposit.TermDepositFunctionGroups;
 import com.opengamma.strata.function.calculation.rate.fra.FraFunctionGroups;
-import com.opengamma.strata.function.rate.swap.SwapFunctionGroups;
+import com.opengamma.strata.function.calculation.rate.swap.SwapFunctionGroups;
 
 /**
  * Contains standard sets of pricing rules that provide full access to the built-in asset class coverage.
@@ -32,7 +34,8 @@ public final class OpenGammaPricingRules {
       PricingRule.builder(FraTrade.class).functionGroup(FraFunctionGroups.discounting()).build(),
       PricingRule.builder(GenericFutureTrade.class).functionGroup(GenericFutureFunctionGroups.market()).build(),
       PricingRule.builder(GenericFutureOptionTrade.class).functionGroup(GenericFutureOptionFunctionGroups.market()).build(),
-      PricingRule.builder(SwapTrade.class).functionGroup(SwapFunctionGroups.discounting()).build());
+      PricingRule.builder(SwapTrade.class).functionGroup(SwapFunctionGroups.discounting()).build(),
+      PricingRule.builder(TermDepositTrade.class).functionGroup(TermDepositFunctionGroups.discounting()).build());
 
   /**
    * Restricted constructor.

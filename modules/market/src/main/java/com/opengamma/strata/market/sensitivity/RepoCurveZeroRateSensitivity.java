@@ -31,7 +31,11 @@ import com.opengamma.strata.basics.currency.FxRateProvider;
 import com.opengamma.strata.market.value.BondGroup;
 
 /**
+<<<<<<< HEAD
  * Point sensitivity to the issuer curve.
+=======
+ * Point sensitivity to the repo curve.
+>>>>>>> master
  * <p>
  * Holds the sensitivity to the repo curve at a specific date.
  */
@@ -58,7 +62,7 @@ public final class RepoCurveZeroRateSensitivity
    * The bond group. 
    * <p>
    * This defines the bond group that the discount factors are for.
-   * The bond group typically represents legal entity and bond security. 
+   * The bond group typically represents the legal entity and bond security. 
    */
   @PropertyDefinition(validate = "notNull")
   private final BondGroup bondGroup;
@@ -105,8 +109,13 @@ public final class RepoCurveZeroRateSensitivity
   }
 
   /**
+<<<<<<< HEAD
    * Obtains a {@code RepoCurveZeroRateSensitivity} from the curve currency, date, sensitivity currency, bond group and 
    * value.
+=======
+   * Obtains a {@code RepoCurveZeroRateSensitivity} from the curve currency, date, sensitivity currency,
+   * bond group and value.
+>>>>>>> master
    * 
    * @param curveCurrency  the currency of the curve
    * @param date  the date that was looked up on the curve
@@ -279,7 +288,7 @@ public final class RepoCurveZeroRateSensitivity
    * Gets the bond group.
    * <p>
    * This defines the bond group that the discount factors are for.
-   * The bond group typically represents legal entity and bond security.
+   * The bond group typically represents the legal entity and bond security.
    * @return the value of the property, not null
    */
   public BondGroup getBondGroup() {

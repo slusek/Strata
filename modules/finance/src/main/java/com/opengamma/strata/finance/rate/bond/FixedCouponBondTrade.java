@@ -62,12 +62,14 @@ public final class FixedCouponBondTrade
   private final long quantity;
 
   //-------------------------------------------------------------------------
-  @SuppressWarnings({"rawtypes", "unchecked" })
+  @SuppressWarnings({"rawtypes", "unchecked"})
   @ImmutableDefaults
   private static void applyDefaults(Builder builder) {
     builder.tradeInfo = TradeInfo.EMPTY;
   }
 
+
+  //-------------------------------------------------------------------------
   @Override
   public SecurityTrade<FixedCouponBond> resolveLinks(LinkResolver resolver) {
     return resolver.resolveLinksIn(this, securityLink, resolved -> toBuilder().securityLink(resolved).build());

@@ -48,6 +48,11 @@ public final class ZeroRateDiscountFactors
     implements DiscountFactors, ImmutableBean, Serializable {
 
   /**
+   * Year fraction used as an effective zero.
+   */
+  private static final double EFFECTIVE_ZERO = 1e-10;
+
+  /**
    * The currency that the discount factors are for.
    */
   @PropertyDefinition(validate = "notNull", overrideGet = true)
@@ -81,11 +86,7 @@ public final class ZeroRateDiscountFactors
    * @param underlyingCurve  the underlying curve
    * @return the curve
    */
-  public static ZeroRateDiscountFactors of(
-      Currency currency,
-      LocalDate valuationDate,
-      Curve underlyingCurve) {
-
+  public static ZeroRateDiscountFactors of(Currency currency, LocalDate valuationDate, Curve underlyingCurve) {
     return new ZeroRateDiscountFactors(currency, valuationDate, underlyingCurve);
   }
 
@@ -199,6 +200,7 @@ public final class ZeroRateDiscountFactors
     return sensi.multipliedBy(factor);
   }
 
+  //-------------------------------------------------------------------------
   @Override
   public CurveUnitParameterSensitivities unitParameterSensitivity(LocalDate date) {
     double relativeYearFraction = relativeYearFraction(date);

@@ -17,6 +17,7 @@ import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.finance.rate.swap.CompoundingMethod;
 import com.opengamma.strata.finance.rate.swap.ExpandedSwap;
 import com.opengamma.strata.finance.rate.swap.ExpandedSwapLeg;
+import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
 import com.opengamma.strata.finance.rate.swap.RateAccrualPeriod;
 import com.opengamma.strata.finance.rate.swap.RatePaymentPeriod;
 import com.opengamma.strata.finance.rate.swap.SwapLeg;
@@ -141,6 +142,27 @@ public class DiscountingSwapProductPricer {
     }
   }
 
+  //-------------------------------------------------------------------------
+  /**
+   * Calculates the accrued interest since the last payment.
+   * <p>
+   * This determines the payment period applicable at the valuation date and calculates
+   * the accrued interest since the last payment.
+   * 
+   * @param product  the product to price
+   * @param provider  the rates provider
+   * @return the accrued interest of the swap product
+   */
+  public MultiCurrencyAmount accruedInterest(SwapProduct product, RatesProvider provider) {
+    ExpandedSwap swap = product.expand();
+    MultiCurrencyAmount result = MultiCurrencyAmount.empty();
+    for (ExpandedSwapLeg leg : swap.getLegs()) {
+      result = result.plus(legPricer.accruedInterest(leg, provider));
+    }
+    return result;
+  }
+
+  //-------------------------------------------------------------------------
   /**
    * Computes the par rate for swaps with a fixed leg. 
    * <p>
@@ -175,7 +197,9 @@ public class DiscountingSwapProductPricer {
       // Par rate
       return -(otherLegsConvertedPv + fixedLegEventsPv) / pvbpFixedLeg;
     } else {
-      RatePaymentPeriod payment = (RatePaymentPeriod) fixedLeg.getPaymentPeriods().get(0);
+      PaymentPeriod firstPeriod = fixedLeg.getPaymentPeriods().get(0);
+      ArgChecker.isTrue(firstPeriod instanceof RatePaymentPeriod, "PaymentPeriod must be instance of RatePaymentPeriod");
+      RatePaymentPeriod payment = (RatePaymentPeriod) firstPeriod;
       if (payment.getAccrualPeriods().size() == 1) { // no compounding
         // PVBP
         double pvbpFixedLeg = legPricer.pvbp(fixedLeg, provider);
@@ -192,7 +216,7 @@ public class DiscountingSwapProductPricer {
       double nbAp = ap.size();
       double notional = payment.getNotional();
       double df = provider.discountFactor(ccyFixedLeg, payment.getPaymentDate());
-      return Math.pow(-(otherLegsConvertedPv + fixedLegEventsPv) / notional / df + 1.0d, 1 / nbAp) - 1.0d;
+      return Math.pow(-(otherLegsConvertedPv + fixedLegEventsPv) / notional / df + 1d, 1 / nbAp) - 1d;
     }
   }
 

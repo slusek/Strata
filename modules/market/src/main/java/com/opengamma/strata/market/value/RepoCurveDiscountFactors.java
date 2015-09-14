@@ -41,18 +41,18 @@ public final class RepoCurveDiscountFactors
     implements ImmutableBean, Serializable {
 
   /**
-   * The discount factors for a single currency. 
+   * The underlying discount factors for a single currency. 
    * <p>
    * This contains curve, curve currency, valuation date and day count convention. 
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.
    */
-  @PropertyDefinition(validate = "notNull", get = "private")
+  @PropertyDefinition(validate = "notNull")
   private final DiscountFactors discountFactors;
   /**
    * The bond group. 
    * <p>
    * This defines the bond group that the discount factors are for.
-   * The bond group typically represents legal entity and bond security. 
+   * The bond group typically represents the legal entity and bond security. 
    */
   @PropertyDefinition(validate = "notNull")
   private final BondGroup bondGroup;
@@ -224,13 +224,13 @@ public final class RepoCurveDiscountFactors
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the discount factors for a single currency.
+   * Gets the underlying discount factors for a single currency.
    * <p>
    * This contains curve, curve currency, valuation date and day count convention.
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.
    * @return the value of the property, not null
    */
-  private DiscountFactors getDiscountFactors() {
+  public DiscountFactors getDiscountFactors() {
     return discountFactors;
   }
 
@@ -239,7 +239,7 @@ public final class RepoCurveDiscountFactors
    * Gets the bond group.
    * <p>
    * This defines the bond group that the discount factors are for.
-   * The bond group typically represents legal entity and bond security.
+   * The bond group typically represents the legal entity and bond security.
    * @return the value of the property, not null
    */
   public BondGroup getBondGroup() {

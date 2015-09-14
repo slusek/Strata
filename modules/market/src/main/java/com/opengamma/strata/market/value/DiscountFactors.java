@@ -76,8 +76,8 @@ public interface DiscountFactors {
    * The discount factor represents the time value of money for the specified currency
    * when comparing the valuation date to the specified date.
    * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve. 
    * <p>
    * If the valuation date is on or after the specified date, the discount factor is 1.
    * 
@@ -114,12 +114,12 @@ public interface DiscountFactors {
   /**
    * Calculates the zero rate point sensitivity with z-spread at the specified date.
    * <p>
-   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve used to determine 
-   * the discount factor. The sensitivity refers to the result of 
-   * {@link #discountFactorWithZSpread(LocalDate, double, CompoundedRateType, int)}.
+   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
+   * used to determine the discount factor.
+   * The sensitivity refers to the result of {@link #discountFactorWithSpread(LocalDate, double, CompoundedRateType, int)}.
    * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve. 
    * 
    * @param date  the date to discount to
    * @param zSpread  the z-spread
@@ -155,15 +155,15 @@ public interface DiscountFactors {
   public abstract ZeroRateSensitivity zeroRatePointSensitivity(LocalDate date, Currency sensitivityCurrency);
 
   /**
-   * Calculates the zero rate point sensitivity with z-spread at the specified date specifying the currency 
-   * of the sensitivity.
+   * Calculates the zero rate point sensitivity with z-spread at the specified date specifying
+   * the currency of the sensitivity.
    * <p>
-   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve used to determine 
-   * the discount factor. The sensitivity refers to the result of 
-   * {@link #discountFactorWithSpread(LocalDate, double, CompoundedRateType, int)}.
+   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
+   * used to determine the discount factor.
+   * The sensitivity refers to the result of {@link #discountFactorWithSpread(LocalDate, double, CompoundedRateType, int)}.
    * <p>
-   * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
-   * of the discounting curve. 
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve. 
    * <p>
    * This method allows the currency of the sensitivity to differ from the currency of the curve.
    * 

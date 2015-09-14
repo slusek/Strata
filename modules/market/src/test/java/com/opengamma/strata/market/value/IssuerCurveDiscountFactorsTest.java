@@ -55,6 +55,14 @@ public class IssuerCurveDiscountFactorsTest {
   public void test_zeroRatePointSensitivity() {
     IssuerCurveDiscountFactors base = IssuerCurveDiscountFactors.of(DSC_FACTORS, GROUP);
     IssuerCurveZeroRateSensitivity expected =
+        IssuerCurveZeroRateSensitivity.of(DSC_FACTORS.zeroRatePointSensitivity(DATE_AFTER), GROUP);
+    IssuerCurveZeroRateSensitivity computed = base.zeroRatePointSensitivity(DATE_AFTER);
+    assertEquals(computed, expected);
+  }
+
+  public void test_zeroRatePointSensitivity_USD() {
+    IssuerCurveDiscountFactors base = IssuerCurveDiscountFactors.of(DSC_FACTORS, GROUP);
+    IssuerCurveZeroRateSensitivity expected =
         IssuerCurveZeroRateSensitivity.of(DSC_FACTORS.zeroRatePointSensitivity(DATE_AFTER, USD), GROUP);
     IssuerCurveZeroRateSensitivity computed = base.zeroRatePointSensitivity(DATE_AFTER, USD);
     assertEquals(computed, expected);

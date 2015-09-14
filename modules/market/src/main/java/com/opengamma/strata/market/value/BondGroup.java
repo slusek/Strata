@@ -22,7 +22,7 @@ public final class BondGroup
   /**
    * Obtains a {@code BondGroup} by name.
    * <p>
-   * Bond group may contain any character, but must not be empty.
+   * Bond group names may contain any character, but must not be empty.
    *
    * @param name  the bond group name
    * @return a bond group with the specified String

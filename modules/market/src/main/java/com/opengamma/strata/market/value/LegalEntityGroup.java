@@ -22,7 +22,7 @@ public final class LegalEntityGroup
   /**
    * Obtains a {@code LegalEntityGroup} by name.
    * <p>
-   * Legal entity group may contain any character, but must not be empty.
+   * Legal entity group names may contain any character, but must not be empty.
    *
    * @param name  the legal entity group name
    * @return a legal entity group with the specified String

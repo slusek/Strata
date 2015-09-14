@@ -94,7 +94,8 @@ public final class IssuerCurveZeroRateSensitivity
    * @param legalEntityGroup  the legal entity group
    * @return the point sensitivity object
    */
-  public static IssuerCurveZeroRateSensitivity of(ZeroRateSensitivity zeroRateSensitivity,
+  public static IssuerCurveZeroRateSensitivity of(
+      ZeroRateSensitivity zeroRateSensitivity,
       LegalEntityGroup legalEntityGroup) {
     return of(
         zeroRateSensitivity.getCurveCurrency(),
@@ -105,8 +106,13 @@ public final class IssuerCurveZeroRateSensitivity
   }
 
   /**
+<<<<<<< HEAD
    * Obtains a {@code IssuerCurveZeroRateSensitivity} from the curve currency, date, sensitivity currency, legal 
    * entity group and value.
+=======
+   * Obtains a {@code IssuerCurveZeroRateSensitivity} from the curve currency, date, sensitivity currency,
+   * legal entity group and value.
+>>>>>>> master
    * 
    * @param curveCurrency  the currency of the curve
    * @param date  the date that was looked up on the curve

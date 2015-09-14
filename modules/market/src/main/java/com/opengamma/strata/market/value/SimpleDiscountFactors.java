@@ -47,6 +47,11 @@ public final class SimpleDiscountFactors
     implements DiscountFactors, ImmutableBean, Serializable {
 
   /**
+   * Year fraction used as an effective zero.
+   */
+  private static final double EFFECTIVE_ZERO = 1e-10;
+
+  /**
    * The currency that the discount factors are for.
    */
   @PropertyDefinition(validate = "notNull", overrideGet = true)
@@ -190,10 +195,12 @@ public final class SimpleDiscountFactors
     } else {
       throw new UnsupportedOperationException(
           "The compounded rate type " + compoundedRateType.name() + " is not supported.");
+
     }
     return sensi.multipliedBy(factor);
   }
 
+  //-------------------------------------------------------------------------
   @Override
   public CurveUnitParameterSensitivities unitParameterSensitivity(LocalDate date) {
     double relativeYearFraction = relativeYearFraction(date);

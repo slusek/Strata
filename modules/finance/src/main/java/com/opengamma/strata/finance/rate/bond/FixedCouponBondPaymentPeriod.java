@@ -29,10 +29,11 @@ import org.joda.beans.impl.direct.DirectMetaPropertyMap;
 
 import com.google.common.collect.ImmutableSet;
 import com.opengamma.strata.basics.currency.Currency;
+import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.date.DayCount;
 import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.collect.ArgChecker;
-import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
+import com.opengamma.strata.finance.rate.swap.NotionalPaymentPeriod;
 
 /**
  * A period over which a fixed coupon is paid.
@@ -43,7 +44,7 @@ import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
  */
 @BeanDefinition
 public final class FixedCouponBondPaymentPeriod
-    implements PaymentPeriod, ImmutableBean, Serializable {
+    implements NotionalPaymentPeriod, ImmutableBean, Serializable {
 
   /**
    * The primary currency of the payment period.
@@ -62,7 +63,7 @@ public final class FixedCouponBondPaymentPeriod
   @PropertyDefinition(validate = "ArgChecker.notNegative")
   private final double notional;
   /**
-   * The start date of the coupon period.
+   * The start date of the payment period.
    * <p>
    * This is the first date in the period.
    * If the schedule adjusts for business days, then this is the adjusted date.
@@ -70,7 +71,7 @@ public final class FixedCouponBondPaymentPeriod
   @PropertyDefinition(validate = "notNull", overrideGet = true)
   private final LocalDate startDate;
   /**
-   * The end date of the coupon period.
+   * The end date of the payment period.
    * <p>
    * This is the last date in the period.
    * If the schedule adjusts for business days, then this is the adjusted date.
@@ -98,8 +99,9 @@ public final class FixedCouponBondPaymentPeriod
   /**
    * The detachment date.
    * <p>
-   * Some bonds trade ex-coupons before the coupon payment. The coupon is paid not to the owner of the bond on 
-   * the payment date but to the owner of the bond on the detachment date. 
+   * Some bonds trade ex-coupon before the coupon payment.
+   * The coupon is paid not to the owner of the bond on the payment date but to the
+   * owner of the bond on the detachment date. 
    * <p>
    * When building, this will default to the end date if not specified.
    */
@@ -115,7 +117,7 @@ public final class FixedCouponBondPaymentPeriod
   /**
    * The year fraction that the accrual period represents.
    * <p>
-   * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+   * The value is usually calculated using a {@link DayCount}.
    * Typically the value will be close to 1 for one year and close to 0.5 for six months.
    * The fraction may be greater than 1, but not less than 0.
    */
@@ -123,7 +125,6 @@ public final class FixedCouponBondPaymentPeriod
   private final double yearFraction;
 
   //-------------------------------------------------------------------------
-
   @Override
   public void collectIndices(ImmutableSet.Builder<Index> builder) {
     // no index
@@ -133,10 +134,15 @@ public final class FixedCouponBondPaymentPeriod
   public FixedCouponBondPaymentPeriod adjustPaymentDate(TemporalAdjuster adjuster) {
     return this;
   }
-  
+
   @Override
   public LocalDate getPaymentDate() {
     return getEndDate();
+  }
+
+  @Override
+  public CurrencyAmount getNotionalAmount() {
+    return CurrencyAmount.of(currency, notional);
   }
 
   //-------------------------------------------------------------------------
@@ -237,7 +243,7 @@ public final class FixedCouponBondPaymentPeriod
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the start date of the coupon period.
+   * Gets the start date of the payment period.
    * <p>
    * This is the first date in the period.
    * If the schedule adjusts for business days, then this is the adjusted date.
@@ -250,7 +256,7 @@ public final class FixedCouponBondPaymentPeriod
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the end date of the coupon period.
+   * Gets the end date of the payment period.
    * <p>
    * This is the last date in the period.
    * If the schedule adjusts for business days, then this is the adjusted date.
@@ -291,8 +297,9 @@ public final class FixedCouponBondPaymentPeriod
   /**
    * Gets the detachment date.
    * <p>
-   * Some bonds trade ex-coupons before the coupon payment. The coupon is paid not to the owner of the bond on
-   * the payment date but to the owner of the bond on the detachment date.
+   * Some bonds trade ex-coupon before the coupon payment.
+   * The coupon is paid not to the owner of the bond on the payment date but to the
+   * owner of the bond on the detachment date.
    * <p>
    * When building, this will default to the end date if not specified.
    * @return the value of the property, not null
@@ -316,7 +323,7 @@ public final class FixedCouponBondPaymentPeriod
   /**
    * Gets the year fraction that the accrual period represents.
    * <p>
-   * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+   * The value is usually calculated using a {@link DayCount}.
    * Typically the value will be close to 1 for one year and close to 0.5 for six months.
    * The fraction may be greater than 1, but not less than 0.
    * @return the value of the property
@@ -781,7 +788,7 @@ public final class FixedCouponBondPaymentPeriod
     }
 
     /**
-     * Sets the start date of the coupon period.
+     * Sets the start date of the payment period.
      * <p>
      * This is the first date in the period.
      * If the schedule adjusts for business days, then this is the adjusted date.
@@ -795,7 +802,7 @@ public final class FixedCouponBondPaymentPeriod
     }
 
     /**
-     * Sets the end date of the coupon period.
+     * Sets the end date of the payment period.
      * <p>
      * This is the last date in the period.
      * If the schedule adjusts for business days, then this is the adjusted date.
@@ -841,8 +848,9 @@ public final class FixedCouponBondPaymentPeriod
     /**
      * Sets the detachment date.
      * <p>
-     * Some bonds trade ex-coupons before the coupon payment. The coupon is paid not to the owner of the bond on
-     * the payment date but to the owner of the bond on the detachment date.
+     * Some bonds trade ex-coupon before the coupon payment.
+     * The coupon is paid not to the owner of the bond on the payment date but to the
+     * owner of the bond on the detachment date.
      * <p>
      * When building, this will default to the end date if not specified.
      * @param detachmentDate  the new value, not null
@@ -869,7 +877,7 @@ public final class FixedCouponBondPaymentPeriod
     /**
      * Sets the year fraction that the accrual period represents.
      * <p>
-     * The value is usually calculated using a {@link DayCount} which may be different to that of the index.
+     * The value is usually calculated using a {@link DayCount}.
      * Typically the value will be close to 1 for one year and close to 0.5 for six months.
      * The fraction may be greater than 1, but not less than 0.
      * @param yearFraction  the new value

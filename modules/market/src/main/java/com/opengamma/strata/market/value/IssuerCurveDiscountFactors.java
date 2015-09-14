@@ -39,8 +39,9 @@ import com.opengamma.strata.market.sensitivity.ZeroRateSensitivity;
 @BeanDefinition(builderScope = "private")
 public final class IssuerCurveDiscountFactors
     implements ImmutableBean, Serializable {
+
   /**
-   * The discount factors for a single currency. 
+   * The underlying discount factors for a single currency. 
    * <p>
    * This contains curve, curve currency, valuation date and day count convention. 
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.
@@ -222,7 +223,7 @@ public final class IssuerCurveDiscountFactors
 
   //-----------------------------------------------------------------------
   /**
-   * Gets the discount factors for a single currency.
+   * Gets the underlying discount factors for a single currency.
    * <p>
    * This contains curve, curve currency, valuation date and day count convention.
    * The discount factor, its point sensitivity and curve sensitivity are computed by this {@code DiscountFactors}.

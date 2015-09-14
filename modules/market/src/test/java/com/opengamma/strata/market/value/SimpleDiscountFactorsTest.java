@@ -100,8 +100,7 @@ public class SimpleDiscountFactorsTest {
     double discountFactorBase = test.discountFactor(DATE_AFTER);
     double rate = (Math.pow(discountFactorBase, -1d / periodPerYear / relativeYearFraction) - 1d) * periodPerYear;
     double expected = discountFactorFromPeriodicallyCompoundedRate(rate + SPREAD, periodPerYear, relativeYearFraction);
-    assertEquals(test.discountFactorWithZSpread(DATE_AFTER, SPREAD, CompoundedRateType.PERIODIC, periodPerYear),
-        expected, TOL);
+    assertEquals(test.discountFactorWithZSpread(DATE_AFTER, SPREAD, CompoundedRateType.PERIODIC, periodPerYear), expected, TOL);
   }
 
   public void test_discountFactor_withSpread_smallYearFraction() {
@@ -136,8 +135,7 @@ public class SimpleDiscountFactorsTest {
     double relativeYearFraction = ACT_365F.relativeYearFraction(DATE_VAL, DATE_AFTER);
     double df = CURVE.yValue(relativeYearFraction) * Math.exp(-SPREAD * relativeYearFraction);
     ZeroRateSensitivity expected = ZeroRateSensitivity.of(GBP, DATE_AFTER, -df * relativeYearFraction);
-    assertEquals(test.zeroRatePointSensitivityWithZSpread(DATE_AFTER, SPREAD, CompoundedRateType.CONTINUOUS, 0),
-        expected);
+    assertEquals(test.zeroRatePointSensitivityWithZSpread(DATE_AFTER, SPREAD, CompoundedRateType.CONTINUOUS, 0), expected);
   }
 
   public void test_zeroRatePointSensitivityWithSpread_sensitivityCurrency_continuous() {
@@ -145,8 +143,7 @@ public class SimpleDiscountFactorsTest {
     double relativeYearFraction = ACT_365F.relativeYearFraction(DATE_VAL, DATE_AFTER);
     double df = CURVE.yValue(relativeYearFraction) * Math.exp(-SPREAD * relativeYearFraction);
     ZeroRateSensitivity expected = ZeroRateSensitivity.of(GBP, DATE_AFTER, USD, -df * relativeYearFraction);
-    assertEquals(test.zeroRatePointSensitivityWithZSpread(DATE_AFTER, USD, SPREAD, CompoundedRateType.CONTINUOUS, 1),
-        expected);
+    assertEquals(test.zeroRatePointSensitivityWithZSpread(DATE_AFTER, USD, SPREAD, CompoundedRateType.CONTINUOUS, 1), expected);
   }
 
   public void test_zeroRatePointSensitivityWithSpread_periodic() {
