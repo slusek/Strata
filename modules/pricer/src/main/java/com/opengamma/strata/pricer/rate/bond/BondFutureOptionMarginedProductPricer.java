@@ -8,7 +8,7 @@ package com.opengamma.strata.pricer.rate.bond;
 import com.opengamma.strata.finance.common.FutureOptionPremiumStyle;
 import com.opengamma.strata.finance.rate.bond.BondFutureOption;
 import com.opengamma.strata.market.sensitivity.PointSensitivities;
-import com.opengamma.strata.pricer.rate.RatesProvider;
+import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
 
 /**
  * Pricer for bond future option products with daily margin.
@@ -39,7 +39,7 @@ public abstract class BondFutureOptionMarginedProductPricer {
    */
   abstract double price(
       BondFutureOption option,
-      RatesProvider ratesProvider,
+      LegalEntityDiscountingProvider ratesProvider,
       BondFutureProvider futureProvider);
 
   //-------------------------------------------------------------------------
@@ -55,7 +55,7 @@ public abstract class BondFutureOptionMarginedProductPricer {
    */
   abstract PointSensitivities priceSensitivity(
       BondFutureOption option,
-      RatesProvider ratesProvider,
+      LegalEntityDiscountingProvider ratesProvider,
       BondFutureProvider futureProvider);
 
   //-------------------------------------------------------------------------

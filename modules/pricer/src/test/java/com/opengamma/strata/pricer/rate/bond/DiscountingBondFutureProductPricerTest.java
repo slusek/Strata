@@ -33,14 +33,14 @@ import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityC
 @Test
 public class DiscountingBondFutureProductPricerTest {
   // product 
-  private static final BondFuture FUTURE_PRODUCT = BondDataSets.FUTURE_PRODUCT;
-  private static final LocalDate TRADE_DATE = BondDataSets.TRADE_DATE;
-  private static final SecurityLink<FixedCouponBond>[] BOND_SECURITY_LINK = BondDataSets.BOND_SECURITY_LINK.clone();
-  private static final Double[] CONVERSION_FACTOR = BondDataSets.CONVERSION_FACTOR.clone();
+  private static final BondFuture FUTURE_PRODUCT = BondDataSets.FUTURE_PRODUCT_USD;
+  private static final LocalDate TRADE_DATE = BondDataSets.TRADE_DATE_USD;
+  private static final SecurityLink<FixedCouponBond>[] BOND_SECURITY_LINK = BondDataSets.BOND_SECURITY_LINK_USD.clone();
+  private static final Double[] CONVERSION_FACTOR = BondDataSets.CONVERSION_FACTOR_USD.clone();
   // curves
   private static final LegalEntityDiscountingProvider PROVIDER = LegalEntityDiscountingProviderDataSets.ISSUER_REPO_ZERO;
-  private static final CurveMetadata METADATA_ISSUER = LegalEntityDiscountingProviderDataSets.META_ZERO_ISSUER;
-  private static final CurveMetadata METADATA_REPO = LegalEntityDiscountingProviderDataSets.META_ZERO_REPO;
+  private static final CurveMetadata METADATA_ISSUER = LegalEntityDiscountingProviderDataSets.META_ZERO_ISSUER_USD;
+  private static final CurveMetadata METADATA_REPO = LegalEntityDiscountingProviderDataSets.META_ZERO_REPO_USD;
   // parameters
   private static final double Z_SPREAD = 0.0075;
   private static final int PERIOD_PER_YEAR = 4;
