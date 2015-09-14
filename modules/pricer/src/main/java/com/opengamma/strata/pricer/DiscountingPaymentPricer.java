@@ -9,6 +9,7 @@ import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.ZeroRateSensitivity;
+import com.opengamma.strata.market.value.CompoundedRateType;
 import com.opengamma.strata.market.value.DiscountFactors;
 
 /**
@@ -61,7 +62,7 @@ public class DiscountingPaymentPricer {
    * @param payment  the payment to price
    * @param discountFactors  the discount factors to price against
    * @param zSpread  the z-spread
-   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the present value
@@ -70,12 +71,12 @@ public class DiscountingPaymentPricer {
       Payment payment,
       DiscountFactors discountFactors,
       double zSpread,
-      boolean periodic,
+      CompoundedRateType compoundedRateType,
       int periodPerYear) {
     if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
       return CurrencyAmount.zero(payment.getCurrency());
     }
-    double df = discountFactors.discountFactorWithSpread(payment.getDate(), zSpread, periodic, periodPerYear);
+    double df = discountFactors.discountFactorWithZSpread(payment.getDate(), zSpread, compoundedRateType, periodPerYear);
     return payment.getValue().multipliedBy(df);
   }
 
@@ -133,7 +134,8 @@ public class DiscountingPaymentPricer {
    * @param payment  the payment to price
    * @param discountFactors  the discount factors to price against
    * @param zSpread  the z-spread
-   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
+   * continuously compounded rates
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the point sensitivity of the present value
@@ -142,13 +144,13 @@ public class DiscountingPaymentPricer {
       Payment payment, 
       DiscountFactors discountFactors,
       double zSpread,
-      boolean periodic,
+      CompoundedRateType compoundedRateType,
       int periodPerYear) {
     if (discountFactors.getValuationDate().isAfter(payment.getDate())) {
       return PointSensitivityBuilder.none();
     }
-    ZeroRateSensitivity sensi =
-        discountFactors.zeroRatePointSensitivityWithSpread(payment.getDate(), zSpread, periodic, periodPerYear);
+    ZeroRateSensitivity sensi = discountFactors.zeroRatePointSensitivityWithZSpread(
+        payment.getDate(), zSpread, compoundedRateType, periodPerYear);
     return sensi.multipliedBy(payment.getAmount());
   }
 

@@ -125,19 +125,26 @@ public final class SimpleDiscountFactors
   }
 
   @Override
-  public double discountFactorWithSpread(LocalDate date, double zSpread, boolean periodic, int periodPerYear) {
+  public double discountFactorWithZSpread(
+      LocalDate date,
+      double zSpread,
+      CompoundedRateType compoundedRateType,
+      int periodPerYear) {
     double yearFraction = relativeYearFraction(date);
     double factor = 1d;
     if (Math.abs(yearFraction) < 1.0E-10) {
       return factor;
     }
-    if (periodic) {
+    if (compoundedRateType.equals(CompoundedRateType.PERIODIC)) {
       ArgChecker.isTrue(periodPerYear > 0, "periodPerYear must be strictly positive");
       double ratePeriodicAnnualPlusOne =
           Math.pow(discountFactor(date), -1.0 / periodPerYear / yearFraction) + zSpread / periodPerYear;
       factor = Math.pow(ratePeriodicAnnualPlusOne, -periodPerYear * yearFraction);
-    } else {
+    } else if (compoundedRateType.equals(CompoundedRateType.CONTINUOUS)) {
       factor = discountFactor(date) * Math.exp(-zSpread * yearFraction);
+    } else {
+      throw new UnsupportedOperationException(
+          "The compounded rate type " + compoundedRateType.name() + " is not supported.");
     }
     return factor;
   }
@@ -162,11 +169,11 @@ public final class SimpleDiscountFactors
   }
 
   @Override
-  public ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+  public ZeroRateSensitivity zeroRatePointSensitivityWithZSpread(
       LocalDate date,
       Currency sensitivityCurrency,
       double zSpread,
-      boolean periodic,
+      CompoundedRateType compoundedRateType,
       int periodPerYear) {
     double yearFraction = relativeYearFraction(date);
     ZeroRateSensitivity sensi = zeroRatePointSensitivity(date, sensitivityCurrency);
@@ -174,12 +181,15 @@ public final class SimpleDiscountFactors
     if (Math.abs(yearFraction) < 1.0E-10) {
       return sensi;
     }
-    if (periodic) {
+    if (compoundedRateType.equals(CompoundedRateType.PERIODIC)) {
       double df = discountFactor(date);
       double dfRoot = Math.pow(df, -1.0 / periodPerYear / yearFraction);
       factor = dfRoot / df / Math.pow(dfRoot + zSpread / periodPerYear, periodPerYear * yearFraction + 1);
-    } else {
+    } else if (compoundedRateType.equals(CompoundedRateType.CONTINUOUS)) {
       factor = Math.exp(-zSpread * yearFraction);
+    } else {
+      throw new UnsupportedOperationException(
+          "The compounded rate type " + compoundedRateType.name() + " is not supported.");
     }
     return sensi.multipliedBy(factor);
   }

@@ -83,13 +83,17 @@ public interface DiscountFactors {
    * 
    * @param date  the date to discount to
    * @param zSpread  the z-spread
-   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the discount factor
    * @throws RuntimeException if the value cannot be obtained
    */
-  public abstract double discountFactorWithSpread(LocalDate date, double zSpread, boolean periodic, int periodPerYear);
+  public abstract double discountFactorWithZSpread(
+      LocalDate date,
+      double zSpread,
+      CompoundedRateType compoundedRateType,
+      int periodPerYear);
 
   /**
    * Calculates the zero rate point sensitivity at the specified date.
@@ -110,27 +114,27 @@ public interface DiscountFactors {
   /**
    * Calculates the zero rate point sensitivity with z-spread at the specified date.
    * <p>
-   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
-   * used to determine the discount factor.
-   * The sensitivity refers to the result of {@link #discountFactorWithSpread(LocalDate, double, boolean, int)}.
+   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve used to determine 
+   * the discount factor. The sensitivity refers to the result of 
+   * {@link #discountFactorWithZSpread(LocalDate, double, CompoundedRateType, int)}.
    * <p>
    * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
    * of the discounting curve. 
    * 
    * @param date  the date to discount to
    * @param zSpread  the z-spread
-   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the point sensitivity of the zero rate
    * @throws RuntimeException if the result cannot be calculated
    */
-  public default ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+  public default ZeroRateSensitivity zeroRatePointSensitivityWithZSpread(
       LocalDate date,
       double zSpread,
-      boolean periodic,
+      CompoundedRateType compoundedRateType,
       int periodPerYear) {
-    return zeroRatePointSensitivityWithSpread(date, getCurrency(), zSpread, periodic, periodPerYear);
+    return zeroRatePointSensitivityWithZSpread(date, getCurrency(), zSpread, compoundedRateType, periodPerYear);
   }
 
   /**
@@ -154,9 +158,9 @@ public interface DiscountFactors {
    * Calculates the zero rate point sensitivity with z-spread at the specified date specifying the currency 
    * of the sensitivity.
    * <p>
-   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve
-   * used to determine the discount factor.
-   * The sensitivity refers to the result of {@link #discountFactorWithSpread(LocalDate, double, boolean, int)}.
+   * This returns a sensitivity instance referring to the zero rate sensitivity of the curve used to determine 
+   * the discount factor. The sensitivity refers to the result of 
+   * {@link #discountFactorWithSpread(LocalDate, double, CompoundedRateType, int)}.
    * <p>
    * The z-spread is a parallel shift applied to continuously compounded rates or periodic compounded rates 
    * of the discounting curve. 
@@ -166,17 +170,17 @@ public interface DiscountFactors {
    * @param date  the date to discount to
    * @param sensitivityCurrency  the currency of the sensitivity
    * @param zSpread  the z-spread
-   * @param periodic  If true, the spread is added to periodic compounded rates. If false, the spread is added to 
+   * @param compoundedRateType  the spread is added to periodic compounded rates, or the spread is added to 
    * continuously compounded rates
    * @param periodPerYear  the number of periods per year
    * @return the point sensitivity of the zero rate
    * @throws RuntimeException if the result cannot be calculated
    */
-  public abstract ZeroRateSensitivity zeroRatePointSensitivityWithSpread(
+  public abstract ZeroRateSensitivity zeroRatePointSensitivityWithZSpread(
       LocalDate date,
       Currency sensitivityCurrency,
       double zSpread,
-      boolean periodic,
+      CompoundedRateType compoundedRateType,
       int periodPerYear);
 
   //-------------------------------------------------------------------------
