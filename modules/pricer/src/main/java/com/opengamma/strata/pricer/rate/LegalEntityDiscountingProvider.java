@@ -65,10 +65,10 @@ public final class LegalEntityDiscountingProvider
    * This map is used to convert the {@link StandardId} that identifies the bond to
    * the associated bond group in order to lookup a repo curve.
    * <p>
-   * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(List, Currency)}.
+   * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(StandardId, StandardId, Currency)}.
    */
   @PropertyDefinition(validate = "notNull", get = "private")
-  private final ImmutableMap<List<StandardId>, BondGroup> bondMap;
+  private final ImmutableMap<StandardId, BondGroup> bondMap;
   /**
    * The repo curves, defaulted to an empty map.
    * The curve data, predicting the future, associated with each bond group and currency.
@@ -123,19 +123,23 @@ public final class LegalEntityDiscountingProvider
 
   //-------------------------------------------------------------------------
   /**
-   * Gets the discount factors of a repo curve for a list of standard ID and a currency.
+   * Gets the discount factors of a repo curve for standard IDs and a currency.
    * <p>
    * If the valuation date is on or after the specified date, the discount factor is 1.
    * 
-   * @param standardId  the list of standard ID to get the discount factors for
+   * @param securityID  the standard ID of security to get the discount factors for
+   * @param issuerID  the standard ID of legal entity to get the discount factors for
    * @param currency  the currency to get the discount factors for
    * @return the discount factors 
    * @throws IllegalArgumentException if the discount factors are not available
    */
-  public RepoCurveDiscountFactors repoCurveDiscountFactors(List<StandardId> standardId, Currency currency) {
-    BondGroup bondGroup = bondMap.get(standardId);
+  public RepoCurveDiscountFactors repoCurveDiscountFactors(StandardId securityID, StandardId issuerID, Currency currency) {
+    BondGroup bondGroup = bondMap.get(securityID);
     if (bondGroup == null) {
-      throw new IllegalArgumentException("Unable to find map for ID: " + standardId);
+      bondGroup = bondMap.get(issuerID);
+      if (bondGroup == null) {
+        throw new IllegalArgumentException("Unable to find map for ID: " + securityID + ", " + issuerID);
+      }
     }
     return repoCurveDiscountFactors(bondGroup, currency);
   }
@@ -235,7 +239,7 @@ public final class LegalEntityDiscountingProvider
 
   private LegalEntityDiscountingProvider(
       LocalDate valuationDate,
-      Map<List<StandardId>, BondGroup> bondMap,
+      Map<StandardId, BondGroup> bondMap,
       Map<Pair<BondGroup, Currency>, DiscountFactors> repoCurves,
       Map<StandardId, LegalEntityGroup> legalEntityMap,
       Map<Pair<LegalEntityGroup, Currency>, DiscountFactors> issuerCurves) {
@@ -284,10 +288,10 @@ public final class LegalEntityDiscountingProvider
    * This map is used to convert the {@link StandardId} that identifies the bond to
    * the associated bond group in order to lookup a repo curve.
    * <p>
-   * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(List, Currency)}.
+   * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(StandardId, StandardId, Currency)}.
    * @return the value of the property, not null
    */
-  private ImmutableMap<List<StandardId>, BondGroup> getBondMap() {
+  private ImmutableMap<StandardId, BondGroup> getBondMap() {
     return bondMap;
   }
 
@@ -393,7 +397,7 @@ public final class LegalEntityDiscountingProvider
      * The meta-property for the {@code bondMap} property.
      */
     @SuppressWarnings({"unchecked", "rawtypes" })
-    private final MetaProperty<ImmutableMap<List<StandardId>, BondGroup>> bondMap = DirectMetaProperty.ofImmutable(
+    private final MetaProperty<ImmutableMap<StandardId, BondGroup>> bondMap = DirectMetaProperty.ofImmutable(
         this, "bondMap", LegalEntityDiscountingProvider.class, (Class) ImmutableMap.class);
     /**
      * The meta-property for the {@code repoCurves} property.
@@ -475,7 +479,7 @@ public final class LegalEntityDiscountingProvider
      * The meta-property for the {@code bondMap} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ImmutableMap<List<StandardId>, BondGroup>> bondMap() {
+    public MetaProperty<ImmutableMap<StandardId, BondGroup>> bondMap() {
       return bondMap;
     }
 
@@ -539,7 +543,7 @@ public final class LegalEntityDiscountingProvider
   public static final class Builder extends DirectFieldsBeanBuilder<LegalEntityDiscountingProvider> {
 
     private LocalDate valuationDate;
-    private Map<List<StandardId>, BondGroup> bondMap = ImmutableMap.of();
+    private Map<StandardId, BondGroup> bondMap = ImmutableMap.of();
     private Map<Pair<BondGroup, Currency>, DiscountFactors> repoCurves = ImmutableMap.of();
     private Map<StandardId, LegalEntityGroup> legalEntityMap = ImmutableMap.of();
     private Map<Pair<LegalEntityGroup, Currency>, DiscountFactors> issuerCurves = ImmutableMap.of();
@@ -589,7 +593,7 @@ public final class LegalEntityDiscountingProvider
           this.valuationDate = (LocalDate) newValue;
           break;
         case 63526809:  // bondMap
-          this.bondMap = (Map<List<StandardId>, BondGroup>) newValue;
+          this.bondMap = (Map<StandardId, BondGroup>) newValue;
           break;
         case 587630454:  // repoCurves
           this.repoCurves = (Map<Pair<BondGroup, Currency>, DiscountFactors>) newValue;
@@ -660,11 +664,11 @@ public final class LegalEntityDiscountingProvider
      * This map is used to convert the {@link StandardId} that identifies the bond to
      * the associated bond group in order to lookup a repo curve.
      * <p>
-     * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(List, Currency)}.
+     * See {@link LegalEntityDiscountingProvider#repoCurveDiscountFactors(StandardId, StandardId, Currency)}.
      * @param bondMap  the new value, not null
      * @return this, for chaining, not null
      */
-    public Builder bondMap(Map<List<StandardId>, BondGroup> bondMap) {
+    public Builder bondMap(Map<StandardId, BondGroup> bondMap) {
       JodaBeanUtils.notNull(bondMap, "bondMap");
       this.bondMap = bondMap;
       return this;
