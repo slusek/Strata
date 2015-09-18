@@ -98,6 +98,7 @@ public class DeliverableSwapFutureTradeTest {
           .build())
       .build();
   private static final Swap SWAP = Swap.of(FIXED_LEG, IBOR_LEG);
+  private static final LocalDate LAST_TRADE_DATE = LocalDate.of(2014, 9, 5);
   private static final LocalDate DELIVERY_DATE = LocalDate.of(2014, 9, 9);
   private static final double NOTIONAL = 100000;
 
@@ -108,12 +109,14 @@ public class DeliverableSwapFutureTradeTest {
   private static final Rounding ROUNDING = Rounding.ofDecimalPlaces(6);
   private static final DeliverableSwapFuture DSF_PRODUCT_RESOLVED = DeliverableSwapFuture.builder()
       .deliveryDate(DELIVERY_DATE)
+      .lastTradeDate(LAST_TRADE_DATE)
       .notional(NOTIONAL)
       .rounding(ROUNDING)
       .underlyingLink(SWAP_RESOLVED)
       .build();
   private static final DeliverableSwapFuture DSF_PRODUCT_RESOLVABLE = DeliverableSwapFuture.builder()
       .deliveryDate(DELIVERY_DATE)
+      .lastTradeDate(LAST_TRADE_DATE)
       .notional(NOTIONAL)
       .rounding(ROUNDING)
       .underlyingLink(SWAP_RESOLVABLE)
