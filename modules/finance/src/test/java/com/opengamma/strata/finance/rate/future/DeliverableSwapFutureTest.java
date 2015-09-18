@@ -28,7 +28,6 @@ import java.time.LocalDate;
 import org.testng.annotations.Test;
 
 import com.google.common.reflect.TypeToken;
-import com.opengamma.analytics.financial.datasets.CalendarUSD;
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
 import com.opengamma.strata.basics.date.DaysAdjustment;
 import com.opengamma.strata.basics.date.HolidayCalendars;
@@ -209,7 +208,7 @@ public class DeliverableSwapFutureTest {
             .build())
         .calculation(IborRateCalculation.builder()
             .index(INDEX)
-            .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, CalendarUSD.NYC, BDA_P))
+            .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, HolidayCalendars.SAT_SUN, BDA_P))
             .build())
         .build();
     Swap swap1 = Swap.of(fixedLeg10, IBOR_LEG);
@@ -310,7 +309,7 @@ public class DeliverableSwapFutureTest {
             .build())
         .calculation(IborRateCalculation.builder()
             .index(INDEX)
-            .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, CalendarUSD.NYC, BDA_P))
+            .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, HolidayCalendars.SAT_SUN, BDA_P))
             .build())
         .build();
     Swap swap1 = Swap.of(FIXED_LEG, iborLeg);
