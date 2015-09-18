@@ -57,8 +57,8 @@ import com.opengamma.strata.finance.rate.swap.SwapLeg;
 public class DeliverableSwapFutureTradeTest {
   private static final IborIndex INDEX = IborIndices.USD_LIBOR_3M;
   private static final NotionalSchedule UNIT_NOTIONAL = NotionalSchedule.of(USD, 1d);
-  private static final BusinessDayAdjustment BDA_MF = BusinessDayAdjustment.of(MODIFIED_FOLLOWING, HolidayCalendars.NYSE);
-  private static final BusinessDayAdjustment BDA_P = BusinessDayAdjustment.of(PRECEDING, HolidayCalendars.NYSE);
+  private static final BusinessDayAdjustment BDA_MF = BusinessDayAdjustment.of(MODIFIED_FOLLOWING, HolidayCalendars.SAT_SUN);
+  private static final BusinessDayAdjustment BDA_P = BusinessDayAdjustment.of(PRECEDING, HolidayCalendars.SAT_SUN);
   private static final SwapLeg FIXED_LEG = RateCalculationSwapLeg.builder()
       .payReceive(PAY)
       .accrualSchedule(PeriodicSchedule.builder()
@@ -94,7 +94,7 @@ public class DeliverableSwapFutureTradeTest {
       .notionalSchedule(UNIT_NOTIONAL)
       .calculation(IborRateCalculation.builder()
           .index(INDEX)
-          .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, HolidayCalendars.NYSE, BDA_P))
+          .fixingDateOffset(DaysAdjustment.ofBusinessDays(-2, HolidayCalendars.SAT_SUN, BDA_P))
           .build())
       .build();
   private static final Swap SWAP = Swap.of(FIXED_LEG, IBOR_LEG);
