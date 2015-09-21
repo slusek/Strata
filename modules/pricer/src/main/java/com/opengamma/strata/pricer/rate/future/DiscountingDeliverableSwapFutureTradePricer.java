@@ -69,7 +69,7 @@ public class DiscountingDeliverableSwapFutureTradePricer
   * @param trade  the trade to price
   * @param provider  the rates provider
   * @param referencePrice  the price with respect to which the margining should be done. The reference price is
-  *   the trade date before any margining has taken place and the price used for the last margining otherwise.
+  *   the trade price before any margining has taken place and the price used for the last margining otherwise.
   * @return the present value
   */
   public CurrencyAmount presentValue(DeliverableSwapFutureTrade trade, RatesProvider provider, double referencePrice) {

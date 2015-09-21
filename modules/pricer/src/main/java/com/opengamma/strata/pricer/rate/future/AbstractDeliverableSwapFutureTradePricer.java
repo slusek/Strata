@@ -38,7 +38,7 @@ public abstract class AbstractDeliverableSwapFutureTradePricer {
    * @param trade  the trade to price
    * @param currentPrice  the price on the valuation date
    * @param referencePrice  the price with respect to which the margining should be done. The reference price is
-   *   the trade date before any margining has taken place and the price used for the last margining otherwise.
+   *   the trade price before any margining has taken place and the price used for the last margining otherwise.
    * @return the present value
    */
   public CurrencyAmount presentValue(DeliverableSwapFutureTrade trade, double currentPrice, double referencePrice) {
