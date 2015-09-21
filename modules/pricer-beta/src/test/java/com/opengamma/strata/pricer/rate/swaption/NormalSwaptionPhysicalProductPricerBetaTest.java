@@ -5,12 +5,12 @@
  */
 package com.opengamma.strata.pricer.rate.swaption;
 
-import static com.opengamma.strata.basics.BuySell.SELL;
 import static com.opengamma.strata.basics.BuySell.BUY;
+import static com.opengamma.strata.basics.BuySell.SELL;
 import static com.opengamma.strata.basics.currency.Currency.USD;
 import static com.opengamma.strata.basics.index.IborIndices.USD_LIBOR_3M;
-import static com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConventions.USD_FIXED_6M_LIBOR_3M;
 import static com.opengamma.strata.collect.TestHelper.assertThrowsIllegalArg;
+import static com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConventions.USD_FIXED_6M_LIBOR_3M;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -30,6 +30,7 @@ import com.opengamma.strata.basics.currency.MultiCurrencyAmount;
 import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.type.IborIborSwapConvention;
+import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.PointSensitivities;
@@ -71,22 +72,22 @@ public class NormalSwaptionPhysicalProductPricerBetaTest {
       .toTrade(SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE.plusYears(10),
           BUY, NOTIONAL, STRIKE).getProduct();
   
-  private static final Swaption SWAPTION_LONG_REC = Swaption.builder().cashSettled(false)
+  private static final Swaption SWAPTION_LONG_REC = Swaption.builder().settlementType(SettlementType.PHYSICAL)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_REC).build();
-  private static final Swaption SWAPTION_SHORT_REC = Swaption.builder().cashSettled(false)
+  private static final Swaption SWAPTION_SHORT_REC = Swaption.builder().settlementType(SettlementType.PHYSICAL)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.SHORT).underlying(SWAP_REC).build();
-  private static final Swaption SWAPTION_LONG_PAY = Swaption.builder().cashSettled(false)
+  private static final Swaption SWAPTION_LONG_PAY = Swaption.builder().settlementType(SettlementType.PHYSICAL)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_PAY).build();
-  private static final Swaption SWAPTION_LONG_REC_CASH = Swaption.builder().cashSettled(true)
+  private static final Swaption SWAPTION_LONG_REC_CASH = Swaption.builder().settlementType(SettlementType.CASH)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_REC).build();
-  private static final Swaption SWAPTION_BASIS = Swaption.builder().cashSettled(false)
+  private static final Swaption SWAPTION_BASIS = Swaption.builder().settlementType(SettlementType.PHYSICAL)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_BASIS).build();
-  private static final Swaption SWAPTION_PAST = Swaption.builder().cashSettled(false)
+  private static final Swaption SWAPTION_PAST = Swaption.builder().settlementType(SettlementType.PHYSICAL)
       .expiryDate(SWAPTION_PAST_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_PAST).build();
 

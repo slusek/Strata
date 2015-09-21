@@ -48,12 +48,11 @@ public class Swaption
   @PropertyDefinition
   private final LongShort longShort;
   /**
-   * Whether the option is cash settled, defaulted to physical.
-   * TODO: cash/physical could be better. There is an enumeration of possibilities in FPML and ISDA definitions
-   * Probably a different class is required for cash settlement vs a swap index as we need a new field for the swap index.
+   * Settlement type 
+   * TODO javadoc
    */
   @PropertyDefinition
-  private final boolean cashSettled;
+  private final SettlementType settlementType;
   /**
    * The expiry date of the option.  
    * <p>
@@ -146,7 +145,7 @@ public class Swaption
     JodaBeanUtils.notNull(builder.expiryZone, "expiryZone");
     JodaBeanUtils.notNull(builder.underlying, "underlying");
     this.longShort = builder.longShort;
-    this.cashSettled = builder.cashSettled;
+    this.settlementType = builder.settlementType;
     this.expiryDate = builder.expiryDate;
     this.expiryTime = builder.expiryTime;
     this.expiryZone = builder.expiryZone;
@@ -182,13 +181,12 @@ public class Swaption
 
   //-----------------------------------------------------------------------
   /**
-   * Gets whether the option is cash settled, defaulted to physical.
-   * TODO: cash/physical could be better. There is an enumeration of possibilities in FPML and ISDA definitions
-   * Probably a different class is required for cash settlement vs a swap index as we need a new field for the swap index.
+   * Gets settlement type
+   * TODO javadoc
    * @return the value of the property
    */
-  public boolean isCashSettled() {
-    return cashSettled;
+  public SettlementType getSettlementType() {
+    return settlementType;
   }
 
   //-----------------------------------------------------------------------
@@ -253,7 +251,7 @@ public class Swaption
     if (obj != null && obj.getClass() == this.getClass()) {
       Swaption other = (Swaption) obj;
       return JodaBeanUtils.equal(getLongShort(), other.getLongShort()) &&
-          (isCashSettled() == other.isCashSettled()) &&
+          JodaBeanUtils.equal(getSettlementType(), other.getSettlementType()) &&
           JodaBeanUtils.equal(getExpiryDate(), other.getExpiryDate()) &&
           JodaBeanUtils.equal(getExpiryTime(), other.getExpiryTime()) &&
           JodaBeanUtils.equal(getExpiryZone(), other.getExpiryZone()) &&
@@ -266,7 +264,7 @@ public class Swaption
   public int hashCode() {
     int hash = getClass().hashCode();
     hash = hash * 31 + JodaBeanUtils.hashCode(getLongShort());
-    hash = hash * 31 + JodaBeanUtils.hashCode(isCashSettled());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getSettlementType());
     hash = hash * 31 + JodaBeanUtils.hashCode(getExpiryDate());
     hash = hash * 31 + JodaBeanUtils.hashCode(getExpiryTime());
     hash = hash * 31 + JodaBeanUtils.hashCode(getExpiryZone());
@@ -289,7 +287,7 @@ public class Swaption
 
   protected void toString(StringBuilder buf) {
     buf.append("longShort").append('=').append(JodaBeanUtils.toString(getLongShort())).append(',').append(' ');
-    buf.append("cashSettled").append('=').append(JodaBeanUtils.toString(isCashSettled())).append(',').append(' ');
+    buf.append("settlementType").append('=').append(JodaBeanUtils.toString(getSettlementType())).append(',').append(' ');
     buf.append("expiryDate").append('=').append(JodaBeanUtils.toString(getExpiryDate())).append(',').append(' ');
     buf.append("expiryTime").append('=').append(JodaBeanUtils.toString(getExpiryTime())).append(',').append(' ');
     buf.append("expiryZone").append('=').append(JodaBeanUtils.toString(getExpiryZone())).append(',').append(' ');
@@ -312,10 +310,10 @@ public class Swaption
     private final MetaProperty<LongShort> longShort = DirectMetaProperty.ofImmutable(
         this, "longShort", Swaption.class, LongShort.class);
     /**
-     * The meta-property for the {@code cashSettled} property.
+     * The meta-property for the {@code settlementType} property.
      */
-    private final MetaProperty<Boolean> cashSettled = DirectMetaProperty.ofImmutable(
-        this, "cashSettled", Swaption.class, Boolean.TYPE);
+    private final MetaProperty<SettlementType> settlementType = DirectMetaProperty.ofImmutable(
+        this, "settlementType", Swaption.class, SettlementType.class);
     /**
      * The meta-property for the {@code expiryDate} property.
      */
@@ -342,7 +340,7 @@ public class Swaption
     private final Map<String, MetaProperty<?>> metaPropertyMap$ = new DirectMetaPropertyMap(
         this, null,
         "longShort",
-        "cashSettled",
+        "settlementType",
         "expiryDate",
         "expiryTime",
         "expiryZone",
@@ -359,8 +357,8 @@ public class Swaption
       switch (propertyName.hashCode()) {
         case 116685664:  // longShort
           return longShort;
-        case -871053882:  // cashSettled
-          return cashSettled;
+        case -295448573:  // settlementType
+          return settlementType;
         case -816738431:  // expiryDate
           return expiryDate;
         case -816254304:  // expiryTime
@@ -398,11 +396,11 @@ public class Swaption
     }
 
     /**
-     * The meta-property for the {@code cashSettled} property.
+     * The meta-property for the {@code settlementType} property.
      * @return the meta-property, not null
      */
-    public final MetaProperty<Boolean> cashSettled() {
-      return cashSettled;
+    public final MetaProperty<SettlementType> settlementType() {
+      return settlementType;
     }
 
     /**
@@ -443,8 +441,8 @@ public class Swaption
       switch (propertyName.hashCode()) {
         case 116685664:  // longShort
           return ((Swaption) bean).getLongShort();
-        case -871053882:  // cashSettled
-          return ((Swaption) bean).isCashSettled();
+        case -295448573:  // settlementType
+          return ((Swaption) bean).getSettlementType();
         case -816738431:  // expiryDate
           return ((Swaption) bean).getExpiryDate();
         case -816254304:  // expiryTime
@@ -475,7 +473,7 @@ public class Swaption
   public static class Builder extends DirectFieldsBeanBuilder<Swaption> {
 
     private LongShort longShort;
-    private boolean cashSettled;
+    private SettlementType settlementType;
     private LocalDate expiryDate;
     private LocalTime expiryTime;
     private ZoneId expiryZone;
@@ -493,7 +491,7 @@ public class Swaption
      */
     protected Builder(Swaption beanToCopy) {
       this.longShort = beanToCopy.getLongShort();
-      this.cashSettled = beanToCopy.isCashSettled();
+      this.settlementType = beanToCopy.getSettlementType();
       this.expiryDate = beanToCopy.getExpiryDate();
       this.expiryTime = beanToCopy.getExpiryTime();
       this.expiryZone = beanToCopy.getExpiryZone();
@@ -506,8 +504,8 @@ public class Swaption
       switch (propertyName.hashCode()) {
         case 116685664:  // longShort
           return longShort;
-        case -871053882:  // cashSettled
-          return cashSettled;
+        case -295448573:  // settlementType
+          return settlementType;
         case -816738431:  // expiryDate
           return expiryDate;
         case -816254304:  // expiryTime
@@ -527,8 +525,8 @@ public class Swaption
         case 116685664:  // longShort
           this.longShort = (LongShort) newValue;
           break;
-        case -871053882:  // cashSettled
-          this.cashSettled = (Boolean) newValue;
+        case -295448573:  // settlementType
+          this.settlementType = (SettlementType) newValue;
           break;
         case -816738431:  // expiryDate
           this.expiryDate = (LocalDate) newValue;
@@ -592,14 +590,13 @@ public class Swaption
     }
 
     /**
-     * Sets whether the option is cash settled, defaulted to physical.
-     * TODO: cash/physical could be better. There is an enumeration of possibilities in FPML and ISDA definitions
-     * Probably a different class is required for cash settlement vs a swap index as we need a new field for the swap index.
-     * @param cashSettled  the new value
+     * Sets settlement type
+     * TODO javadoc
+     * @param settlementType  the new value
      * @return this, for chaining, not null
      */
-    public Builder cashSettled(boolean cashSettled) {
-      this.cashSettled = cashSettled;
+    public Builder settlementType(SettlementType settlementType) {
+      this.settlementType = settlementType;
       return this;
     }
 
@@ -672,7 +669,7 @@ public class Swaption
 
     protected void toString(StringBuilder buf) {
       buf.append("longShort").append('=').append(JodaBeanUtils.toString(longShort)).append(',').append(' ');
-      buf.append("cashSettled").append('=').append(JodaBeanUtils.toString(cashSettled)).append(',').append(' ');
+      buf.append("settlementType").append('=').append(JodaBeanUtils.toString(settlementType)).append(',').append(' ');
       buf.append("expiryDate").append('=').append(JodaBeanUtils.toString(expiryDate)).append(',').append(' ');
       buf.append("expiryTime").append('=').append(JodaBeanUtils.toString(expiryTime)).append(',').append(' ');
       buf.append("expiryZone").append('=').append(JodaBeanUtils.toString(expiryZone)).append(',').append(' ');

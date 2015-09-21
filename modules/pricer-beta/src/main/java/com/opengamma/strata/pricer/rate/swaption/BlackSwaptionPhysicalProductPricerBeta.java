@@ -23,6 +23,7 @@ import com.opengamma.strata.finance.rate.swap.ExpandedSwapLeg;
 import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.SwapProduct;
+import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.pricer.provider.BlackVolatilitySwaptionProvider;
@@ -240,7 +241,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     ArgChecker.isTrue(volatility.getValuationDate().equals(rates.getValuationDate()), 
         "volatility and rate data should be for the same date");
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");
-    ArgChecker.isFalse(swaption.isCashSettled(), "swaption should be physical settlement");
+    ArgChecker.isTrue(swaption.getSettlementType().equals(SettlementType.PHYSICAL), "swaption should be physical settlement");
   }
 
 }
