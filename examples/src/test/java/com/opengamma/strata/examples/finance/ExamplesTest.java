@@ -9,7 +9,13 @@ import static com.opengamma.strata.collect.TestHelper.caputureSystemOut;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
+import java.io.File;
+import java.io.FileInputStream;
+
+import org.joda.beans.ser.JodaBeanSer;
 import org.testng.annotations.Test;
+
+import com.opengamma.strata.examples.report.TradePortfolio;
 
 /**
  * Test examples do not throw exceptions.
@@ -29,6 +35,14 @@ public class ExamplesTest {
   //-------------------------------------------------------------------------
   public void test_fraPricing() {
     String captured = caputureSystemOut(() -> FraPricingExample.main(NO_ARGS));
+    assertTrue(captured.contains("+------"));
+    assertFalse(captured.contains("ERROR"));
+    assertFalse(captured.contains("Exception"));
+  }
+
+  //-------------------------------------------------------------------------
+  public void test_fxPricing() {
+    String captured = caputureSystemOut(() -> FxPricingExample.main(NO_ARGS));
     assertTrue(captured.contains("+------"));
     assertFalse(captured.contains("ERROR"));
     assertFalse(captured.contains("Exception"));
@@ -80,6 +94,18 @@ public class ExamplesTest {
     assertTrue(captured.contains("<product>"));
     assertFalse(captured.contains("ERROR"));
     assertFalse(captured.contains("Exception"));
+  }
+
+  //-------------------------------------------------------------------------
+  public void test_portfolios() throws Exception {
+    File baseDir = new File("src/main/resources/example-portfolios");
+    assertTrue(baseDir.exists());
+    for (File file : baseDir.listFiles(f -> f.getName().endsWith(".xml"))) {
+      try (FileInputStream in = new FileInputStream(file)) {
+        TradePortfolio portfolio = JodaBeanSer.COMPACT.xmlReader().read(in, TradePortfolio.class);
+        assertTrue(portfolio.getTrades().size() > 0);
+      }
+    }
   }
 
 }
