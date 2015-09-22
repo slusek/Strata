@@ -49,7 +49,8 @@ public class Swaption
   private final LongShort longShort;
   /**
    * Settlement type 
-   * TODO javadoc
+   * <p>
+   * The settlement of the option is specified by {@link SettlementType}.
    */
   @PropertyDefinition
   private final SettlementType settlementType;
@@ -182,7 +183,8 @@ public class Swaption
   //-----------------------------------------------------------------------
   /**
    * Gets settlement type
-   * TODO javadoc
+   * <p>
+   * The settlement of the option is specified by {@link SettlementType}.
    * @return the value of the property
    */
   public SettlementType getSettlementType() {
@@ -591,7 +593,8 @@ public class Swaption
 
     /**
      * Sets settlement type
-     * TODO javadoc
+     * <p>
+     * The settlement of the option is specified by {@link SettlementType}.
      * @param settlementType  the new value
      * @return this, for chaining, not null
      */
