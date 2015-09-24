@@ -65,7 +65,6 @@ import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
  */
 @Test
 public class DiscountingFixedCouponBondTradePricerTest {
-
   // fixed coupon bond
   private static final StandardId SECURITY_ID = StandardId.of("OG-Ticker", "GOVT1-BOND1");
   private static final StandardId ISSUER_ID = StandardId.of("OG-Ticker", "GOVT1");

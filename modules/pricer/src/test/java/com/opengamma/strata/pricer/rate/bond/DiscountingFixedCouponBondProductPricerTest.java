@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ *
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.pricer.rate.bond;
 
 import static com.opengamma.strata.basics.currency.Currency.EUR;
@@ -33,7 +38,6 @@ import com.opengamma.strata.basics.schedule.StubConvention;
 import com.opengamma.strata.collect.id.StandardId;
 import com.opengamma.strata.collect.tuple.Pair;
 import com.opengamma.strata.finance.Security;
-import com.opengamma.strata.finance.TradeInfo;
 import com.opengamma.strata.finance.UnitSecurity;
 import com.opengamma.strata.finance.rate.bond.ExpandedFixedCouponBond;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBond;
@@ -62,7 +66,6 @@ import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
  */
 @Test
 public class DiscountingFixedCouponBondProductPricerTest {
-
   // fixed coupon bond
   private static final StandardId SECURITY_ID = StandardId.of("OG-Ticker", "GOVT1-BOND1");
   private static final StandardId ISSUER_ID = StandardId.of("OG-Ticker", "GOVT1");
@@ -105,8 +108,6 @@ public class DiscountingFixedCouponBondProductPricerTest {
       .settlementDateOffset(DATE_OFFSET)
       .yieldConvention(YIELD_CONVENTION)
       .build();
-  private static final Security<FixedCouponBond> BOND_SECURITY_NO_EXCOUPON =
-      UnitSecurity.builder(PRODUCT_NO_EXCOUPON).standardId(SECURITY_ID).build();
 
   // rates provider
   private static final CurveInterpolator INTERPOLATOR = Interpolator1DFactory.LINEAR_INSTANCE;
@@ -243,29 +244,6 @@ public class DiscountingFixedCouponBondProductPricerTest {
     assertEquals(computed.getAmount(), expected.getAmount(), NOTIONAL * TOL);
   }
 
-  //  public void test_presentValue_Ended() {
-  //    CurrencyAmount computed = PRICER.presentValueProduct(TRADE_ENDED, PROVIDER);
-  //    assertEquals(computed, CurrencyAmount.zero(EUR));
-  //    CurrencyAmount computedTrade = PRICER.presentValue(TRADE_ENDED, PROVIDER);
-  //    assertEquals(computedTrade, CurrencyAmount.zero(EUR));
-  //  }
-  //
-  //  public void test_presentValueWithZSpread_continuous_Ended() {
-  //    CurrencyAmount computed = PRICER.presentValueProductWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, false, 0);
-  //    assertEquals(computed, CurrencyAmount.zero(EUR));
-  //    CurrencyAmount computedTrade = PRICER.presentValueWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, false, 0);
-  //    assertEquals(computedTrade, CurrencyAmount.zero(EUR));
-  //  }
-  //
-  //  public void test_presentValueWithZSpread_periodic_Ended() {
-  //    CurrencyAmount computed = PRICER.presentValueProductWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, true,
-  //        PERIOD_PER_YEAR);
-  //    assertEquals(computed, CurrencyAmount.zero(EUR));
-  //    CurrencyAmount computedTrade = PRICER.presentValueWithZSpread(TRADE_ENDED, PROVIDER, Z_SPREAD, true,
-  //        PERIOD_PER_YEAR);
-  //    assertEquals(computedTrade, CurrencyAmount.zero(EUR));
-  //  }
-
   //-------------------------------------------------------------------------
   public void test_presentValueFromCleanPrice() {
     // product
@@ -380,23 +358,6 @@ public class DiscountingFixedCouponBondProductPricerTest {
     assertTrue(computed.equalWithTolerance(expected, NOTIONAL * EPS));
   }
 
-//  public void test_presentValueProductSensitivity_Ended() {
-//    PointSensitivityBuilder computed = PRICER.presentValueProductSensitivity(TRADE_ENDED, PROVIDER);
-//    assertEquals(computed, PointSensitivityBuilder.none());
-//  }
-//
-//  public void test_presentValueSensitivityWithZSpread_continuous_Ended() {
-//    PointSensitivityBuilder computed = PRICER.presentValueProductSensitivityWithZSpread(
-//        TRADE_ENDED, PROVIDER, Z_SPREAD, false, 0);
-//    assertEquals(computed, PointSensitivityBuilder.none());
-//  }
-//
-//  public void test_ppresentValueSensitivityWithZSpread_periodic_Ended() {
-//    PointSensitivityBuilder computed = PRICER.presentValueProductSensitivityWithZSpread(
-//        TRADE_ENDED, PROVIDER, Z_SPREAD, true, PERIOD_PER_YEAR);
-//    assertEquals(computed, PointSensitivityBuilder.none());
-//  }
-
   public void test_dirtyPriceSensitivity() {
     PointSensitivityBuilder point = PRICER.dirtyPriceSensitivity(BOND_SECURITY, PROVIDER);
     CurveCurrencyParameterSensitivities computed = PROVIDER.curveParameterSensitivity(point.build());
@@ -473,33 +434,15 @@ public class DiscountingFixedCouponBondProductPricerTest {
   //-------------------------------------------------------------------------
   public void test_accruedInterest() {
     // settle before start
-    LocalDate valDate1 = START_DATE.minusDays(7);
     LocalDate settleDate1 = START_DATE.minusDays(5);
-    //    TradeInfo tradeInfo1 = TradeInfo.builder().tradeDate(valDate1).settlementDate(settleDate1).build();
-    //    FixedCouponBondTrade trade1 = FixedCouponBondTrade.builder()
-    //        .securityLink(SECURITY_LINK)
-    //        .tradeInfo(tradeInfo1)
-    //        .quantity(QUANTITY)
-    //        .payment(UPFRONT_PAYMENT) // not used
-    //        .build();
     double accruedInterest1 = PRICER.accruedInterest(PRODUCT, settleDate1);
     assertEquals(accruedInterest1, 0d);
     // settle between endDate and endDate -lag
-    LocalDate valDate2 = date(2015, 10, 6);
     LocalDate settleDate2 = date(2015, 10, 8);
-    //    TradeInfo tradeInfo2 = TradeInfo.builder().tradeDate(valDate2).settlementDate(settleDate2).build();
-    //    FixedCouponBondTrade trade2 = FixedCouponBondTrade.builder()
-    //        .securityLink(SECURITY_LINK)
-    //        .tradeInfo(tradeInfo2)
-    //        .quantity(QUANTITY)
-    //        .payment(UPFRONT_PAYMENT) // not used
-    //        .build();
     double accruedInterest2 = PRICER.accruedInterest(PRODUCT, settleDate2);
     assertEquals(accruedInterest2, -4.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
     // normal
-    LocalDate valDate3 = date(2015, 4, 16);
     LocalDate settleDate3 = date(2015, 4, 18); // not adjusted
-    TradeInfo tradeInfo3 = TradeInfo.builder().tradeDate(valDate3).settlementDate(settleDate3).build();
     FixedCouponBond product = FixedCouponBond.builder()
         .dayCount(DAY_COUNT)
         .fixedRate(FIXED_RATE)
@@ -511,15 +454,6 @@ public class DiscountingFixedCouponBondProductPricerTest {
         .yieldConvention(YIELD_CONVENTION)
         .exCouponPeriod(DaysAdjustment.NONE)
         .build();
-    //    Security<FixedCouponBond> security =
-    //        UnitSecurity.builder(product).standardId(SECURITY_ID).build();
-    //    SecurityLink<FixedCouponBond> link = SecurityLink.resolved(security);
-    //    FixedCouponBondTrade trade3 = FixedCouponBondTrade.builder()
-    //        .securityLink(link)
-    //        .tradeInfo(tradeInfo3)
-    //        .quantity(QUANTITY)
-    //        .payment(UPFRONT_PAYMENT) // not used
-    //        .build();
     double accruedInterest3 = PRICER.accruedInterest(product, settleDate3);
     assertEquals(accruedInterest3, 6.0 / 365.0 * FIXED_RATE * NOTIONAL, EPS);
   }
