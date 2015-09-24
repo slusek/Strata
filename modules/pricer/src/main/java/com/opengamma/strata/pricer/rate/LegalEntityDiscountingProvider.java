@@ -7,7 +7,6 @@ package com.opengamma.strata.pricer.rate;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -124,6 +123,10 @@ public final class LegalEntityDiscountingProvider
   //-------------------------------------------------------------------------
   /**
    * Gets the discount factors of a repo curve for standard IDs and a currency.
+   * <p>
+   * If the bond standard ID is matched in a BondGroup, the relevant DiscountFactors is returned, 
+   * if not the issuer standard ID is checked and the relevant DiscountFactors is returned; 
+   * if both the bond and the issuer ID are not in any BondGroup, an error is thrown.
    * <p>
    * If the valuation date is on or after the specified date, the discount factor is 1.
    * 

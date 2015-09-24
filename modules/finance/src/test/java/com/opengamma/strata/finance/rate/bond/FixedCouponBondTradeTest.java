@@ -77,7 +77,8 @@ public class FixedCouponBondTradeTest {
       .build();
   private static final Security<FixedCouponBond> BOND_SECURITY =
       UnitSecurity.builder(PRODUCT).standardId(SECURITY_ID).build();
-  private static final Payment UPFRONT_PAYMENT = Payment.of(CurrencyAmount.of(EUR, -NOTIONAL * 0.065), SETTLEMENT_DATE);
+  private static final Payment UPFRONT_PAYMENT = Payment.of(
+      CurrencyAmount.of(EUR, -NOTIONAL * QUANTITY * 0.99), SETTLEMENT_DATE);
 
   private static final SecurityLink<FixedCouponBond> SECURITY_LINK_RESOLVED = SecurityLink.resolved(BOND_SECURITY);
   private static final SecurityLink<FixedCouponBond> SECURITY_LINK_RESOLVABLE =
@@ -163,7 +164,7 @@ public class FixedCouponBondTradeTest {
             .standardId(StandardId.of("Ticker", "GOV1-BND1"))
             .build()))
         .quantity(100L)
-        .payment(Payment.of(CurrencyAmount.of(EUR, NOTIONAL * 0.05), SETTLEMENT_DATE))
+        .payment(Payment.of(CurrencyAmount.of(EUR, -NOTIONAL * QUANTITY * 0.99), SETTLEMENT_DATE))
         .build();
     coverBeanEquals(test1, test2);
   }
