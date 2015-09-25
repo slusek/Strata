@@ -27,6 +27,7 @@ import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
+import com.opengamma.strata.finance.rate.swaption.SwaptionSettlementMethod;
 import com.opengamma.strata.finance.rate.swaption.SwaptionTrade;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
@@ -54,9 +55,15 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
   private static final double NOTIONAL = 100_000_000;
   private static final Swap SWAP_REC = USD_FIXED_6M_LIBOR_3M
       .toTrade(VALUATION_DATE, SWAP_EFFECTIVE_DATE, SWAP_MATURITY_DATE, SELL, NOTIONAL, STRIKE).getProduct();
+  private static final SwaptionSettlementMethod PHYSICAL_SETTLE = new SwaptionSettlementMethod() {
+    @Override
+    public SettlementType getSettlementType() {
+      return SettlementType.PHYSICAL;
+    }
+  };
 
   private static final double PREMIUM_AMOUNT = 100_000;
-  private static final Swaption SWAPTION_LONG_REC = Swaption.builder().settlementType(SettlementType.PHYSICAL)
+  private static final Swaption SWAPTION_LONG_REC = Swaption.builder().settlementMethod(PHYSICAL_SETTLE)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_REC).build();
   private static final Payment PREMIUM_FWD_PAY = Payment.of(CurrencyAmount.of(USD, -PREMIUM_AMOUNT), SWAP_EFFECTIVE_DATE);
