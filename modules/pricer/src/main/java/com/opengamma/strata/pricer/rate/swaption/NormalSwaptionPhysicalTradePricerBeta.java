@@ -13,10 +13,9 @@ import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.finance.rate.swaption.SwaptionTrade;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
+import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
 import com.opengamma.strata.pricer.DiscountingPaymentPricer;
-import com.opengamma.strata.pricer.provider.NormalVolatilitySwaptionProvider;
 import com.opengamma.strata.pricer.rate.RatesProvider;
-import com.opengamma.strata.pricer.sensitivity.SwaptionSensitivity;
 
 /**
  * Pricer for swaption trade with physical settlement in a normal model on the swap rate.
@@ -51,7 +50,7 @@ public class NormalSwaptionPhysicalTradePricerBeta {
    * @param volatilities  the normal volatility parameters
    * @return the present value of the swap product
    */
-  public CurrencyAmount presentValue(SwaptionTrade tradeSwaption, RatesProvider rates, 
+  public CurrencyAmount presentValue(SwaptionTrade tradeSwaption, RatesProvider rates,
       NormalVolatilitySwaptionProvider volatilities) {
     Swaption product = tradeSwaption.getProduct();
     CurrencyAmount pvProduct = PRICER_PRODUCT.presentValue(product, rates, volatilities);

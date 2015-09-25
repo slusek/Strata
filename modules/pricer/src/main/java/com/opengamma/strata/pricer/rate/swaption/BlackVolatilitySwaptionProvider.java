@@ -3,7 +3,7 @@
  *
  * Please see distribution for license.
  */
-package com.opengamma.strata.pricer.provider;
+package com.opengamma.strata.pricer.rate.swaption;
 
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
