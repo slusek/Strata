@@ -19,13 +19,18 @@ import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolat
 import com.opengamma.analytics.math.interpolation.GridInterpolator2D;
 import com.opengamma.analytics.math.interpolation.Interpolator1D;
 import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
-import com.opengamma.analytics.math.surface.InterpolatedDoublesSurface;
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
 import com.opengamma.strata.basics.date.DayCounts;
 import com.opengamma.strata.basics.schedule.Frequency;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConvention;
 import com.opengamma.strata.finance.rate.swap.type.FixedRateSwapLegConvention;
 import com.opengamma.strata.finance.rate.swap.type.IborRateSwapLegConvention;
+import com.opengamma.strata.market.surface.DefaultSurfaceMetadata;
+import com.opengamma.strata.market.surface.InterpolatedNodalSurface;
+import com.opengamma.strata.market.surface.NodalSurface;
+import com.opengamma.strata.market.surface.SurfaceMetadata;
+import com.opengamma.strata.market.surface.SurfaceName;
+import com.opengamma.strata.market.value.ValueType;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 
 /**
@@ -50,8 +55,14 @@ public class NormalSwaptionVolatilityDataSets {
   private static final double[] NORMAL_VOL =
       new double[] {0.010, 0.011, 0.012, 0.013, 0.011, 0.012, 0.013, 0.014,
         0.012, 0.013, 0.014, 0.015, 0.013, 0.014, 0.015, 0.016, 0.014, 0.015, 0.016, 0.017 };
-  private static final InterpolatedDoublesSurface SURFACE_STD =
-      new InterpolatedDoublesSurface(TIMES, TENOR, NORMAL_VOL, INTERPOLATOR_2D);
+  private static final SurfaceMetadata METADATA = DefaultSurfaceMetadata.builder()
+      .xValueType(ValueType.YEAR_FRACTION)
+      .yValueType(ValueType.YEAR_FRACTION)
+      .zValueType(ValueType.VOLATILITY)
+      .surfaceName(SurfaceName.of("Normal Vol"))
+      .build();
+  private static final NodalSurface SURFACE_STD =
+      InterpolatedNodalSurface.of(METADATA, TIMES, TENOR, NORMAL_VOL, INTERPOLATOR_2D);
 
   private static final LocalDate VALUATION_DATE_STD = RatesProviderDataSets.VAL_DATE_2014_01_22;
   private static final LocalTime VALUATION_TIME_STD = LocalTime.of(13, 45);
@@ -78,7 +89,7 @@ public class NormalSwaptionVolatilityDataSets {
       volShifted[i] += shift;
     }
     return NormalVolatilityExpiryTenorSwaptionProvider.of(
-        new InterpolatedDoublesSurface(TIMES, TENOR, volShifted, INTERPOLATOR_2D), 
+        InterpolatedNodalSurface.of(METADATA, TIMES, TENOR, volShifted, INTERPOLATOR_2D),
         USD_1Y_LIBOR3M, DayCounts.ACT_365F, VALUATION_DATE_STD, VALUATION_TIME_STD, VALUATION_ZONE_STD);
   }
   
@@ -87,8 +98,8 @@ public class NormalSwaptionVolatilityDataSets {
   private static final double[] TIMES_FLAT = new double[] {0.0, 100.0, 0.0, 100.0 };
   private static final double[] TENOR_FLAT = new double[] {0.0, 0.0, 30.0, 30.0 };
   private static final double[] NORMAL_VOL_FLAT = new double[] { 0.01, 0.01, 0.01, 0.01};  
-  private static final InterpolatedDoublesSurface SURFACE_FLAT = 
-      new InterpolatedDoublesSurface(TIMES_FLAT, TENOR_FLAT, NORMAL_VOL_FLAT, INTERPOLATOR_2D);
+  private static final InterpolatedNodalSurface SURFACE_FLAT =
+      InterpolatedNodalSurface.of(METADATA, TIMES_FLAT, TENOR_FLAT, NORMAL_VOL_FLAT, INTERPOLATOR_2D);
   
   public static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT = 
       NormalVolatilityExpiryTenorSwaptionProvider.of(SURFACE_FLAT, USD_1Y_LIBOR3M, DayCounts.ACT_365F, 
@@ -126,8 +137,8 @@ public class NormalSwaptionVolatilityDataSets {
       NORMAL_VOL_20150320[i] = NORMAL_VOL_20150320_BP[i] * BP1;
     }
   }
-  private static final InterpolatedDoublesSurface SURFACE_20150320 =
-      new InterpolatedDoublesSurface(TIMES_20150320, TENORS_20150320, NORMAL_VOL_20150320, INTERPOLATOR_2D);
+  private static final NodalSurface SURFACE_20150320 =
+      InterpolatedNodalSurface.of(METADATA, TIMES_20150320, TENORS_20150320, NORMAL_VOL_20150320, INTERPOLATOR_2D);
 
   private static final LocalDate VALUATION_DATE_20150320 = LocalDate.of(2015, 3, 20);
   private static final LocalTime VALUATION_TIME_20150320 = LocalTime.of(18, 00);

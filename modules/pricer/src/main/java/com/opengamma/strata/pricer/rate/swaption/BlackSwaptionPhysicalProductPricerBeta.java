@@ -83,7 +83,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     ExpandedSwaption expanded = swaption.expand();
     validate(rates, expanded, volatilities);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeYearFraction(expiryDateTime);
+    double expiry = volatilities.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     if(expiry < 0.0d) { // Option has expired already
@@ -136,7 +136,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     ExpandedSwaption expanded = swaption.expand();
     validate(rates, expanded, volatilities);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeYearFraction(expiryDateTime);
+    double expiry = volatilities.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     ArgChecker.isTrue(expiry >= 0.0d, "option should be before expiry to compute an implied volatility");
@@ -166,7 +166,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     ExpandedSwaption expanded = swaption.expand();
     validate(rates, expanded, volatilities);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeYearFraction(expiryDateTime);
+    double expiry = volatilities.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     if(expiry < 0.0d) { // Option has expired already
@@ -209,7 +209,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     ExpandedSwaption expanded = swaption.expand();
     validate(rates, expanded, volatilities);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeYearFraction(expiryDateTime);
+    double expiry = volatilities.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     double tenor = volatilities.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
@@ -242,7 +242,7 @@ public class BlackSwaptionPhysicalProductPricerBeta {
   
   // validate that the rates and volatilities providers are coherent
   private void validate(RatesProvider rates, ExpandedSwaption swaption, BlackVolatilitySwaptionProvider volatility) {
-    ArgChecker.isTrue(volatility.getValuationDate().equals(rates.getValuationDate()), 
+    ArgChecker.isTrue(volatility.getValuationDateTime().toLocalDate().equals(rates.getValuationDate()),
         "volatility and rate data should be for the same date");
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");
     ArgChecker.isTrue(swaption.getSettlementMethod().getSettlementType().equals(SettlementType.PHYSICAL), "swaption should be physical settlement");

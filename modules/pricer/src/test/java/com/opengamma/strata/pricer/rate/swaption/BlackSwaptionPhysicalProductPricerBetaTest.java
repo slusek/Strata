@@ -38,6 +38,10 @@ import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitiviti
 import com.opengamma.strata.market.sensitivity.PointSensitivities;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
+import com.opengamma.strata.market.surface.ConstantNodalSurface;
+import com.opengamma.strata.market.surface.DefaultSurfaceMetadata;
+import com.opengamma.strata.market.surface.NodalSurface;
+import com.opengamma.strata.market.surface.SurfaceMetadata;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
@@ -114,8 +118,10 @@ public class BlackSwaptionPhysicalProductPricerBetaTest {
   private static final ImmutableRatesProvider MULTI_USD =
       RatesProviderDataSets.MULTI_USD.toBuilder().valuationDate(VALUATION_DATE).build();
   private static final double VOLATILITY = 0.20;
-  private static final BlackVolatilityConstantSwaptionProvider BLACK_VOL_CST_SWAPTION_PROVIDER_USD =
-      BlackVolatilityConstantSwaptionProvider.of(VOLATILITY, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE);
+  private static final SurfaceMetadata META_DATA = DefaultSurfaceMetadata.of("Constant Surface");
+  private static final NodalSurface CST_SURFACE = ConstantNodalSurface.of(META_DATA, VOLATILITY);
+  private static final BlackVolatilityExpiryTenorSwaptionProvider BLACK_VOL_CST_SWAPTION_PROVIDER_USD =
+      BlackVolatilityExpiryTenorSwaptionProvider.of(CST_SURFACE, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE);
 
   private static final double TOLERANCE_PV = 1.0E-2;
   private static final double TOLERANCE_PV_DELTA = 1.0E+2;
@@ -160,7 +166,7 @@ public class BlackSwaptionPhysicalProductPricerBetaTest {
     double volatility = BLACK_VOL_CST_SWAPTION_PROVIDER_USD.getVolatility(SWAPTION_LONG_REC.getExpiryDateTime(), 
         SWAP_TENOR_YEAR, STRIKE, forward);
     BlackFunctionData blackData = new BlackFunctionData(forward, Math.abs(pvbp), volatility);
-    double expiry = BLACK_VOL_CST_SWAPTION_PROVIDER_USD.relativeYearFraction(SWAPTION_LONG_REC.getExpiryDateTime());
+    double expiry = BLACK_VOL_CST_SWAPTION_PROVIDER_USD.relativeTime(SWAPTION_LONG_REC.getExpiryDateTime());
     EuropeanVanillaOption option = new EuropeanVanillaOption(STRIKE, expiry, false);
     double pvExpected = BLACK.getPriceFunction(option).evaluate(blackData);
     CurrencyAmount pvComputed = 
@@ -251,10 +257,12 @@ public class BlackSwaptionPhysicalProductPricerBetaTest {
   @Test
   public void present_value_sensitivityBlackVolatility_FD() {
     double shiftVol = 1.0E-4;
+    NodalSurface surfaceUp = ConstantNodalSurface.of(META_DATA, VOLATILITY + shiftVol);
+    NodalSurface surfaceDw = ConstantNodalSurface.of(META_DATA, VOLATILITY - shiftVol);
     CurrencyAmount pvP = PRICER_SWAPTION_BLACK.presentValue(SWAPTION_LONG_PAY, MULTI_USD,
-        BlackVolatilityConstantSwaptionProvider.of(VOLATILITY+shiftVol, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE));
+        BlackVolatilityExpiryTenorSwaptionProvider.of(surfaceUp, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE));
     CurrencyAmount pvM = PRICER_SWAPTION_BLACK.presentValue(SWAPTION_LONG_PAY, MULTI_USD,
-        BlackVolatilityConstantSwaptionProvider.of(VOLATILITY-shiftVol, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE));
+        BlackVolatilityExpiryTenorSwaptionProvider.of(surfaceDw, USD_FIXED_6M_LIBOR_3M, ACT_365F, VALUATION_DATE));
     double pvnvsFd = (pvP.getAmount() - pvM.getAmount()) / (2 * shiftVol);
     SwaptionSensitivity pvnvsAd = PRICER_SWAPTION_BLACK
         .presentValueSensitivityBlackVolatility(SWAPTION_LONG_PAY, MULTI_USD, BLACK_VOL_CST_SWAPTION_PROVIDER_USD);
