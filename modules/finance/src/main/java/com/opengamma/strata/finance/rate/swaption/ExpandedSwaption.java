@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ *
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.finance.rate.swaption;
 
 import java.io.Serializable;
@@ -40,14 +45,14 @@ public final class ExpandedSwaption
    * Long indicates that the owner wants the option to be in the money at expiry.
    * Short indicates that the owner wants the option to be out of the money at expiry.
    */
-  @PropertyDefinition
+  @PropertyDefinition(validate = "notNull")
   private final LongShort longShort;
   /**
-   * Settlement type 
+   * Settlement method.  
    * <p>
-   * The settlement of the option is specified by {@link SettlementType}.
+   * The settlement of the option is specified by {@link SwaptionSettlementMethod}.
    */
-  @PropertyDefinition
+  @PropertyDefinition(validate = "notNull")
   private final SwaptionSettlementMethod settlementMethod;
   /**
    * The expiry date of the option.  
@@ -140,6 +145,8 @@ public final class ExpandedSwaption
       LocalTime expiryTime,
       ZoneId expiryZone,
       ExpandedSwap underlying) {
+    JodaBeanUtils.notNull(longShort, "longShort");
+    JodaBeanUtils.notNull(settlementMethod, "settlementMethod");
     JodaBeanUtils.notNull(expiryDate, "expiryDate");
     JodaBeanUtils.notNull(expiryTime, "expiryTime");
     JodaBeanUtils.notNull(expiryZone, "expiryZone");
@@ -173,7 +180,7 @@ public final class ExpandedSwaption
    * <p>
    * Long indicates that the owner wants the option to be in the money at expiry.
    * Short indicates that the owner wants the option to be out of the money at expiry.
-   * @return the value of the property
+   * @return the value of the property, not null
    */
   public LongShort getLongShort() {
     return longShort;
@@ -181,10 +188,10 @@ public final class ExpandedSwaption
 
   //-----------------------------------------------------------------------
   /**
-   * Gets settlement type
+   * Gets settlement method.
    * <p>
-   * The settlement of the option is specified by {@link SettlementType}.
-   * @return the value of the property
+   * The settlement of the option is specified by {@link SwaptionSettlementMethod}.
+   * @return the value of the property, not null
    */
   public SwaptionSettlementMethod getSettlementMethod() {
     return settlementMethod;
@@ -582,22 +589,24 @@ public final class ExpandedSwaption
      * <p>
      * Long indicates that the owner wants the option to be in the money at expiry.
      * Short indicates that the owner wants the option to be out of the money at expiry.
-     * @param longShort  the new value
+     * @param longShort  the new value, not null
      * @return this, for chaining, not null
      */
     public Builder longShort(LongShort longShort) {
+      JodaBeanUtils.notNull(longShort, "longShort");
       this.longShort = longShort;
       return this;
     }
 
     /**
-     * Sets settlement type
+     * Sets settlement method.
      * <p>
-     * The settlement of the option is specified by {@link SettlementType}.
-     * @param settlementMethod  the new value
+     * The settlement of the option is specified by {@link SwaptionSettlementMethod}.
+     * @param settlementMethod  the new value, not null
      * @return this, for chaining, not null
      */
     public Builder settlementMethod(SwaptionSettlementMethod settlementMethod) {
+      JodaBeanUtils.notNull(settlementMethod, "settlementMethod");
       this.settlementMethod = settlementMethod;
       return this;
     }
