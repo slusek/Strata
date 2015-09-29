@@ -52,9 +52,7 @@ import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityC
  */
 @Test
 public class BlackSwaptionPhysicalProductPricerTest {
-
   private static final LocalDate VALUATION_DATE = LocalDate.of(2015, 8, 7);
-
   private static final LocalDate SWAPTION_EXERCISE_DATE = VALUATION_DATE.plusYears(5);
   private static final LocalDate SWAPTION_PAST_EXERCISE_DATE = VALUATION_DATE.minusYears(1);
   private static final LocalTime SWAPTION_EXPIRY_TIME = LocalTime.of(11, 0);
@@ -108,7 +106,7 @@ public class BlackSwaptionPhysicalProductPricerTest {
       .expiryDate(SWAPTION_PAST_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_PAST).build();
 
-  public static final BlackPriceFunction BLACK = new BlackPriceFunction();
+  private static final BlackPriceFunction BLACK = new BlackPriceFunction();
   private static final BlackSwaptionPhysicalProductPricer PRICER_SWAPTION_BLACK =
       BlackSwaptionPhysicalProductPricer.DEFAULT;
   private static final DiscountingSwapProductPricer PRICER_SWAP = DiscountingSwapProductPricer.DEFAULT;
@@ -283,7 +281,6 @@ public class BlackSwaptionPhysicalProductPricerTest {
     SwaptionSensitivity v = PRICER_SWAPTION_BLACK
         .presentValueSensitivityBlackVolatility(SWAPTION_PAST, MULTI_USD, BLACK_VOL_CST_SWAPTION_PROVIDER_USD);
     assertEquals(v.getSensitivity(), 0.0d, TOLERANCE_PV_VEGA);
-    
   }
   
 }

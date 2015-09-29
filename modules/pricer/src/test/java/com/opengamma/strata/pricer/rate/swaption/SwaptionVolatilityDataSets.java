@@ -34,9 +34,9 @@ import com.opengamma.strata.market.value.ValueType;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 
 /**
- * Normal swaption volatility data sets for testing.
+ * Swaption volatility data sets for testing.
  */
-public class NormalSwaptionVolatilityDataSets {
+public class SwaptionVolatilityDataSets {
   
   private static final double BP1 = 1.0E-4;
 
@@ -76,6 +76,9 @@ public class NormalSwaptionVolatilityDataSets {
       FixedIborSwapConvention.of(USD_FIXED_1Y_30U360, USD_IBOR_LIBOR3M);
   public static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_STD = 
       NormalVolatilityExpiryTenorSwaptionProvider.of(SURFACE_STD, USD_1Y_LIBOR3M, DayCounts.ACT_365F, 
+          VALUATION_DATE_STD, VALUATION_TIME_STD, VALUATION_ZONE_STD);
+  public static final BlackVolatilityExpiryTenorSwaptionProvider BLACK_VOL_SWAPTION_PROVIDER_USD_STD =
+      BlackVolatilityExpiryTenorSwaptionProvider.of(SURFACE_STD, USD_1Y_LIBOR3M, DayCounts.ACT_365F,
           VALUATION_DATE_STD, VALUATION_TIME_STD, VALUATION_ZONE_STD);
   
   /**
@@ -122,7 +125,8 @@ public class NormalSwaptionVolatilityDataSets {
     1.0, 2.0, 5.0, 10.0, 30.0,
     1.0, 2.0, 5.0, 10.0, 30.0,
     1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0 };
+    1.0, 2.0, 5.0, 10.0, 30.0
+  };
   private static final double[] NORMAL_VOL_20150320_BP = new double[] {
     43.6, 65.3, 88, 87.5, 88, // 3M
     55.5, 72.2, 90.3, 89.3, 88.6, // 6M

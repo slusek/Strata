@@ -25,6 +25,7 @@ import com.opengamma.strata.finance.rate.swap.SwapProduct;
 import com.opengamma.strata.finance.rate.swaption.ExpandedSwaption;
 import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
+import com.opengamma.strata.finance.rate.swaption.SwaptionProduct;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
 import com.opengamma.strata.pricer.rate.RatesProvider;
@@ -43,17 +44,18 @@ import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
  * the method, {@link NormalVolatilitySwaptionProvider#relativeTime(ZonedDateTime)}.
  */
 public class NormalSwaptionPhysicalProductPricer {
-
   /**
    * Default implementation.
    */
   public static final NormalSwaptionPhysicalProductPricer DEFAULT = new NormalSwaptionPhysicalProductPricer(
       DiscountingSwapProductPricer.DEFAULT);
-
-  /** Pricer for {@link SwapProduct}. */
+  /** 
+   * Pricer for {@link SwapProduct}. 
+   */
   private final DiscountingSwapProductPricer swapPricer;
-
-  /** Normal model pricing function. */
+  /** 
+   * Normal model pricing function. 
+   */
   public static final NormalPriceFunction NORMAL = new NormalPriceFunction();
   
   /**
@@ -72,11 +74,11 @@ public class NormalSwaptionPhysicalProductPricer {
    * 
    * @param swaption  the product to price
    * @param ratesProvider  the rates provider
-   * @param volatilityProvider  the Black volatility provider
+   * @param volatilityProvider  the normal volatility provider
    * @return the present value of the swaption product
    */
   public CurrencyAmount presentValue(
-      Swaption swaption,
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -109,7 +111,7 @@ public class NormalSwaptionPhysicalProductPricer {
    * 
    * @param swaption  the swaption to price
    * @param ratesProvider  the rates provider
-   * @param volatilityProvider  the Black volatility provider
+   * @param volatilityProvider  the normal volatility provider
    * @return the present value of the swaption product
    */
   public MultiCurrencyAmount currencyExposure(
@@ -125,11 +127,11 @@ public class NormalSwaptionPhysicalProductPricer {
    * 
    * @param swaption  the product to price
    * @param ratesProvider  the rates provider
-   * @param volatilityProvider  the Black volatility provider
+   * @param volatilityProvider  the normal volatility provider
    * @return the present value of the swap product
    */
   public double impliedVolatility(
-      Swaption swaption,
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -155,11 +157,11 @@ public class NormalSwaptionPhysicalProductPricer {
    * 
    * @param swaption  the swaption product
    * @param ratesProvider  the rates provider
-   * @param volatilityProvider  the Black volatility provider
+   * @param volatilityProvider  the normal volatility provider
    * @return the present value curve sensitivity of the swap product
    */
   public PointSensitivityBuilder presentValueSensitivityStickyStrike(
-      Swaption swaption,
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -199,11 +201,11 @@ public class NormalSwaptionPhysicalProductPricer {
    * 
    * @param swaption  the swaption product
    * @param ratesProvider  the rates provider
-   * @param volatilityProvider  the Black volatility provider
+   * @param volatilityProvider  the normal volatility provider
    * @return the point sensitivity to the normal volatility
    */
   public SwaptionSensitivity presentValueSensitivityNormalVolatility(
-      Swaption swaption,
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -244,12 +246,13 @@ public class NormalSwaptionPhysicalProductPricer {
   }
   
   // validate that the rates and volatilities providers are coherent
-  private void validate(RatesProvider rates, ExpandedSwaption swaption,
+  private void validate(RatesProvider ratesProvider, ExpandedSwaption swaption,
       NormalVolatilitySwaptionProvider volatilityProvider) {
-    ArgChecker.isTrue(volatilityProvider.getValuationDateTime().toLocalDate().equals(rates.getValuationDate()),
+    ArgChecker.isTrue(volatilityProvider.getValuationDateTime().toLocalDate().equals(ratesProvider.getValuationDate()),
         "volatility and rate data should be for the same date");
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");
-    ArgChecker.isTrue(swaption.getSettlementMethod().getSettlementType().equals(SettlementType.PHYSICAL), "swaption should be physical settlement");
+    ArgChecker.isTrue(swaption.getSettlementMethod().getSettlementType().equals(SettlementType.PHYSICAL),
+        "swaption should be physical settlement");
   }
 
 }

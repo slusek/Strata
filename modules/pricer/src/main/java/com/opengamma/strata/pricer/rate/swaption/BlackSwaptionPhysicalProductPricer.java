@@ -21,7 +21,7 @@ import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.SwapProduct;
 import com.opengamma.strata.finance.rate.swaption.ExpandedSwaption;
 import com.opengamma.strata.finance.rate.swaption.SettlementType;
-import com.opengamma.strata.finance.rate.swaption.Swaption;
+import com.opengamma.strata.finance.rate.swaption.SwaptionProduct;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
 import com.opengamma.strata.pricer.rate.RatesProvider;
@@ -46,7 +46,6 @@ public class BlackSwaptionPhysicalProductPricer {
    */
   public static final BlackSwaptionPhysicalProductPricer DEFAULT =
       new BlackSwaptionPhysicalProductPricer(DiscountingSwapProductPricer.DEFAULT);
-
   /** 
    * Pricer for {@link SwapProduct}. 
    */
@@ -72,7 +71,7 @@ public class BlackSwaptionPhysicalProductPricer {
    * @return the present value of the swaption product
    */
   public CurrencyAmount presentValue(
-      Swaption swaption, 
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -107,7 +106,7 @@ public class BlackSwaptionPhysicalProductPricer {
    * @return the present value of the swaption product
    */
   public MultiCurrencyAmount currencyExposure(
-      Swaption swaption, 
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
     return MultiCurrencyAmount.of(presentValue(swaption, ratesProvider, volatilityProvider));
@@ -115,7 +114,7 @@ public class BlackSwaptionPhysicalProductPricer {
 
   //-------------------------------------------------------------------------
   /**
-   * Computes the implied Normal volatility of the swaption.
+   * Computes the implied Black volatility of the swaption.
    * 
    * @param swaption  the product to price
    * @param ratesProvider  the rates provider
@@ -123,7 +122,7 @@ public class BlackSwaptionPhysicalProductPricer {
    * @return the Black implied volatility associated to the swaption
    */
   public double impliedVolatility(
-      Swaption swaption, 
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -153,7 +152,7 @@ public class BlackSwaptionPhysicalProductPricer {
    * @return the present value curve sensitivity of the swap product
    */
   public PointSensitivityBuilder presentValueSensitivityStickyStrike(
-      Swaption swaption, 
+      SwaptionProduct swaption,
       RatesProvider rates, 
       BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
@@ -187,15 +186,15 @@ public class BlackSwaptionPhysicalProductPricer {
   /**
    * Calculates the present value sensitivity to the implied volatility of the swaption product.
    * <p>
-   * The sensitivity to the implied normal volatility is also called normal vega.
+   * The sensitivity to the Black volatility is also called Black vega.
    * 
    * @param swaption  the swaption product
    * @param ratesProvider  the rates provider
    * @param volatilityProvider  the Black volatility provider
-   * @return the point sensitivity to the normal volatility
+   * @return the point sensitivity to the Black volatility
    */
   public SwaptionSensitivity presentValueSensitivityBlackVolatility(
-      Swaption swaption, 
+      SwaptionProduct swaption,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();

@@ -36,15 +36,16 @@ import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 
 /**
- * Tests {@link NormalSwaptionPhysicalTradePricer}.
+ * Test {@link BlackSwaptionPhysicalTradePricer}.
  */
 @Test
-public class NormalSwaptionPhysicalTradePricerTest {
+public class BlackSwaptionPhysicalTradePricerTest {
   private static final LocalDate VALUATION_DATE = RatesProviderDataSets.VAL_DATE_2014_01_22;
   private static final LocalDate SWAPTION_EXERCISE_DATE = VALUATION_DATE.plusYears(5);
   private static final LocalTime SWAPTION_EXPIRY_TIME = LocalTime.of(11, 0);
   private static final ZoneId SWAPTION_EXPIRY_ZONE = ZoneId.of("America/New_York");
-  private static final LocalDate SWAP_EFFECTIVE_DATE = USD_LIBOR_3M.calculateEffectiveFromFixing(SWAPTION_EXERCISE_DATE);
+  private static final LocalDate SWAP_EFFECTIVE_DATE = USD_LIBOR_3M
+      .calculateEffectiveFromFixing(SWAPTION_EXERCISE_DATE);
   private static final int SWAP_TENOR_YEAR = 5;
   private static final Period SWAP_TENOR = Period.ofYears(SWAP_TENOR_YEAR);
   private static final LocalDate SWAP_MATURITY_DATE = SWAP_EFFECTIVE_DATE.plus(SWAP_TENOR);
@@ -63,125 +64,129 @@ public class NormalSwaptionPhysicalTradePricerTest {
   private static final Swaption SWAPTION_LONG_REC = Swaption.builder().settlementMethod(PHYSICAL_SETTLE)
       .expiryDate(SWAPTION_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_REC).build();
-  private static final Payment PREMIUM_FWD_PAY = Payment.of(CurrencyAmount.of(USD, -PREMIUM_AMOUNT), SWAP_EFFECTIVE_DATE);
+  private static final Payment PREMIUM_FWD_PAY = Payment.of(CurrencyAmount.of(USD, -PREMIUM_AMOUNT),
+      SWAP_EFFECTIVE_DATE);
   private static final SwaptionTrade SWAPTION_PREFWD_LONG_REC = SwaptionTrade.builder().product(SWAPTION_LONG_REC)
       .premium(PREMIUM_FWD_PAY).build();
   private static final Payment PREMIUM_TRA_PAY = Payment.of(CurrencyAmount.of(USD, -PREMIUM_AMOUNT), VALUATION_DATE);
   private static final SwaptionTrade SWAPTION_PRETOD_LONG_REC = SwaptionTrade.builder().product(SWAPTION_LONG_REC)
       .premium(PREMIUM_TRA_PAY).build();
-  private static final Payment PREMIUM_PAST_PAY = 
+  private static final Payment PREMIUM_PAST_PAY =
       Payment.of(CurrencyAmount.of(USD, -PREMIUM_AMOUNT), VALUATION_DATE.minusDays(1));
   private static final SwaptionTrade SWAPTION_PREPAST_LONG_REC = SwaptionTrade.builder().product(SWAPTION_LONG_REC)
       .premium(PREMIUM_PAST_PAY).build();
 
-  private static final NormalSwaptionPhysicalProductPricer PRICER_SWAPTION_NORMAL_PRODUCT = 
-      NormalSwaptionPhysicalProductPricer.DEFAULT;
-  private static final NormalSwaptionPhysicalTradePricer PRICER_SWAPTION_NORMAL_TRADE = 
-      NormalSwaptionPhysicalTradePricer.DEFAULT;
+  private static final BlackSwaptionPhysicalProductPricer PRICER_SWAPTION_BLACK_PRODUCT =
+      BlackSwaptionPhysicalProductPricer.DEFAULT;
+  private static final BlackSwaptionPhysicalTradePricer PRICER_SWAPTION_BLACK_TRADE =
+      BlackSwaptionPhysicalTradePricer.DEFAULT;
   private static final DiscountingPaymentPricer PRICER_PAYMENT = DiscountingPaymentPricer.DEFAULT;
-  
-  private static final ImmutableRatesProvider MULTI_USD = 
+
+  private static final ImmutableRatesProvider MULTI_USD =
       RatesProviderDataSets.MULTI_USD.toBuilder().valuationDate(VALUATION_DATE).build();
-  private static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD =
-      SwaptionVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_STD;
-  
+  private static final BlackVolatilityExpiryTenorSwaptionProvider BLACK_VOL_SWAPTION_PROVIDER_USD =
+      SwaptionVolatilityDataSets.BLACK_VOL_SWAPTION_PROVIDER_USD_STD;
+
   private static final double TOLERANCE_PV = 1.0E-2;
   private static final double TOLERANCE_PV_DELTA = 1.0E+2;
   private static final double TOLERANCE_PV_VEGA = 1.0E+4;
 
   //-------------------------------------------------------------------------
   public void present_value_premium_forward() {
-    CurrencyAmount pvTrade = 
-        PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    CurrencyAmount pvProduct = 
-        PRICER_SWAPTION_NORMAL_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvTrade =
+        PRICER_SWAPTION_BLACK_TRADE
+            .presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvProduct =
+        PRICER_SWAPTION_BLACK_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     CurrencyAmount pvPremium = PRICER_PAYMENT.presentValue(PREMIUM_FWD_PAY, MULTI_USD);
     assertEquals(pvTrade.getAmount(), pvProduct.getAmount() + pvPremium.getAmount(), TOLERANCE_PV);
   }
-  
+
   public void present_value_premium_valuedate() {
-    CurrencyAmount pvTrade = 
-        PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PRETOD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    CurrencyAmount pvProduct = 
-        PRICER_SWAPTION_NORMAL_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvTrade =
+        PRICER_SWAPTION_BLACK_TRADE
+            .presentValue(SWAPTION_PRETOD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvProduct =
+        PRICER_SWAPTION_BLACK_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     CurrencyAmount pvPremium = PRICER_PAYMENT.presentValue(PREMIUM_TRA_PAY, MULTI_USD);
     assertEquals(pvTrade.getAmount(), pvProduct.getAmount() + pvPremium.getAmount(), TOLERANCE_PV);
   }
-  
+
   public void present_value_premium_past() {
-    CurrencyAmount pvTrade = 
-        PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PREPAST_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    CurrencyAmount pvProduct = 
-        PRICER_SWAPTION_NORMAL_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvTrade =
+        PRICER_SWAPTION_BLACK_TRADE.presentValue(SWAPTION_PREPAST_LONG_REC, MULTI_USD,
+            BLACK_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pvProduct =
+        PRICER_SWAPTION_BLACK_PRODUCT.presentValue(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvTrade.getAmount(), pvProduct.getAmount(), TOLERANCE_PV);
   }
 
   //-------------------------------------------------------------------------
   public void currency_exposure_premium_forward() {
-    CurrencyAmount pv = PRICER_SWAPTION_NORMAL_TRADE
-        .presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    MultiCurrencyAmount ce = PRICER_SWAPTION_NORMAL_TRADE
-        .currencyExposure(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    CurrencyAmount pv = PRICER_SWAPTION_BLACK_TRADE
+        .presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    MultiCurrencyAmount ce = PRICER_SWAPTION_BLACK_TRADE
+        .currencyExposure(SWAPTION_PREFWD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pv.getAmount(), ce.getAmount(USD).getAmount(), TOLERANCE_PV);
   }
 
   //-------------------------------------------------------------------------
   public void current_cash_forward() {
-    CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PREFWD_LONG_REC, VALUATION_DATE);
+    CurrencyAmount ccTrade = PRICER_SWAPTION_BLACK_TRADE.currentCash(SWAPTION_PREFWD_LONG_REC, VALUATION_DATE);
     assertEquals(ccTrade.getAmount(), 0, TOLERANCE_PV);
   }
 
   public void current_cash_vd() {
-    CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PRETOD_LONG_REC, VALUATION_DATE);
+    CurrencyAmount ccTrade = PRICER_SWAPTION_BLACK_TRADE.currentCash(SWAPTION_PRETOD_LONG_REC, VALUATION_DATE);
     assertEquals(ccTrade.getAmount(), -PREMIUM_AMOUNT, TOLERANCE_PV);
   }
 
   public void current_cash_past() {
-    CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PREPAST_LONG_REC, VALUATION_DATE);
-    assertEquals(ccTrade.getAmount(),  0, TOLERANCE_PV);
+    CurrencyAmount ccTrade = PRICER_SWAPTION_BLACK_TRADE.currentCash(SWAPTION_PREPAST_LONG_REC, VALUATION_DATE);
+    assertEquals(ccTrade.getAmount(), 0, TOLERANCE_PV);
   }
 
   //-------------------------------------------------------------------------
   public void present_value_sensitivity_premium_forward() {
-    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
-        .presentValueSensitivityStickyStrike(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_NORMAL_PRODUCT
-        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_BLACK_TRADE
+        .presentValueSensitivityStickyStrike(SWAPTION_PREFWD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_BLACK_PRODUCT
+        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     PointSensitivityBuilder pvcsPremium = PRICER_PAYMENT.presentValueSensitivity(PREMIUM_FWD_PAY, MULTI_USD);
-    CurveCurrencyParameterSensitivities pvpsTrade = 
+    CurveCurrencyParameterSensitivities pvpsTrade =
         MULTI_USD.curveParameterSensitivity(pvcsTrade.build());
-    CurveCurrencyParameterSensitivities pvpsProduct = 
+    CurveCurrencyParameterSensitivities pvpsProduct =
         MULTI_USD.curveParameterSensitivity(pvcsProduct.combinedWith(pvcsPremium).build());
     assertTrue(pvpsTrade.equalWithTolerance(pvpsProduct, TOLERANCE_PV_DELTA));
   }
-  
+
   public void present_value_sensitivity_premium_valuedate() {
-    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
-        .presentValueSensitivityStickyStrike(SWAPTION_PRETOD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_NORMAL_PRODUCT
-        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_BLACK_TRADE
+        .presentValueSensitivityStickyStrike(SWAPTION_PRETOD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_BLACK_PRODUCT
+        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     CurveCurrencyParameterSensitivities pvpsTrade = MULTI_USD.curveParameterSensitivity(pvcsTrade.build());
     CurveCurrencyParameterSensitivities pvpsProduct = MULTI_USD.curveParameterSensitivity(pvcsProduct.build());
     assertTrue(pvpsTrade.equalWithTolerance(pvpsProduct, TOLERANCE_PV_DELTA));
   }
-  
+
   public void present_value_sensitivity_premium_past() {
-    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
-        .presentValueSensitivityStickyStrike(SWAPTION_PREPAST_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_NORMAL_PRODUCT
-        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_BLACK_TRADE
+        .presentValueSensitivityStickyStrike(SWAPTION_PREPAST_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    PointSensitivityBuilder pvcsProduct = PRICER_SWAPTION_BLACK_PRODUCT
+        .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
     CurveCurrencyParameterSensitivities pvpsTrade = MULTI_USD.curveParameterSensitivity(pvcsTrade.build());
     CurveCurrencyParameterSensitivities pvpsProduct = MULTI_USD.curveParameterSensitivity(pvcsProduct.build());
     assertTrue(pvpsTrade.equalWithTolerance(pvpsProduct, TOLERANCE_PV_DELTA));
   }
 
   //-------------------------------------------------------------------------
-  public void present_value_normal_vol_sensitivity_premium_forward() {
-    SwaptionSensitivity vegaTrade = PRICER_SWAPTION_NORMAL_TRADE
-        .presentValueSensitivityNormalVolatility(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    SwaptionSensitivity vegaProduct = PRICER_SWAPTION_NORMAL_PRODUCT
-        .presentValueSensitivityNormalVolatility(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    assertEquals(vegaTrade.getSensitivity(), vegaProduct.getSensitivity(), TOLERANCE_PV_VEGA);    
+  public void present_value_black_vol_sensitivity_premium_forward() {
+    SwaptionSensitivity vegaTrade = PRICER_SWAPTION_BLACK_TRADE
+        .presentValueSensitivityBlackVolatility(SWAPTION_PREFWD_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    SwaptionSensitivity vegaProduct = PRICER_SWAPTION_BLACK_PRODUCT
+        .presentValueSensitivityBlackVolatility(SWAPTION_LONG_REC, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD);
+    assertEquals(vegaTrade.getSensitivity(), vegaProduct.getSensitivity(), TOLERANCE_PV_VEGA);
   }
-  
+
 }

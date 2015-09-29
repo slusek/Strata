@@ -47,9 +47,7 @@ import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityC
  */
 @Test
 public class NormalSwaptionPhysicalProductPricerTest {
-  
   private static final LocalDate VALUATION_DATE = RatesProviderDataSets.VAL_DATE_2014_01_22;
-
   private static final LocalDate SWAPTION_EXERCISE_DATE = VALUATION_DATE.plusYears(5);
   private static final LocalDate SWAPTION_PAST_EXERCISE_DATE = VALUATION_DATE.minusYears(1);
   private static final LocalTime SWAPTION_EXPIRY_TIME = LocalTime.of(11, 0);
@@ -103,8 +101,7 @@ public class NormalSwaptionPhysicalProductPricerTest {
       .expiryDate(SWAPTION_PAST_EXERCISE_DATE).expiryTime(SWAPTION_EXPIRY_TIME).expiryZone(SWAPTION_EXPIRY_ZONE)
       .longShort(LongShort.LONG).underlying(SWAP_PAST).build();
 
-  public static final NormalPriceFunction NORMAL = new NormalPriceFunction();
-
+  private static final NormalPriceFunction NORMAL = new NormalPriceFunction();
   private static final NormalSwaptionPhysicalProductPricer PRICER_SWAPTION_NORMAL =
       NormalSwaptionPhysicalProductPricer.DEFAULT;
   private static final DiscountingSwapProductPricer PRICER_SWAP = DiscountingSwapProductPricer.DEFAULT;
@@ -115,9 +112,9 @@ public class NormalSwaptionPhysicalProductPricerTest {
   private static final ImmutableRatesProvider MULTI_USD = 
       RatesProviderDataSets.MULTI_USD.toBuilder().valuationDate(VALUATION_DATE).build();
   private static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD =
-      NormalSwaptionVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_STD;  
+      SwaptionVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_STD;
   private static final NormalVolatilitySwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT =
-      NormalSwaptionVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT;  
+      SwaptionVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT;
   
   private static final double TOLERANCE_PV = 1.0E-2;
   private static final double TOLERANCE_PV_DELTA = 1.0E+2;
@@ -240,15 +237,15 @@ public class NormalSwaptionPhysicalProductPricerTest {
   public void present_value_sensitivityNormalVolatility_FD() {
     double shiftVol = 1.0E-4;
     CurrencyAmount pvP = PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_PAY, MULTI_USD,
-        NormalSwaptionVolatilityDataSets.normalVolSwaptionProviderUsdStsShifted(shiftVol));
+        SwaptionVolatilityDataSets.normalVolSwaptionProviderUsdStsShifted(shiftVol));
     CurrencyAmount pvM = PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_PAY, MULTI_USD,
-        NormalSwaptionVolatilityDataSets.normalVolSwaptionProviderUsdStsShifted(-shiftVol));
+        SwaptionVolatilityDataSets.normalVolSwaptionProviderUsdStsShifted(-shiftVol));
     double pvnvsFd = (pvP.getAmount() - pvM.getAmount()) / (2 * shiftVol);
     SwaptionSensitivity pvnvsAd = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvnvsAd.getCurrency(), USD);
     assertEquals(pvnvsAd.getSensitivity(), pvnvsFd, TOLERANCE_PV_VEGA);
-    assertEquals(pvnvsAd.getConvention(), NormalSwaptionVolatilityDataSets.USD_1Y_LIBOR3M);
+    assertEquals(pvnvsAd.getConvention(), SwaptionVolatilityDataSets.USD_1Y_LIBOR3M);
     assertEquals(pvnvsAd.getExpiry(), SWAPTION_LONG_PAY.getExpiryDateTime());
     assertEquals(pvnvsAd.getTenor(), SWAP_TENOR_YEAR, TOLERANCE_RATE);
     assertEquals(pvnvsAd.getStrike(), STRIKE, TOLERANCE_RATE);
@@ -276,7 +273,6 @@ public class NormalSwaptionPhysicalProductPricerTest {
     SwaptionSensitivity v = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_PAST, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(v.getSensitivity(), 0.0d, TOLERANCE_PV_VEGA);
-    
   }
   
 }
