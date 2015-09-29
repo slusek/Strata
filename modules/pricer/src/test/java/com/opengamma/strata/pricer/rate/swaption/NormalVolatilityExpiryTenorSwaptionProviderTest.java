@@ -49,15 +49,13 @@ import com.opengamma.strata.market.value.ValueType;
  */
 @Test
 public class NormalVolatilityExpiryTenorSwaptionProviderTest {
-
   private static final Interpolator1D LINEAR_FLAT =
       CombinedInterpolatorExtrapolatorFactory.getInterpolator(Interpolator1DFactory.LINEAR,
           Interpolator1DFactory.FLAT_EXTRAPOLATOR, Interpolator1DFactory.FLAT_EXTRAPOLATOR);
   private static final GridInterpolator2D INTERPOLATOR_2D = new GridInterpolator2D(LINEAR_FLAT, LINEAR_FLAT);
   private static final double[] TIME = new double[] {0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0 };
   private static final double[] TENOR = new double[] {3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 7.0, 7.0, 7.0, 10.0, 10.0, 10.0 };
-  private static final double[] VOL = new double[] {0.14, 0.12, 0.1, 0.14, 0.13, 0.12, 0.13, 0.12, 0.11, 0.12, 0.11,
-    0.1 };
+  private static final double[] VOL = new double[] {0.14, 0.12, 0.1, 0.14, 0.13, 0.12, 0.13, 0.12, 0.11, 0.12, 0.11, 0.1 };
   private static final SurfaceMetadata METADATA_WITH_PARAM;
   private static final SurfaceMetadata METADATA;
   static {
@@ -74,13 +72,13 @@ public class NormalVolatilityExpiryTenorSwaptionProviderTest {
         .parameterMetadata(list)
         .surfaceName(SurfaceName.of("GOVT1-SWAPTION-VOL"))
         .xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.MONTHS)
+        .yValueType(ValueType.YEAR_FRACTION)
         .build();
     METADATA = DefaultSurfaceMetadata.builder()
         .dayCount(ACT_365F)
         .surfaceName(SurfaceName.of("GOVT1-SWAPTION-VOL"))
         .xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.MONTHS)
+        .yValueType(ValueType.YEAR_FRACTION)
         .build();
   }
   private static final InterpolatedNodalSurface SURFACE_WITH_PARAM =
@@ -102,8 +100,6 @@ public class NormalVolatilityExpiryTenorSwaptionProviderTest {
   private static final ZonedDateTime[] TEST_OPTION_EXPIRY = new ZonedDateTime[] {
     dateUtc(2015, 2, 17), dateUtc(2015, 5, 17), dateUtc(2015, 6, 17), dateUtc(2017, 2, 17) };
   private static final int NB_TEST = TEST_OPTION_EXPIRY.length;
-  //  private static final LocalDate[] TEST_FUTURE_EXPIRY =
-  //      new LocalDate[] {date(2015, 2, 17), date(2015, 5, 17), date(2015, 5, 17), date(2015, 5, 17) };
   private static final double[] TEST_TENOR = new double[] {2.0, 6.0, 7.0, 15.0 };
   private static final double[] TEST_SENSITIVITY = new double[] {1.0, 1.0, 1.0, 1.0 };
   private static final double TEST_FORWARD = 0.025; // not used internally
@@ -134,7 +130,7 @@ public class NormalVolatilityExpiryTenorSwaptionProviderTest {
     assertEquals(test1, 0d);
     double test2 = PROVIDER_WITH_PARAM.relativeTime(date(2018, 2, 17).atStartOfDay(LONDON_ZONE));
     double test3 = PROVIDER_WITH_PARAM.relativeTime(date(2012, 2, 17).atStartOfDay(LONDON_ZONE));
-    assertEquals(test2, -test3); // cosnsitency checked
+    assertEquals(test2, -test3); // consistency checked
   }
 
   public void test_volatility() {

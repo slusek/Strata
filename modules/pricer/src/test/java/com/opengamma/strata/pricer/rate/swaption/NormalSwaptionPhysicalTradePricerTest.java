@@ -37,9 +37,10 @@ import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 
 /**
- * Tests {@link NormalSwaptionPhysicalTradePricerBeta}.
+ * Tests {@link NormalSwaptionPhysicalTradePricer}.
  */
-public class NormalSwaptionPhysicalTradePricerBetaTest {
+@Test
+public class NormalSwaptionPhysicalTradePricerTest {
   
   private static final LocalDate VALUATION_DATE = RatesProviderDataSets.VAL_DATE_2014_01_22;
 
@@ -78,10 +79,10 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
 
   public static final NormalPriceFunction NORMAL = new NormalPriceFunction();
 
-  private static final NormalSwaptionPhysicalProductPricerBeta PRICER_SWAPTION_NORMAL_PRODUCT = 
-      NormalSwaptionPhysicalProductPricerBeta.DEFAULT;
-  private static final NormalSwaptionPhysicalTradePricerBeta PRICER_SWAPTION_NORMAL_TRADE = 
-      NormalSwaptionPhysicalTradePricerBeta.DEFAULT;
+  private static final NormalSwaptionPhysicalProductPricer PRICER_SWAPTION_NORMAL_PRODUCT = 
+      NormalSwaptionPhysicalProductPricer.DEFAULT;
+  private static final NormalSwaptionPhysicalTradePricer PRICER_SWAPTION_NORMAL_TRADE = 
+      NormalSwaptionPhysicalTradePricer.DEFAULT;
   private static final DiscountingPaymentPricer PRICER_PAYMENT = DiscountingPaymentPricer.DEFAULT;
   
   private static final ImmutableRatesProvider MULTI_USD = 
@@ -94,7 +95,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
   private static final double TOLERANCE_PV_VEGA = 1.0E+4;
 
   //-------------------------------------------------------------------------
-  @Test
   public void present_value_premium_forward() {
     CurrencyAmount pvTrade = 
         PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -104,7 +104,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
     assertEquals(pvTrade.getAmount(), pvProduct.getAmount() + pvPremium.getAmount(), TOLERANCE_PV);
   }
   
-  @Test
   public void present_value_premium_valuedate() {
     CurrencyAmount pvTrade = 
         PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PRETOD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -114,7 +113,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
     assertEquals(pvTrade.getAmount(), pvProduct.getAmount() + pvPremium.getAmount(), TOLERANCE_PV);
   }
   
-  @Test
   public void present_value_premium_past() {
     CurrencyAmount pvTrade = 
         PRICER_SWAPTION_NORMAL_TRADE.presentValue(SWAPTION_PREPAST_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -124,7 +122,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
   }
 
   //-------------------------------------------------------------------------
-  @Test
   public void currency_exposure_premium_forward() {
     CurrencyAmount pv = PRICER_SWAPTION_NORMAL_TRADE
         .presentValue(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -134,26 +131,22 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
   }
 
   //-------------------------------------------------------------------------
-  @Test
   public void current_cash_forward() {
     CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PREFWD_LONG_REC, VALUATION_DATE);
     assertEquals(ccTrade.getAmount(), 0, TOLERANCE_PV);
   }
 
-  @Test
   public void current_cash_vd() {
     CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PRETOD_LONG_REC, VALUATION_DATE);
     assertEquals(ccTrade.getAmount(), -PREMIUM_AMOUNT, TOLERANCE_PV);
   }
 
-  @Test
   public void current_cash_past() {
     CurrencyAmount ccTrade = PRICER_SWAPTION_NORMAL_TRADE.currentCash(SWAPTION_PREPAST_LONG_REC, VALUATION_DATE);
     assertEquals(ccTrade.getAmount(),  0, TOLERANCE_PV);
   }
 
   //-------------------------------------------------------------------------
-  @Test
   public void present_value_sensitivity_premium_forward() {
     PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
         .presentValueSensitivityStickyStrike(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -167,7 +160,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
     assertTrue(pvpsTrade.equalWithTolerance(pvpsProduct, TOLERANCE_PV_DELTA));
   }
   
-  @Test
   public void present_value_sensitivity_premium_valuedate() {
     PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
         .presentValueSensitivityStickyStrike(SWAPTION_PRETOD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -178,7 +170,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
     assertTrue(pvpsTrade.equalWithTolerance(pvpsProduct, TOLERANCE_PV_DELTA));
   }
   
-  @Test
   public void present_value_sensitivity_premium_past() {
     PointSensitivityBuilder pvcsTrade = PRICER_SWAPTION_NORMAL_TRADE
         .presentValueSensitivityStickyStrike(SWAPTION_PREPAST_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -190,7 +181,6 @@ public class NormalSwaptionPhysicalTradePricerBetaTest {
   }
 
   //-------------------------------------------------------------------------
-  @Test
   public void present_value_normal_vol_sensitivity_premium_forward() {
     SwaptionSensitivity vegaTrade = PRICER_SWAPTION_NORMAL_TRADE
         .presentValueSensitivityNormalVolatility(SWAPTION_PREFWD_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);

@@ -8,11 +8,7 @@ package com.opengamma.strata.pricer.rate.swaption;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.BlackFunctionData;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.BlackPriceFunction;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.EuropeanVanillaOption;
 import com.opengamma.analytics.financial.model.volatility.BlackFormulaRepository;
-import com.opengamma.analytics.math.function.Function1D;
 import com.opengamma.strata.basics.LongShort;
 import com.opengamma.strata.basics.PayReceive;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
@@ -40,29 +36,28 @@ import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
  * The volatility parameters are not adjusted for the underlying swap conventions. The volatilities from the provider
  * are taken as such.
  * <p>
- * The value of the swaption after expiry is 0. The fact that the option is after expiry is equivalent to a negative
- * number returned by the {@link BlackVolatilitySwaptionProvider#relativeYearFraction(ZonedDateTime)}.
+ * The value of the swaption after expiry is 0. For a swaption which already expired, negative number is returned by 
+ * the method, {@link BlackVolatilitySwaptionProvider#relativeTime(ZonedDateTime)}.
  */
-public class BlackSwaptionPhysicalProductPricerBeta {
+public class BlackSwaptionPhysicalProductPricer {
 
   /**
    * Default implementation.
    */
-  public static final BlackSwaptionPhysicalProductPricerBeta DEFAULT = new BlackSwaptionPhysicalProductPricerBeta(
-      DiscountingSwapProductPricer.DEFAULT);
+  public static final BlackSwaptionPhysicalProductPricer DEFAULT =
+      new BlackSwaptionPhysicalProductPricer(DiscountingSwapProductPricer.DEFAULT);
 
-  /** Pricer for {@link SwapProduct}. */
+  /** 
+   * Pricer for {@link SwapProduct}. 
+   */
   private final DiscountingSwapProductPricer swapPricer;
-
-  /** Black model pricing function. */
-  public static final BlackPriceFunction BLACK = new BlackPriceFunction();
   
   /**
    * Creates an instance.
    * 
    * @param swapPricer  the pricer for {@link Swap}
    */
-  public BlackSwaptionPhysicalProductPricerBeta(DiscountingSwapProductPricer swapPricer) {
+  public BlackSwaptionPhysicalProductPricer(DiscountingSwapProductPricer swapPricer) {
     this.swapPricer = ArgChecker.notNull(swapPricer, "swap pricer");
   }
   
@@ -72,35 +67,33 @@ public class BlackSwaptionPhysicalProductPricerBeta {
    * The result is expressed using the currency of the swapion.
    * 
    * @param swaption  the product to price
-   * @param rates  the rates provider
-   * @param volatilities  the Black volatility parameters
+   * @param ratesProvider  the rates provider
+   * @param volatilityProvider  the Black volatility provider
    * @return the present value of the swaption product
    */
   public CurrencyAmount presentValue(
       Swaption swaption, 
-      RatesProvider rates, 
-      BlackVolatilitySwaptionProvider volatilities) {
+      RatesProvider ratesProvider,
+      BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
-    validate(rates, expanded, volatilities);
+    validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeTime(expiryDateTime);
+    double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     if(expiry < 0.0d) { // Option has expired already
       return CurrencyAmount.of(fixedLeg.getCurrency(), 0.0d);
     }
-    double forward = swapPricer.parRate(underlying, rates);
-    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, rates);
-    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, rates, pvbp);
-    double tenor = volatilities.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    double volatility = volatilities.getVolatility(expiryDateTime, tenor, strike, forward);
-    BlackFunctionData blackData = new BlackFunctionData(forward, Math.abs(pvbp), volatility);
+    double forward = swapPricer.parRate(underlying, ratesProvider);
+    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
+    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
+    double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
+    double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
-    EuropeanVanillaOption option = new EuropeanVanillaOption(strike, expiry, isCall);
     // option required to pass the strike (in case the swap has non-constant coupon).
-    Function1D<BlackFunctionData, Double> func = BLACK.getPriceFunction(option);
-    double pv = func.evaluate(blackData) * ((expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0);
+    double price = Math.abs(pvbp) * BlackFormulaRepository.price(forward, strike, expiry, volatility, isCall);
+    double pv = price * ((expanded.getLongShort() == LongShort.LONG) ? 1d : -1d);
     return CurrencyAmount.of(fixedLeg.getCurrency(), pv);
   }  
 
@@ -109,15 +102,15 @@ public class BlackSwaptionPhysicalProductPricerBeta {
    * Computes the currency exposure of the swaption product.
    * 
    * @param swaption  the swaption to price
-   * @param rates  the rates provider
-   * @param volatilities  the Black volatility parameters
+   * @param ratesProvider  the rates provider
+   * @param volatilityProvider  the Black volatility provider
    * @return the present value of the swaption product
    */
   public MultiCurrencyAmount currencyExposure(
       Swaption swaption, 
-      RatesProvider rates, 
-      BlackVolatilitySwaptionProvider volatilities) {
-    return MultiCurrencyAmount.of(presentValue(swaption, rates, volatilities));
+      RatesProvider ratesProvider,
+      BlackVolatilitySwaptionProvider volatilityProvider) {
+    return MultiCurrencyAmount.of(presentValue(swaption, ratesProvider, volatilityProvider));
   }
 
   //-------------------------------------------------------------------------
@@ -125,26 +118,26 @@ public class BlackSwaptionPhysicalProductPricerBeta {
    * Computes the implied Normal volatility of the swaption.
    * 
    * @param swaption  the product to price
-   * @param rates  the rates provider
-   * @param volatilities  the Black volatility parameters
+   * @param ratesProvider  the rates provider
+   * @param volatilityProvider  the Black volatility provider
    * @return the Black implied volatility associated to the swaption
    */
   public double impliedVolatility(
       Swaption swaption, 
-      RatesProvider rates, 
-      BlackVolatilitySwaptionProvider volatilities) {
+      RatesProvider ratesProvider,
+      BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
-    validate(rates, expanded, volatilities);
+    validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeTime(expiryDateTime);
+    double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     ArgChecker.isTrue(expiry >= 0.0d, "option should be before expiry to compute an implied volatility");
-    double forward = swapPricer.parRate(underlying, rates);
-    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, rates);
-    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, rates, pvbp);
-    double tenor = volatilities.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    return volatilities.getVolatility(expiryDateTime, tenor, strike, forward);
+    double forward = swapPricer.parRate(underlying, ratesProvider);
+    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
+    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
+    double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
+    return volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
   }
 
   //-------------------------------------------------------------------------
@@ -156,17 +149,17 @@ public class BlackSwaptionPhysicalProductPricerBeta {
    * 
    * @param swaption  the swaption product
    * @param rates  the rates provider
-   * @param volatilities  the Black volatility parameters
+   * @param volatilityProvider  the Black volatility provider
    * @return the present value curve sensitivity of the swap product
    */
   public PointSensitivityBuilder presentValueSensitivityStickyStrike(
       Swaption swaption, 
       RatesProvider rates, 
-      BlackVolatilitySwaptionProvider volatilities) {
+      BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
-    validate(rates, expanded, volatilities);
+    validate(rates, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeTime(expiryDateTime);
+    double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     if(expiry < 0.0d) { // Option has expired already
@@ -175,20 +168,19 @@ public class BlackSwaptionPhysicalProductPricerBeta {
     double forward = swapPricer.parRate(underlying, rates);
     double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, rates);
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, rates, pvbp);
-    double tenor = volatilities.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    double volatility = volatilities.getVolatility(expiryDateTime, tenor, strike, forward);
-    BlackFunctionData blackData = new BlackFunctionData(forward, 1.0d, volatility);
+    double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
+    double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
-    EuropeanVanillaOption option = new EuropeanVanillaOption(strike, expiry, isCall);
     // option required to pass the strike (in case the swap has non-constant coupon).
     // Backward sweep
     PointSensitivityBuilder pvbpDr = swapPricer.getLegPricer().pvbpSensitivity(fixedLeg, rates);
     PointSensitivityBuilder forwardDr = swapPricer.parRateSensitivity(underlying, rates);
-    double[] pvAd = BLACK.getPriceAdjoint(option, blackData);
+    double price = BlackFormulaRepository.price(forward, strike, expiry, volatility, isCall);
+    double delta = BlackFormulaRepository.delta(forward, strike, expiry, volatility, isCall);
     double sign = (expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0;
-    return pvbpDr.multipliedBy(pvAd[0] * sign * Math.signum(pvbp))
-        .combinedWith(forwardDr.multipliedBy(pvAd[1] * Math.abs(pvbp) * sign));
+    return pvbpDr.multipliedBy(price * sign * Math.signum(pvbp))
+        .combinedWith(forwardDr.multipliedBy(delta * Math.abs(pvbp) * sign));
   }
 
   //-------------------------------------------------------------------------
@@ -198,34 +190,34 @@ public class BlackSwaptionPhysicalProductPricerBeta {
    * The sensitivity to the implied normal volatility is also called normal vega.
    * 
    * @param swaption  the swaption product
-   * @param rates  the rates provider
-   * @param volatilities  the Black volatility parameters
+   * @param ratesProvider  the rates provider
+   * @param volatilityProvider  the Black volatility provider
    * @return the point sensitivity to the normal volatility
    */
   public SwaptionSensitivity presentValueSensitivityBlackVolatility(
       Swaption swaption, 
-      RatesProvider rates, 
-      BlackVolatilitySwaptionProvider volatilities) {
+      RatesProvider ratesProvider,
+      BlackVolatilitySwaptionProvider volatilityProvider) {
     ExpandedSwaption expanded = swaption.expand();
-    validate(rates, expanded, volatilities);
+    validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
-    double expiry = volatilities.relativeTime(expiryDateTime);
+    double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
-    double tenor = volatilities.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, rates);
-    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, rates, pvbp);
+    double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
+    double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
+    double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
     if(expiry < 0.0d) { // Option has expired already
-      return SwaptionSensitivity.of(volatilities.getConvention(), expiryDateTime, tenor, strike, 0.0d, 
+      return SwaptionSensitivity.of(volatilityProvider.getConvention(), expiryDateTime, tenor, strike, 0.0d,
         fixedLeg.getCurrency(), 0.0d);
     }
-    double forward = swapPricer.parRate(underlying, rates);
-    double volatility = volatilities.getVolatility(expiryDateTime, tenor, strike, forward);
+    double forward = swapPricer.parRate(underlying, ratesProvider);
+    double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
     // option required to pass the strike (in case the swap has non-constant coupon).
     // Backward sweep
     double vega = Math.abs(pvbp) * BlackFormulaRepository.vega(forward, strike, expiry, volatility) 
         * ((expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0);
-    return SwaptionSensitivity.of(volatilities.getConvention(), expiryDateTime, tenor, strike, forward, 
+    return SwaptionSensitivity.of(volatilityProvider.getConvention(), expiryDateTime, tenor, strike, forward,
         fixedLeg.getCurrency(), vega);
   }
 
@@ -241,11 +233,13 @@ public class BlackSwaptionPhysicalProductPricerBeta {
   }
   
   // validate that the rates and volatilities providers are coherent
-  private void validate(RatesProvider rates, ExpandedSwaption swaption, BlackVolatilitySwaptionProvider volatility) {
-    ArgChecker.isTrue(volatility.getValuationDateTime().toLocalDate().equals(rates.getValuationDate()),
+  private void validate(RatesProvider ratesProvider, ExpandedSwaption swaption,
+      BlackVolatilitySwaptionProvider volatilityProvider) {
+    ArgChecker.isTrue(volatilityProvider.getValuationDateTime().toLocalDate().equals(ratesProvider.getValuationDate()),
         "volatility and rate data should be for the same date");
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");
-    ArgChecker.isTrue(swaption.getSettlementMethod().getSettlementType().equals(SettlementType.PHYSICAL), "swaption should be physical settlement");
+    ArgChecker.isTrue(swaption.getSettlementMethod().getSettlementType().equals(SettlementType.PHYSICAL),
+        "swaption should be physical settlement");
   }
 
 }

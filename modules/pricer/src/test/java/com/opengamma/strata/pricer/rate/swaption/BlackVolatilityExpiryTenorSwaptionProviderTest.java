@@ -49,7 +49,6 @@ import com.opengamma.strata.market.value.ValueType;
  */
 @Test
 public class BlackVolatilityExpiryTenorSwaptionProviderTest {
-
   private static final Interpolator1D LINEAR_FLAT =
       CombinedInterpolatorExtrapolatorFactory.getInterpolator(Interpolator1DFactory.LINEAR,
           Interpolator1DFactory.FLAT_EXTRAPOLATOR, Interpolator1DFactory.FLAT_EXTRAPOLATOR);
@@ -73,13 +72,13 @@ public class BlackVolatilityExpiryTenorSwaptionProviderTest {
         .parameterMetadata(list)
         .surfaceName(SurfaceName.of("GOVT1-SWAPTION-VOL"))
         .xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.MONTHS)
+        .yValueType(ValueType.YEAR_FRACTION)
         .build();
     METADATA = DefaultSurfaceMetadata.builder()
         .dayCount(ACT_365F)
         .surfaceName(SurfaceName.of("GOVT1-SWAPTION-VOL"))
         .xValueType(ValueType.YEAR_FRACTION)
-        .yValueType(ValueType.MONTHS)
+        .yValueType(ValueType.YEAR_FRACTION)
         .build();
   }
   private static final InterpolatedNodalSurface SURFACE_WITH_PARAM =
@@ -101,8 +100,6 @@ public class BlackVolatilityExpiryTenorSwaptionProviderTest {
   private static final ZonedDateTime[] TEST_OPTION_EXPIRY = new ZonedDateTime[] {
     dateUtc(2015, 2, 17), dateUtc(2015, 5, 17), dateUtc(2015, 6, 17), dateUtc(2017, 2, 17) };
   private static final int NB_TEST = TEST_OPTION_EXPIRY.length;
-  //  private static final LocalDate[] TEST_FUTURE_EXPIRY =
-  //      new LocalDate[] {date(2015, 2, 17), date(2015, 5, 17), date(2015, 5, 17), date(2015, 5, 17) };
   private static final double[] TEST_TENOR = new double[] {2.0, 6.0, 7.0, 15.0 };
   private static final double[] TEST_SENSITIVITY = new double[] {1.0, 1.0, 1.0, 1.0 };
   private static final double TEST_FORWARD = 0.025; // not used internally
@@ -133,7 +130,7 @@ public class BlackVolatilityExpiryTenorSwaptionProviderTest {
     assertEquals(test1, 0d);
     double test2 = PROVIDER_WITH_PARAM.relativeTime(date(2018, 2, 17).atStartOfDay(LONDON_ZONE));
     double test3 = PROVIDER_WITH_PARAM.relativeTime(date(2012, 2, 17).atStartOfDay(LONDON_ZONE));
-    assertEquals(test2, -test3); // cosnsitency checked
+    assertEquals(test2, -test3); // consistency checked
   }
 
   public void test_volatility() {

@@ -75,7 +75,8 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
    */
   @PropertyDefinition(validate = "notNull", overrideGet = true)
   private final ZonedDateTime valuationDateTime;
-  
+
+  //-------------------------------------------------------------------------
   /**
    * Creates a provider from the implied volatility surface and the date-time for which it is valid.
    * 
@@ -113,7 +114,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
       ZoneId valuationZone) {
     return of(surface, convention, dayCount, valuationDate.atTime(valuationTime).atZone(valuationZone));
   }
-  
+
   /**
    * Creates a provider from the implied volatility surface and the date. 
    * <p>
@@ -133,6 +134,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
     return of(surface, convention, dayCount, valuationDate.atTime(LocalTime.NOON).atZone(ZoneOffset.UTC));
   }
 
+  //-------------------------------------------------------------------------
   @Override
   public double getVolatility(ZonedDateTime expiryDate, double tenor, double strike, double forwardRate) {
     double expiryTime = relativeTime(expiryDate);
@@ -185,6 +187,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
 
   @Override
   public double relativeTime(ZonedDateTime dateTime) {
+    ArgChecker.notNull(dateTime, "dateTime");
     LocalDate valuationDate = valuationDateTime.toLocalDate();
     LocalDate date = dateTime.toLocalDate();
     boolean timeIsNegative = valuationDate.isAfter(date);
