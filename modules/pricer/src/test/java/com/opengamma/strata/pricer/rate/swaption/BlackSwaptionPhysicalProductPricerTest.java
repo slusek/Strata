@@ -166,14 +166,12 @@ public class BlackSwaptionPhysicalProductPricerTest {
 
   //-------------------------------------------------------------------------
   public void validate_physical_settlement() {
-    assertThrowsIllegalArg(() -> 
- PRICER_SWAPTION_BLACK.presentValue(SWAPTION_LONG_REC_CASH, MULTI_USD,
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_BLACK.presentValue(SWAPTION_LONG_REC_CASH, MULTI_USD,
         BLACK_VOL_SWAPTION_PROVIDER_USD_STD));
   }
 
   public void validate_swap_fixed_leg() {
-    assertThrowsIllegalArg(() -> 
- PRICER_SWAPTION_BLACK.presentValue(SWAPTION_BASIS, MULTI_USD,
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_BLACK.presentValue(SWAPTION_BASIS, MULTI_USD,
         BLACK_VOL_SWAPTION_PROVIDER_USD_STD));
   }
 
@@ -188,8 +186,7 @@ public class BlackSwaptionPhysicalProductPricerTest {
   }
 
   public void test_implied_volatility_after_expiry() {
-    assertThrowsIllegalArg(() -> 
- PRICER_SWAPTION_BLACK.impliedVolatility(SWAPTION_PAST, MULTI_USD,
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_BLACK.impliedVolatility(SWAPTION_PAST, MULTI_USD,
         BLACK_VOL_SWAPTION_PROVIDER_USD_STD));
   }
 
@@ -237,8 +234,7 @@ public class BlackSwaptionPhysicalProductPricerTest {
   }
 
   public void present_value_after_expiry() {
-    CurrencyAmount pv = PRICER_SWAPTION_BLACK.presentValue(SWAPTION_PAST, MULTI_USD,
-        BLACK_VOL_SWAPTION_PROVIDER_USD_STD);
+    CurrencyAmount pv = PRICER_SWAPTION_BLACK.presentValue(SWAPTION_PAST, MULTI_USD, BLACK_VOL_SWAPTION_PROVIDER_USD_STD);
     assertEquals(pv.getAmount(), 0.0d, TOLERANCE_PV);
   }
 
