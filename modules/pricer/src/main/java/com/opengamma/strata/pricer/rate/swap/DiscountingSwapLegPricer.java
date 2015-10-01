@@ -19,7 +19,6 @@ import com.opengamma.strata.finance.rate.swap.PaymentPeriod;
 import com.opengamma.strata.finance.rate.swap.RateAccrualPeriod;
 import com.opengamma.strata.finance.rate.swap.RatePaymentPeriod;
 import com.opengamma.strata.finance.rate.swap.SwapLeg;
-import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.market.amount.CashFlow;
 import com.opengamma.strata.market.amount.CashFlows;
 import com.opengamma.strata.market.explain.ExplainKey;
@@ -295,8 +294,17 @@ public class DiscountingSwapLegPricer {
   }
 
   //-------------------------------------------------------------------------
+  /**
+   * Computes the conventional cash annuity from a swap leg. 
+   * <p>
+   * The computation is relevant only for standard swaps with constant notional and regular payments.
+   * The swap leg must be a fixed leg. However, this is not checked internally.
+   * 
+   * @param fixedLeg  the fixed leg of the swap.
+   * @param forward  the swap forward rate.
+   * @return the cash annuity.
+   */
   public double annuityCash(SwapLeg fixedLeg, double forward) {
-    ArgChecker.isTrue(fixedLeg.getType().equals(SwapLegType.FIXED), "swap leg should be fixed leg");
     ExpandedSwapLeg expanded = fixedLeg.expand();
     int nbFixedPeriod =  expanded.getPaymentPeriods().size();
     PaymentPeriod paymentPeriod = expanded.getPaymentPeriods().get(0);
@@ -309,8 +317,17 @@ public class DiscountingSwapLegPricer {
     return annuityCash;
   }
 
+  /**
+   * Computes the derivative of the conventional cash annuity with respect to the forward from a swap leg. 
+   * <p>
+   * The computation is relevant only for standard swaps with constant notional and regular payments.
+   * The swap leg must be a fixed leg. However, this is not checked internally. 
+   * 
+   * @param fixedLeg  the fixed leg of the swap.
+   * @param forward  the swap forward rate.
+   * @return the cash annuity.
+   */
   public double annuityCashDerivative(SwapLeg fixedLeg, double forward) {
-    ArgChecker.isTrue(fixedLeg.getType().equals(SwapLegType.FIXED), "swap leg should be fixed leg");
     ExpandedSwapLeg expanded = fixedLeg.expand();
     int nbFixedPeriod = expanded.getPaymentPeriods().size();
     PaymentPeriod paymentPeriod = expanded.getPaymentPeriods().get(0);
