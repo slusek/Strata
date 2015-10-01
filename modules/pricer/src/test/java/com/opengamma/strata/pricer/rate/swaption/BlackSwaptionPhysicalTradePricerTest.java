@@ -93,7 +93,7 @@ public class BlackSwaptionPhysicalTradePricerTest {
       .valuationDate(VALUATION_DATE)
       .build();
   private static final BlackVolatilityExpiryTenorSwaptionProvider BLACK_VOL_SWAPTION_PROVIDER_USD =
-      SwaptionVolatilityDataSets.BLACK_VOL_SWAPTION_PROVIDER_USD_STD;
+      SwaptionBlackVolatilityDataSets.BLACK_VOL_SWAPTION_PROVIDER_USD_STD;
 
   private static final double TOLERANCE_PV = 1.0E-2;
   private static final double TOLERANCE_PV_DELTA = 1.0E+2;
