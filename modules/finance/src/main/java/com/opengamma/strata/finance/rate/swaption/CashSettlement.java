@@ -28,26 +28,25 @@ import org.joda.beans.impl.direct.DirectMetaPropertyMap;
  * <p>
  * The settlement type is {@link SettlementType#CASH}, i.e., Cash amount is paid by the short party to the long party 
  * at the exercise date.
-
  */
 @BeanDefinition
 public final class CashSettlement implements SwaptionSettlement, ImmutableBean, Serializable {
-
-  /**
-   * Default instance.
-   */
-  public static final CashSettlement DEFAULT = builder().build();
 
   /**
    * The settlement date. 
    * <p>
    * The payoff of the option is settled at this date. 
    */
-  @PropertyDefinition
+  @PropertyDefinition(validate = "notNull")
   private final LocalDate settlementDate;
-  // TODO add notNull and remove DEFAULT
 
-  // enum ** parYieldCurveAdjusted, zeroCouponYield
+  /**
+   * The cash settlement method. 
+   * <p>
+   * The settlement rate of the cash settled swaption is specified by respective cash settlement methods.
+   */
+  @PropertyDefinition(validate = "notNull")
+  private final CashSettlementMethod cashSettlementMethod;
 
   @Override
   public SettlementType getSettlementType() {
@@ -82,8 +81,12 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
   }
 
   private CashSettlement(
-      LocalDate settlementDate) {
+      LocalDate settlementDate,
+      CashSettlementMethod cashSettlementMethod) {
+    JodaBeanUtils.notNull(settlementDate, "settlementDate");
+    JodaBeanUtils.notNull(cashSettlementMethod, "cashSettlementMethod");
     this.settlementDate = settlementDate;
+    this.cashSettlementMethod = cashSettlementMethod;
   }
 
   @Override
@@ -106,10 +109,21 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
    * Gets the settlement date.
    * <p>
    * The payoff of the option is settled at this date.
-   * @return the value of the property
+   * @return the value of the property, not null
    */
   public LocalDate getSettlementDate() {
     return settlementDate;
+  }
+
+  //-----------------------------------------------------------------------
+  /**
+   * Gets the cash settlement method.
+   * <p>
+   * The settlement rate of the cash settled swaption is specified by respective cash settlement methods.
+   * @return the value of the property, not null
+   */
+  public CashSettlementMethod getCashSettlementMethod() {
+    return cashSettlementMethod;
   }
 
   //-----------------------------------------------------------------------
@@ -128,7 +142,8 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
     }
     if (obj != null && obj.getClass() == this.getClass()) {
       CashSettlement other = (CashSettlement) obj;
-      return JodaBeanUtils.equal(getSettlementDate(), other.getSettlementDate());
+      return JodaBeanUtils.equal(getSettlementDate(), other.getSettlementDate()) &&
+          JodaBeanUtils.equal(getCashSettlementMethod(), other.getCashSettlementMethod());
     }
     return false;
   }
@@ -137,14 +152,16 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
   public int hashCode() {
     int hash = getClass().hashCode();
     hash = hash * 31 + JodaBeanUtils.hashCode(getSettlementDate());
+    hash = hash * 31 + JodaBeanUtils.hashCode(getCashSettlementMethod());
     return hash;
   }
 
   @Override
   public String toString() {
-    StringBuilder buf = new StringBuilder(64);
+    StringBuilder buf = new StringBuilder(96);
     buf.append("CashSettlement{");
-    buf.append("settlementDate").append('=').append(JodaBeanUtils.toString(getSettlementDate()));
+    buf.append("settlementDate").append('=').append(getSettlementDate()).append(',').append(' ');
+    buf.append("cashSettlementMethod").append('=').append(JodaBeanUtils.toString(getCashSettlementMethod()));
     buf.append('}');
     return buf.toString();
   }
@@ -165,11 +182,17 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
     private final MetaProperty<LocalDate> settlementDate = DirectMetaProperty.ofImmutable(
         this, "settlementDate", CashSettlement.class, LocalDate.class);
     /**
+     * The meta-property for the {@code cashSettlementMethod} property.
+     */
+    private final MetaProperty<CashSettlementMethod> cashSettlementMethod = DirectMetaProperty.ofImmutable(
+        this, "cashSettlementMethod", CashSettlement.class, CashSettlementMethod.class);
+    /**
      * The meta-properties.
      */
     private final Map<String, MetaProperty<?>> metaPropertyMap$ = new DirectMetaPropertyMap(
         this, null,
-        "settlementDate");
+        "settlementDate",
+        "cashSettlementMethod");
 
     /**
      * Restricted constructor.
@@ -182,6 +205,8 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
       switch (propertyName.hashCode()) {
         case -295948169:  // settlementDate
           return settlementDate;
+        case 958004413:  // cashSettlementMethod
+          return cashSettlementMethod;
       }
       return super.metaPropertyGet(propertyName);
     }
@@ -210,12 +235,22 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
       return settlementDate;
     }
 
+    /**
+     * The meta-property for the {@code cashSettlementMethod} property.
+     * @return the meta-property, not null
+     */
+    public MetaProperty<CashSettlementMethod> cashSettlementMethod() {
+      return cashSettlementMethod;
+    }
+
     //-----------------------------------------------------------------------
     @Override
     protected Object propertyGet(Bean bean, String propertyName, boolean quiet) {
       switch (propertyName.hashCode()) {
         case -295948169:  // settlementDate
           return ((CashSettlement) bean).getSettlementDate();
+        case 958004413:  // cashSettlementMethod
+          return ((CashSettlement) bean).getCashSettlementMethod();
       }
       return super.propertyGet(bean, propertyName, quiet);
     }
@@ -238,6 +273,7 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
   public static final class Builder extends DirectFieldsBeanBuilder<CashSettlement> {
 
     private LocalDate settlementDate;
+    private CashSettlementMethod cashSettlementMethod;
 
     /**
      * Restricted constructor.
@@ -251,6 +287,7 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
      */
     private Builder(CashSettlement beanToCopy) {
       this.settlementDate = beanToCopy.getSettlementDate();
+      this.cashSettlementMethod = beanToCopy.getCashSettlementMethod();
     }
 
     //-----------------------------------------------------------------------
@@ -259,6 +296,8 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
       switch (propertyName.hashCode()) {
         case -295948169:  // settlementDate
           return settlementDate;
+        case 958004413:  // cashSettlementMethod
+          return cashSettlementMethod;
         default:
           throw new NoSuchElementException("Unknown property: " + propertyName);
       }
@@ -269,6 +308,9 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
       switch (propertyName.hashCode()) {
         case -295948169:  // settlementDate
           this.settlementDate = (LocalDate) newValue;
+          break;
+        case 958004413:  // cashSettlementMethod
+          this.cashSettlementMethod = (CashSettlementMethod) newValue;
           break;
         default:
           throw new NoSuchElementException("Unknown property: " + propertyName);
@@ -303,7 +345,8 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
     @Override
     public CashSettlement build() {
       return new CashSettlement(
-          settlementDate);
+          settlementDate,
+          cashSettlementMethod);
     }
 
     //-----------------------------------------------------------------------
@@ -311,20 +354,35 @@ public final class CashSettlement implements SwaptionSettlement, ImmutableBean, 
      * Sets the settlement date.
      * <p>
      * The payoff of the option is settled at this date.
-     * @param settlementDate  the new value
+     * @param settlementDate  the new value, not null
      * @return this, for chaining, not null
      */
     public Builder settlementDate(LocalDate settlementDate) {
+      JodaBeanUtils.notNull(settlementDate, "settlementDate");
       this.settlementDate = settlementDate;
+      return this;
+    }
+
+    /**
+     * Sets the cash settlement method.
+     * <p>
+     * The settlement rate of the cash settled swaption is specified by respective cash settlement methods.
+     * @param cashSettlementMethod  the new value, not null
+     * @return this, for chaining, not null
+     */
+    public Builder cashSettlementMethod(CashSettlementMethod cashSettlementMethod) {
+      JodaBeanUtils.notNull(cashSettlementMethod, "cashSettlementMethod");
+      this.cashSettlementMethod = cashSettlementMethod;
       return this;
     }
 
     //-----------------------------------------------------------------------
     @Override
     public String toString() {
-      StringBuilder buf = new StringBuilder(64);
+      StringBuilder buf = new StringBuilder(96);
       buf.append("CashSettlement.Builder{");
-      buf.append("settlementDate").append('=').append(JodaBeanUtils.toString(settlementDate));
+      buf.append("settlementDate").append('=').append(JodaBeanUtils.toString(settlementDate)).append(',').append(' ');
+      buf.append("cashSettlementMethod").append('=').append(JodaBeanUtils.toString(cashSettlementMethod));
       buf.append('}');
       return buf.toString();
     }

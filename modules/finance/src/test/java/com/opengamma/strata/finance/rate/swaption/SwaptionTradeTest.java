@@ -47,7 +47,6 @@ public class SwaptionTradeTest {
   private static final LocalTime EXPIRY_TIME = LocalTime.of(11, 0);
   private static final ZoneId ZONE = ZoneId.of("Z");
   private static final SwaptionSettlement PHYSICAL_SETTLE = PhysicalSettlement.DEFAULT;
-  private static final SwaptionSettlement CASH_SETTLE = CashSettlement.DEFAULT;
   private static final Swaption SWAPTION = Swaption.builder()
       .expiryDate(ADJUSTABLE_EXPIRY_DATE)
       .expiryTime(EXPIRY_TIME)

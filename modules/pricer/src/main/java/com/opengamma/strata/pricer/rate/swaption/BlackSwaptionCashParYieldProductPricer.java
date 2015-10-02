@@ -5,6 +5,7 @@
  */
 package com.opengamma.strata.pricer.rate.swaption;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -24,6 +25,7 @@ import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.SwapProduct;
 import com.opengamma.strata.finance.rate.swaption.CashSettlement;
+import com.opengamma.strata.finance.rate.swaption.CashSettlementMethod;
 import com.opengamma.strata.finance.rate.swaption.ExpandedSwaption;
 import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.SwaptionProduct;
@@ -44,7 +46,11 @@ import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
  * The value of the swaption after expiry is 0. For a swaption which already expired, negative number is returned by 
  * the method, {@link BlackVolatilitySwaptionProvider#relativeTime(ZonedDateTime)}.
  */
-public class BlackSwaptionCashProductPricer {
+public class BlackSwaptionCashParYieldProductPricer {
+
+  public static final BlackSwaptionCashParYieldProductPricer DEFAULT =
+      new BlackSwaptionCashParYieldProductPricer(DiscountingSwapProductPricer.DEFAULT);
+
   /** 
    * Pricer for {@link SwapProduct}. 
    */
@@ -55,7 +61,7 @@ public class BlackSwaptionCashProductPricer {
    * 
    * @param swapPricer  the pricer for {@link Swap}
    */
-  public BlackSwaptionCashProductPricer(DiscountingSwapProductPricer swapPricer) {
+  public BlackSwaptionCashParYieldProductPricer(DiscountingSwapProductPricer swapPricer) {
     this.swapPricer = ArgChecker.notNull(swapPricer, "swap pricer");
   }
 
@@ -83,7 +89,7 @@ public class BlackSwaptionCashProductPricer {
       return CurrencyAmount.of(fixedLeg.getCurrency(), 0.0d);
     }
     double forward = swapPricer.parRate(underlying, ratesProvider);
-    double pvbp = swapPricer.getLegPricer().annuityCash(fixedLeg, forward);
+    double annuityCash = swapPricer.getLegPricer().annuityCash(fixedLeg, forward);
     double discountSettle = ratesProvider.discountFactor(
         fixedLeg.getCurrency(), ((CashSettlement) expanded.getSwaptionSettlement()).getSettlementDate());
     double strike = getStrike(fixedLeg);
@@ -92,7 +98,7 @@ public class BlackSwaptionCashProductPricer {
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
     // option required to pass the strike (in case the swap has non-constant coupon).
-    double price = pvbp * discountSettle * BlackFormulaRepository.price(forward, strike, expiry, volatility, isCall);
+    double price = annuityCash * discountSettle * BlackFormulaRepository.price(forward, strike, expiry, volatility, isCall);
     double pv = price * ((expanded.getLongShort() == LongShort.LONG) ? 1d : -1d);
     return CurrencyAmount.of(fixedLeg.getCurrency(), pv);
   }
@@ -177,8 +183,8 @@ public class BlackSwaptionCashProductPricer {
     double forward = swapPricer.parRate(underlying, ratesProvider);
     double annuityCash = swapPricer.getLegPricer().annuityCash(fixedLeg, forward);
     double annuityCashDr = swapPricer.getLegPricer().annuityCashDerivative(fixedLeg, forward);
-    double discountSettle = ratesProvider.discountFactor(
-        fixedLeg.getCurrency(), ((CashSettlement) expanded.getSwaptionSettlement()).getSettlementDate());
+    LocalDate settlementDate = ((CashSettlement) expanded.getSwaptionSettlement()).getSettlementDate();
+    double discountSettle = ratesProvider.discountFactor(fixedLeg.getCurrency(), settlementDate);
     double strike = getStrike(fixedLeg);
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
     double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
@@ -187,8 +193,8 @@ public class BlackSwaptionCashProductPricer {
     double price = BlackFormulaRepository.price(forward, strike, expiry, volatility, isCall);
     double delta = BlackFormulaRepository.delta(forward, strike, expiry, volatility, isCall);
     PointSensitivityBuilder forwardSensi = swapPricer.parRateSensitivity(underlying, ratesProvider);
-    PointSensitivityBuilder discountSettleSensi = ratesProvider.discountFactors(fixedLeg.getCurrency())
-        .zeroRatePointSensitivity(((CashSettlement) expanded.getSwaptionSettlement()).getSettlementDate());
+    PointSensitivityBuilder discountSettleSensi =
+        ratesProvider.discountFactors(fixedLeg.getCurrency()).zeroRatePointSensitivity(settlementDate);
     double sign = (expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0;
     return forwardSensi.multipliedBy(sign * discountSettle * (annuityCash * delta + annuityCashDr * price))
         .combinedWith(discountSettleSensi.multipliedBy(sign * annuityCash * price));
@@ -252,6 +258,9 @@ public class BlackSwaptionCashProductPricer {
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");
     ArgChecker.isTrue(swaption.getSwaptionSettlement().getSettlementType().equals(SettlementType.CASH),
         "swaption should be cash settlement");
+    CashSettlement cashSettle = (CashSettlement) swaption.getSwaptionSettlement();
+    ArgChecker.isTrue(cashSettle.getCashSettlementMethod().equals(CashSettlementMethod.PAR_YIELD),
+        "cash settlement method should be par yield");
   }
 
 }

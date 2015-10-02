@@ -32,6 +32,7 @@ import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.type.IborIborSwapConvention;
 import com.opengamma.strata.finance.rate.swaption.CashSettlement;
+import com.opengamma.strata.finance.rate.swaption.CashSettlementMethod;
 import com.opengamma.strata.finance.rate.swaption.PhysicalSettlement;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.finance.rate.swaption.SwaptionSettlement;
@@ -73,7 +74,10 @@ public class NormalSwaptionPhysicalProductPricerTest {
       .toTrade(SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE.plusYears(10),
           BUY, NOTIONAL, STRIKE).getProduct();
   private static final SwaptionSettlement PHYSICAL_SETTLE = PhysicalSettlement.DEFAULT;
-  private static final SwaptionSettlement CASH_SETTLE = CashSettlement.DEFAULT;
+  private static final SwaptionSettlement CASH_SETTLE = CashSettlement.builder()
+      .cashSettlementMethod(CashSettlementMethod.PAR_YIELD)
+      .settlementDate(SWAP_REC.getStartDate())
+      .build();
   
   private static final Swaption SWAPTION_LONG_REC = Swaption.builder()
       .swaptionSettlement(PHYSICAL_SETTLE)
