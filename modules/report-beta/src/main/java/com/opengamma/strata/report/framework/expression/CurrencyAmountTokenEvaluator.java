@@ -24,7 +24,7 @@ public class CurrencyAmountTokenEvaluator
   }
 
   @Override
-  public ImmutableSet<String> tokens(CurrencyAmount amount) {
+  public ImmutableSet<String>tokens(CurrencyAmount amount) {
     return ImmutableSet.of(CURRENCY_FIELD, AMOUNT_FIELD);
   }
 
