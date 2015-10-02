@@ -58,6 +58,10 @@ public class BlackSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     Swaption product = trade.getProduct();
     CurrencyAmount pvProduct = PRICER_PRODUCT.presentValue(product, ratesProvider, volatilityProvider);
     Payment premium = trade.getPremium();
@@ -78,6 +82,10 @@ public class BlackSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     return MultiCurrencyAmount.of(presentValue(trade, ratesProvider, volatilityProvider));
   }
 
@@ -114,6 +122,10 @@ public class BlackSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     Swaption product = trade.getProduct();
     PointSensitivityBuilder pvcsProduct =
         PRICER_PRODUCT.presentValueSensitivityStickyStrike(product, ratesProvider, volatilityProvider);
@@ -137,6 +149,10 @@ public class BlackSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       BlackVolatilitySwaptionProvider volatilityProvider) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     Swaption product = trade.getProduct();
     return PRICER_PRODUCT.presentValueSensitivityBlackVolatility(product, ratesProvider, volatilityProvider);
   }

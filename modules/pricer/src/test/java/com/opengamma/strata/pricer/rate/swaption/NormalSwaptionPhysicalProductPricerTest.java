@@ -21,10 +21,8 @@ import java.time.ZoneId;
 
 import org.testng.annotations.Test;
 
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.EuropeanVanillaOption;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.NormalFunctionData;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.NormalPriceFunction;
 import com.opengamma.strata.basics.LongShort;
+import com.opengamma.strata.basics.PutCall;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.MultiCurrencyAmount;
 import com.opengamma.strata.basics.date.AdjustableDate;
@@ -32,7 +30,10 @@ import com.opengamma.strata.finance.rate.swap.Swap;
 import com.opengamma.strata.finance.rate.swap.SwapLegType;
 import com.opengamma.strata.finance.rate.swap.type.IborIborSwapConvention;
 import com.opengamma.strata.finance.rate.swaption.CashSettlement;
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
 import com.opengamma.strata.finance.rate.swaption.CashSettlementMethod;
+=======
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
 import com.opengamma.strata.finance.rate.swaption.PhysicalSettlement;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.finance.rate.swaption.SwaptionSettlement;
@@ -42,6 +43,12 @@ import com.opengamma.strata.market.sensitivity.PointSensitivity;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
+=======
+import com.opengamma.strata.pricer.impl.option.EuropeanVanillaOption;
+import com.opengamma.strata.pricer.impl.option.NormalFunctionData;
+import com.opengamma.strata.pricer.impl.option.NormalPriceFunction;
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityCalculator;
@@ -51,6 +58,10 @@ import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityC
  */
 @Test
 public class NormalSwaptionPhysicalProductPricerTest {
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   private static final LocalDate VALUATION_DATE = RatesProviderDataSets.VAL_DATE_2014_01_22;
   private static final LocalDate SWAPTION_EXERCISE_DATE = VALUATION_DATE.plusYears(5);
   private static final LocalDate SWAPTION_PAST_EXERCISE_DATE = VALUATION_DATE.minusYears(1);
@@ -74,11 +85,16 @@ public class NormalSwaptionPhysicalProductPricerTest {
       .toTrade(SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE, SWAPTION_PAST_EXERCISE_DATE.plusYears(10),
           BUY, NOTIONAL, STRIKE).getProduct();
   private static final SwaptionSettlement PHYSICAL_SETTLE = PhysicalSettlement.DEFAULT;
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   private static final SwaptionSettlement CASH_SETTLE = CashSettlement.builder()
       .cashSettlementMethod(CashSettlementMethod.PAR_YIELD)
       .settlementDate(SWAP_REC.getStartDate())
       .build();
   
+=======
+  private static final SwaptionSettlement CASH_SETTLE = CashSettlement.DEFAULT;
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   private static final Swaption SWAPTION_LONG_REC = Swaption.builder()
       .swaptionSettlement(PHYSICAL_SETTLE)
       .expiryDate(AdjustableDate.of(SWAPTION_EXERCISE_DATE))
@@ -149,9 +165,13 @@ public class NormalSwaptionPhysicalProductPricerTest {
       NormalSwaptionPhysicalProductPricer.DEFAULT;
   private static final DiscountingSwapProductPricer PRICER_SWAP = DiscountingSwapProductPricer.DEFAULT;
   private static final double FD_SHIFT = 0.5E-8;
-  private static final RatesFiniteDifferenceSensitivityCalculator FINITE_DIFFERENCE_CALCULATOR = 
+  private static final RatesFiniteDifferenceSensitivityCalculator FINITE_DIFFERENCE_CALCULATOR =
       new RatesFiniteDifferenceSensitivityCalculator(FD_SHIFT);
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   private static final ImmutableRatesProvider MULTI_USD = RatesProviderDataSets.MULTI_USD.toBuilder()
       .valuationDate(VALUATION_DATE)
       .build();
@@ -159,7 +179,11 @@ public class NormalSwaptionPhysicalProductPricerTest {
       SwaptionNormalVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_STD;
   private static final NormalVolatilitySwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT =
       SwaptionNormalVolatilityDataSets.NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT;
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   private static final double TOLERANCE_PV = 1.0E-2;
   private static final double TOLERANCE_PV_DELTA = 1.0E+2;
   private static final double TOLERANCE_PV_VEGA = 1.0E+4;
@@ -167,64 +191,89 @@ public class NormalSwaptionPhysicalProductPricerTest {
 
   //-------------------------------------------------------------------------
   public void validate_physical_settlement() {
-    assertThrowsIllegalArg(() -> 
-    PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_REC_CASH, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD));
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_REC_CASH, MULTI_USD,
+        NORMAL_VOL_SWAPTION_PROVIDER_USD));
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void validate_swap_fixed_leg() {
-    assertThrowsIllegalArg(() -> 
-    PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_BASIS, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD));
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_BASIS, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD));
   }
 
   //-------------------------------------------------------------------------
   public void test_implied_volatility() {
     double forward = PRICER_SWAP.parRate(SWAP_REC, MULTI_USD);
-    double volExpected = NORMAL_VOL_SWAPTION_PROVIDER_USD.getVolatility(SWAPTION_LONG_REC.getExpiryDateTime(), 
+    double volExpected = NORMAL_VOL_SWAPTION_PROVIDER_USD.getVolatility(SWAPTION_LONG_REC.getExpiryDateTime(),
         SWAP_TENOR_YEAR, STRIKE, forward);
     double volComputed = PRICER_SWAPTION_NORMAL
         .impliedVolatility(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(volComputed, volExpected, TOLERANCE_RATE);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void test_implied_volatility_after_expiry() {
-    assertThrowsIllegalArg(() -> 
-    PRICER_SWAPTION_NORMAL.impliedVolatility(SWAPTION_PAST, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD));
+    assertThrowsIllegalArg(() -> PRICER_SWAPTION_NORMAL.impliedVolatility(SWAPTION_PAST, MULTI_USD,
+        NORMAL_VOL_SWAPTION_PROVIDER_USD));
   }
 
   //-------------------------------------------------------------------------
   public void present_value_formula() {
     double forward = PRICER_SWAP.parRate(SWAP_REC, MULTI_USD);
     double pvbp = PRICER_SWAP.getLegPricer().pvbp(SWAP_REC.getLegs(SwapLegType.FIXED).get(0), MULTI_USD);
-    double volatility = NORMAL_VOL_SWAPTION_PROVIDER_USD.getVolatility(SWAPTION_LONG_REC.getExpiryDateTime(), 
+    double volatility = NORMAL_VOL_SWAPTION_PROVIDER_USD.getVolatility(SWAPTION_LONG_REC.getExpiryDateTime(),
         SWAP_TENOR_YEAR, STRIKE, forward);
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
     NormalFunctionData normalData = new NormalFunctionData(forward, Math.abs(pvbp), volatility);
     double expiry = NORMAL_VOL_SWAPTION_PROVIDER_USD.relativeTime(SWAPTION_LONG_REC.getExpiryDateTime());
     EuropeanVanillaOption option = new EuropeanVanillaOption(STRIKE, expiry, false);
+=======
+    NormalFunctionData normalData = NormalFunctionData.of(forward, Math.abs(pvbp), volatility);
+    double expiry = NORMAL_VOL_SWAPTION_PROVIDER_USD.relativeTime(SWAPTION_LONG_REC.getExpiryDateTime());
+    EuropeanVanillaOption option = EuropeanVanillaOption.of(STRIKE, expiry, PutCall.PUT);
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
     double pvExpected = NORMAL.getPriceFunction(option).evaluate(normalData);
-    CurrencyAmount pvComputed = 
+    CurrencyAmount pvComputed =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvComputed.getCurrency(), USD);
     assertEquals(pvComputed.getAmount(), pvExpected, TOLERANCE_PV);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_long_short_parity() {
-    CurrencyAmount pvLong = 
+    CurrencyAmount pvLong =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    CurrencyAmount pvShort = 
+    CurrencyAmount pvShort =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_SHORT_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvLong.getAmount(), -pvShort.getAmount(), TOLERANCE_PV);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_payer_receiver_parity() {
-    CurrencyAmount pvLongPay = 
+    CurrencyAmount pvLongPay =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    CurrencyAmount pvShortRec = 
+    CurrencyAmount pvShortRec =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_SHORT_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     MultiCurrencyAmount pvSwapPay =
         PRICER_SWAP.presentValue(SWAP_PAY, MULTI_USD);
     assertEquals(pvLongPay.getAmount() + pvShortRec.getAmount(), pvSwapPay.getAmount(USD).getAmount(), TOLERANCE_PV);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_at_expiry() {
     CurrencyAmount pvRec =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_REC_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
@@ -233,7 +282,11 @@ public class NormalSwaptionPhysicalProductPricerTest {
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_PAY_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvPay.getAmount(), PRICER_SWAP.presentValue(SWAP_PAY, MULTI_USD).getAmount(USD).getAmount(), TOLERANCE_PV);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_after_expiry() {
     CurrencyAmount pv = PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_PAST, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pv.getAmount(), 0.0d, TOLERANCE_PV);
@@ -241,9 +294,9 @@ public class NormalSwaptionPhysicalProductPricerTest {
 
   //-------------------------------------------------------------------------  
   public void currency_exposure() {
-    CurrencyAmount pv = 
+    CurrencyAmount pv =
         PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    MultiCurrencyAmount ce = 
+    MultiCurrencyAmount ce =
         PRICER_SWAPTION_NORMAL.currencyExposure(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pv.getAmount(), ce.getAmount(USD).getAmount(), TOLERANCE_PV);
   }
@@ -257,7 +310,11 @@ public class NormalSwaptionPhysicalProductPricerTest {
         (p) -> PRICER_SWAPTION_NORMAL.presentValue(SWAPTION_SHORT_REC, p, NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT));
     assertTrue(pvpsAd.equalWithTolerance(pvpsFd, TOLERANCE_PV_DELTA));
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_sensitivity_long_short_parity() {
     PointSensitivities pvptLong = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityStickyStrike(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD).build();
@@ -267,7 +324,11 @@ public class NormalSwaptionPhysicalProductPricerTest {
     CurveCurrencyParameterSensitivities pvpsShort = MULTI_USD.curveParameterSensitivity(pvptShort);
     assertTrue(pvpsLong.equalWithTolerance(pvpsShort.multipliedBy(-1.0), TOLERANCE_PV_DELTA));
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_sensitivity_payer_receiver_parity() {
     PointSensitivities pvptLongPay = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityStickyStrike(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD).build();
@@ -279,7 +340,11 @@ public class NormalSwaptionPhysicalProductPricerTest {
     CurveCurrencyParameterSensitivities pvpsSwapRec = MULTI_USD.curveParameterSensitivity(pvptSwapRec);
     assertTrue(pvpsLongPay.combinedWith(pvpsShortRec).equalWithTolerance(pvpsSwapRec, TOLERANCE_PV_DELTA));
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_sensitivity_at_expiry() {
     PointSensitivities sensiRec = PRICER_SWAPTION_NORMAL.presentValueSensitivityStickyStrike(
         SWAPTION_REC_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD).build();
@@ -298,7 +363,7 @@ public class NormalSwaptionPhysicalProductPricerTest {
         .presentValueSensitivityStickyStrike(SWAPTION_PAST, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(pvpts, PointSensitivityBuilder.none());
   }
-  
+
   //-------------------------------------------------------------------------
   public void present_value_sensitivityNormalVolatility_FD() {
     double shiftVol = 1.0E-4;
@@ -318,22 +383,40 @@ public class NormalSwaptionPhysicalProductPricerTest {
     double forward = PRICER_SWAP.parRate(SWAP_REC, MULTI_USD);
     assertEquals(pvnvsAd.getForward(), forward, TOLERANCE_RATE);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_sensitivityNormalVolatility_long_short_parity() {
     SwaptionSensitivity pvptLongPay = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_LONG_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     SwaptionSensitivity pvptShortRec = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_SHORT_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    assertEquals(pvptLongPay.getSensitivity(), - pvptShortRec.getSensitivity(), TOLERANCE_PV_VEGA);    
+    assertEquals(pvptLongPay.getSensitivity(), -pvptShortRec.getSensitivity(), TOLERANCE_PV_VEGA);
   }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
+=======
+
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   public void present_value_sensitivityNormalVolatility_payer_receiver_parity() {
     SwaptionSensitivity pvptLongPay = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_LONG_PAY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     SwaptionSensitivity pvptShortRec = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_SHORT_REC, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
-    assertEquals(pvptLongPay.getSensitivity() + pvptShortRec.getSensitivity(), 0, TOLERANCE_PV_VEGA);    
+    assertEquals(pvptLongPay.getSensitivity() + pvptShortRec.getSensitivity(), 0, TOLERANCE_PV_VEGA);
   }
+
+  public void present_value_sensitivityBlackVolatility_at_expiry() {
+    SwaptionSensitivity sensiRec = PRICER_SWAPTION_NORMAL.presentValueSensitivityNormalVolatility(
+        SWAPTION_REC_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    assertEquals(sensiRec.getSensitivity(), 0d, TOLERANCE_PV);
+    SwaptionSensitivity sensiPay = PRICER_SWAPTION_NORMAL.presentValueSensitivityNormalVolatility(
+        SWAPTION_PAY_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
+    assertEquals(sensiPay.getSensitivity(), 0d, TOLERANCE_PV);
+  }
+<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
   
   public void present_value_sensitivityBlackVolatility_at_expiry() {
     SwaptionSensitivity sensiRec = PRICER_SWAPTION_NORMAL.presentValueSensitivityNormalVolatility(
@@ -343,11 +426,13 @@ public class NormalSwaptionPhysicalProductPricerTest {
         SWAPTION_PAY_AT_EXPIRY, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(sensiPay.getSensitivity(), 0d, TOLERANCE_PV);
   }
+=======
+>>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalProductPricerTest.java
 
   public void present_value_sensitivityNormalVolatility_after_expiry() {
     SwaptionSensitivity v = PRICER_SWAPTION_NORMAL
         .presentValueSensitivityNormalVolatility(SWAPTION_PAST, MULTI_USD, NORMAL_VOL_SWAPTION_PROVIDER_USD);
     assertEquals(v.getSensitivity(), 0.0d, TOLERANCE_PV_VEGA);
   }
-  
+
 }
