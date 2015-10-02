@@ -55,11 +55,7 @@ public interface BlackVolatilitySwaptionProvider {
    * @return the relative year fraction
    */
   public abstract double relativeTime(ZonedDateTime date);
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilitySwaptionProvider.java
-  
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilitySwaptionProvider.java
   /**
    * Returns the tenor of the swap based on its start date and end date.
    * 

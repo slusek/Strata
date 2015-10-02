@@ -27,13 +27,6 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-<<<<<<< HEAD
-import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolatorFactory;
-import com.opengamma.analytics.math.interpolation.GridInterpolator2D;
-import com.opengamma.analytics.math.interpolation.Interpolator1D;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
-=======
->>>>>>> master
 import com.opengamma.strata.collect.tuple.DoublesPair;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConvention;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConventions;
@@ -46,36 +39,24 @@ import com.opengamma.strata.market.surface.SurfaceName;
 import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
 import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorNodeMetadata;
 import com.opengamma.strata.market.value.ValueType;
-<<<<<<< HEAD
-=======
 import com.opengamma.strata.math.impl.interpolation.CombinedInterpolatorExtrapolatorFactory;
 import com.opengamma.strata.math.impl.interpolation.GridInterpolator2D;
 import com.opengamma.strata.math.impl.interpolation.Interpolator1D;
 import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
->>>>>>> master
 
 /**
  * Test {@link NormalVolatilityExpiryTenorSwaptionProvider}.
  */
 @Test
 public class NormalVolatilityExpiryTenorSwaptionProviderTest {
-<<<<<<< HEAD
-=======
 
->>>>>>> master
   private static final Interpolator1D LINEAR_FLAT =
       CombinedInterpolatorExtrapolatorFactory.getInterpolator(Interpolator1DFactory.LINEAR,
           Interpolator1DFactory.FLAT_EXTRAPOLATOR, Interpolator1DFactory.FLAT_EXTRAPOLATOR);
   private static final GridInterpolator2D INTERPOLATOR_2D = new GridInterpolator2D(LINEAR_FLAT, LINEAR_FLAT);
-<<<<<<< HEAD
-  private static final double[] TIME = new double[] {0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0 };
-  private static final double[] TENOR = new double[] {3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 7.0, 7.0, 7.0, 10.0, 10.0, 10.0 };
-  private static final double[] VOL = new double[] {0.14, 0.12, 0.1, 0.14, 0.13, 0.12, 0.13, 0.12, 0.11, 0.12, 0.11, 0.1 };
-=======
   private static final double[] TIME = new double[] {0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0, 0.25, 0.5, 1.0};
   private static final double[] TENOR = new double[] {3.0, 3.0, 3.0, 5.0, 5.0, 5.0, 7.0, 7.0, 7.0, 10.0, 10.0, 10.0};
   private static final double[] VOL = new double[] {0.14, 0.12, 0.1, 0.14, 0.13, 0.12, 0.13, 0.12, 0.11, 0.12, 0.11, 0.1};
->>>>>>> master
   private static final SurfaceMetadata METADATA_WITH_PARAM;
   private static final SurfaceMetadata METADATA;
   static {
@@ -118,17 +99,10 @@ public class NormalVolatilityExpiryTenorSwaptionProviderTest {
           SURFACE, CONVENTION, ACT_365F, VALUATION_DATE, VALUATION_TIME, LONDON_ZONE);
 
   private static final ZonedDateTime[] TEST_OPTION_EXPIRY = new ZonedDateTime[] {
-<<<<<<< HEAD
-    dateUtc(2015, 2, 17), dateUtc(2015, 5, 17), dateUtc(2015, 6, 17), dateUtc(2017, 2, 17) };
-  private static final int NB_TEST = TEST_OPTION_EXPIRY.length;
-  private static final double[] TEST_TENOR = new double[] {2.0, 6.0, 7.0, 15.0 };
-  private static final double[] TEST_SENSITIVITY = new double[] {1.0, 1.0, 1.0, 1.0 };
-=======
       dateUtc(2015, 2, 17), dateUtc(2015, 5, 17), dateUtc(2015, 6, 17), dateUtc(2017, 2, 17)};
   private static final int NB_TEST = TEST_OPTION_EXPIRY.length;
   private static final double[] TEST_TENOR = new double[] {2.0, 6.0, 7.0, 15.0};
   private static final double[] TEST_SENSITIVITY = new double[] {1.0, 1.0, 1.0, 1.0};
->>>>>>> master
   private static final double TEST_FORWARD = 0.025; // not used internally
   private static final double TEST_STRIKE = 0.03; // not used internally
 
@@ -221,8 +195,5 @@ public class NormalVolatilityExpiryTenorSwaptionProviderTest {
         SURFACE, CONVENTION, ACT_360, VALUATION_DATE);
     coverBeanEquals(test1, test2);
   }
-<<<<<<< HEAD
-=======
 
->>>>>>> master
 }

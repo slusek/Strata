@@ -48,13 +48,8 @@ import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorN
  */
 @BeanDefinition(builderScope = "private")
 public final class BlackVolatilityExpiryTenorSwaptionProvider
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
-  implements  BlackVolatilitySwaptionProvider, ImmutableBean, Serializable { 
-  
-=======
     implements BlackVolatilitySwaptionProvider, ImmutableBean, Serializable {
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
   /** 
    * The normal volatility surface. 
    * <p>
@@ -97,16 +92,10 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
       FixedIborSwapConvention convention,
       DayCount dayCount,
       ZonedDateTime valuationDateTime) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
-    return new BlackVolatilityExpiryTenorSwaptionProvider(surface, convention, dayCount, valuationDateTime);
-  }
-  
-=======
 
     return new BlackVolatilityExpiryTenorSwaptionProvider(surface, convention, dayCount, valuationDateTime);
   }
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
   /**
    * Creates a provider from the implied volatility surface and the date, time and zone for which it is valid.
    * 
@@ -125,10 +114,7 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
       LocalDate valuationDate,
       LocalTime valuationTime,
       ZoneId valuationZone) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
     return of(surface, convention, dayCount, valuationDate.atTime(valuationTime).atZone(valuationZone));
   }
 
@@ -148,10 +134,7 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
       FixedIborSwapConvention convention,
       DayCount dayCount,
       LocalDate valuationDate) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
     return of(surface, convention, dayCount, valuationDate.atTime(LocalTime.NOON).atZone(ZoneOffset.UTC));
   }
 
@@ -223,52 +206,6 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
     return surfaceMetadata.withParameterMetadata(sortedMetaList);
   }
 
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
-  @Override
-  public SurfaceCurrencyParameterSensitivity surfaceCurrencyParameterSensitivity(SwaptionSensitivity point) {
-    ArgChecker.isTrue(point.getConvention().equals(convention),
-        "Swap convention of provider should be the same as swap convention of swaption sensitivity");
-    double expiry = relativeTime(point.getExpiry());
-    double tenor = point.getTenor();
-    Map<DoublesPair, Double> result = surface.zValueParameterSensitivity(expiry, tenor);
-    SurfaceCurrencyParameterSensitivity parameterSensi = SurfaceCurrencyParameterSensitivity.of(
-        updateSurfaceMetadata(result.keySet()), point.getCurrency(), Doubles.toArray(result.values()));
-    return parameterSensi.multipliedBy(point.getSensitivity());
-  }
-
-  private SurfaceMetadata updateSurfaceMetadata(Set<DoublesPair> pairs) {
-    SurfaceMetadata surfaceMetadata = surface.getMetadata();
-    List<SurfaceParameterMetadata> sortedMetaList = new ArrayList<SurfaceParameterMetadata>();
-    if (surfaceMetadata.getParameterMetadata().isPresent()) {
-      List<SurfaceParameterMetadata> metaList =
-          new ArrayList<SurfaceParameterMetadata>(surfaceMetadata.getParameterMetadata().get());
-      for (DoublesPair pair : pairs) {
-        metadataLoop:
-        for (SurfaceParameterMetadata parameterMetadata : metaList) {
-          ArgChecker.isTrue(parameterMetadata instanceof SwaptionVolatilitySurfaceExpiryTenorNodeMetadata,
-              "surface parameter metadata must be instance of SwaptionVolatilitySurfaceExpiryTenorNodeMetadata");
-          SwaptionVolatilitySurfaceExpiryTenorNodeMetadata casted =
-              (SwaptionVolatilitySurfaceExpiryTenorNodeMetadata) parameterMetadata;
-          if (pair.getFirst() == casted.getYearFraction() && pair.getSecond() == casted.getTenor()) {
-            sortedMetaList.add(casted);
-            metaList.remove(parameterMetadata);
-            break metadataLoop;
-          }
-        }
-      }
-      ArgChecker.isTrue(metaList.size() == 0, "mismatch between surface parameter metadata list and doubles pair list");
-    } else {
-      for (DoublesPair pair : pairs) {
-        SwaptionVolatilitySurfaceExpiryTenorNodeMetadata parameterMetadata =
-            SwaptionVolatilitySurfaceExpiryTenorNodeMetadata.of(pair.getFirst(), pair.getSecond());
-        sortedMetaList.add(parameterMetadata);
-      }
-    }
-    return surfaceMetadata.withParameterMetadata(sortedMetaList);
-  }
-  
-=======
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/BlackVolatilityExpiryTenorSwaptionProvider.java
   //------------------------- AUTOGENERATED START -------------------------
   ///CLOVER:OFF
   /**

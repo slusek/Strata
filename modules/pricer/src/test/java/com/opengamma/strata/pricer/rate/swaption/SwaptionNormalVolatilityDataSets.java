@@ -15,13 +15,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolatorFactory;
-import com.opengamma.analytics.math.interpolation.GridInterpolator2D;
-import com.opengamma.analytics.math.interpolation.Interpolator1D;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
-=======
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
 import com.opengamma.strata.basics.date.DayCounts;
 import com.opengamma.strata.basics.schedule.Frequency;
@@ -34,24 +27,17 @@ import com.opengamma.strata.market.surface.NodalSurface;
 import com.opengamma.strata.market.surface.SurfaceMetadata;
 import com.opengamma.strata.market.surface.SurfaceName;
 import com.opengamma.strata.market.value.ValueType;
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-=======
 import com.opengamma.strata.math.impl.interpolation.CombinedInterpolatorExtrapolatorFactory;
 import com.opengamma.strata.math.impl.interpolation.GridInterpolator2D;
 import com.opengamma.strata.math.impl.interpolation.Interpolator1D;
 import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 
 /**
  * Black volatility data sets for testing.
  */
 public class SwaptionNormalVolatilityDataSets {
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-  
-=======
 
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
   private static final double BP1 = 1.0E-4;
 
   private static final Interpolator1D LINEAR_FLAT =
@@ -68,11 +54,7 @@ public class SwaptionNormalVolatilityDataSets {
           5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 30.0, 30.0, 30.0, 30.0};
   private static final double[] NORMAL_VOL =
       new double[] {0.010, 0.011, 0.012, 0.013, 0.011, 0.012, 0.013, 0.014,
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-        0.012, 0.013, 0.014, 0.015, 0.013, 0.014, 0.015, 0.016, 0.014, 0.015, 0.016, 0.017 };
-=======
           0.012, 0.013, 0.014, 0.015, 0.013, 0.014, 0.015, 0.016, 0.014, 0.015, 0.016, 0.017};
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
   private static final SurfaceMetadata METADATA = DefaultSurfaceMetadata.builder()
       .xValueType(ValueType.YEAR_FRACTION)
       .yValueType(ValueType.YEAR_FRACTION)
@@ -112,17 +94,6 @@ public class SwaptionNormalVolatilityDataSets {
   }
 
   //     =====     Flat volatilities for testing     =====
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-  
-  private static final double[] TIMES_FLAT = new double[] {0.0, 100.0, 0.0, 100.0 };
-  private static final double[] TENOR_FLAT = new double[] {0.0, 0.0, 30.0, 30.0 };
-  private static final double[] NORMAL_VOL_FLAT = new double[] { 0.01, 0.01, 0.01, 0.01};  
-  private static final InterpolatedNodalSurface SURFACE_FLAT =
-      InterpolatedNodalSurface.of(METADATA, TIMES_FLAT, TENOR_FLAT, NORMAL_VOL_FLAT, INTERPOLATOR_2D);
-  
-  public static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT = 
-      NormalVolatilityExpiryTenorSwaptionProvider.of(SURFACE_FLAT, USD_1Y_LIBOR3M, DayCounts.ACT_365F, 
-=======
 
   private static final double[] TIMES_FLAT = new double[] {0.0, 100.0, 0.0, 100.0};
   private static final double[] TENOR_FLAT = new double[] {0.0, 0.0, 30.0, 30.0};
@@ -132,7 +103,6 @@ public class SwaptionNormalVolatilityDataSets {
 
   public static final NormalVolatilityExpiryTenorSwaptionProvider NORMAL_VOL_SWAPTION_PROVIDER_USD_FLAT =
       NormalVolatilityExpiryTenorSwaptionProvider.of(SURFACE_FLAT, USD_1Y_LIBOR3M, DayCounts.ACT_365F,
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
           VALUATION_DATE_STD, VALUATION_TIME_STD, VALUATION_ZONE_STD);
 
   //     =====     Market data as of 2014-03-20     =====
@@ -146,21 +116,12 @@ public class SwaptionNormalVolatilityDataSets {
       10.0, 10.0, 10.0, 10.0, 10.0
   };
   private static final double[] TENORS_20150320 = new double[] {
-<<<<<<< HEAD:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
-    1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0,
-    1.0, 2.0, 5.0, 10.0, 30.0
-=======
       1.0, 2.0, 5.0, 10.0, 30.0,
       1.0, 2.0, 5.0, 10.0, 30.0,
       1.0, 2.0, 5.0, 10.0, 30.0,
       1.0, 2.0, 5.0, 10.0, 30.0,
       1.0, 2.0, 5.0, 10.0, 30.0,
       1.0, 2.0, 5.0, 10.0, 30.0
->>>>>>> master:modules/pricer/src/test/java/com/opengamma/strata/pricer/rate/swaption/SwaptionNormalVolatilityDataSets.java
   };
   private static final double[] NORMAL_VOL_20150320_BP = new double[] {
       43.6, 65.3, 88, 87.5, 88, // 3M

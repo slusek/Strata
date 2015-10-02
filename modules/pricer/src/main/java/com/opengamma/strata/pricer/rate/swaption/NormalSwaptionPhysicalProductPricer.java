@@ -8,12 +8,9 @@ package com.opengamma.strata.pricer.rate.swaption;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.EuropeanVanillaOption;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.NormalFunctionData;
-import com.opengamma.analytics.financial.model.option.pricing.analytic.formula.NormalPriceFunction;
-import com.opengamma.analytics.math.function.Function1D;
 import com.opengamma.strata.basics.LongShort;
 import com.opengamma.strata.basics.PayReceive;
+import com.opengamma.strata.basics.PutCall;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.MultiCurrencyAmount;
 import com.opengamma.strata.collect.ArgChecker;
@@ -28,6 +25,10 @@ import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.finance.rate.swaption.SwaptionProduct;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
+import com.opengamma.strata.math.impl.function.Function1D;
+import com.opengamma.strata.pricer.impl.option.EuropeanVanillaOption;
+import com.opengamma.strata.pricer.impl.option.NormalFunctionData;
+import com.opengamma.strata.pricer.impl.option.NormalPriceFunction;
 import com.opengamma.strata.pricer.rate.RatesProvider;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 
@@ -44,6 +45,7 @@ import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
  * the method, {@link NormalVolatilitySwaptionProvider#relativeTime(ZonedDateTime)}.
  */
 public class NormalSwaptionPhysicalProductPricer {
+
   /**
    * Default implementation.
    */
@@ -57,7 +59,7 @@ public class NormalSwaptionPhysicalProductPricer {
    * Normal model pricing function. 
    */
   public static final NormalPriceFunction NORMAL = new NormalPriceFunction();
-  
+
   /**
    * Creates an instance.
    * 
@@ -66,7 +68,8 @@ public class NormalSwaptionPhysicalProductPricer {
   public NormalSwaptionPhysicalProductPricer(DiscountingSwapProductPricer swapPricer) {
     this.swapPricer = ArgChecker.notNull(swapPricer, "swap pricer");
   }
-  
+
+  //-------------------------------------------------------------------------
   /**
    * Calculates the present value of the swaption product.
    * <p>
@@ -81,13 +84,14 @@ public class NormalSwaptionPhysicalProductPricer {
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
+
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
     double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
-    if(expiry < 0.0d) { // Option has expired already
+    if (expiry < 0.0d) { // Option has expired already
       return CurrencyAmount.of(fixedLeg.getCurrency(), 0.0d);
     }
     double forward = swapPricer.parRate(underlying, ratesProvider);
@@ -95,15 +99,15 @@ public class NormalSwaptionPhysicalProductPricer {
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
     double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
-    NormalFunctionData normalData = new NormalFunctionData(forward, Math.abs(pvbp), volatility);
+    NormalFunctionData normalData = NormalFunctionData.of(forward, Math.abs(pvbp), volatility);
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
-    EuropeanVanillaOption option = new EuropeanVanillaOption(strike, expiry, isCall);
+    EuropeanVanillaOption option = EuropeanVanillaOption.of(strike, expiry, isCall ? PutCall.CALL : PutCall.PUT);
     // option required to pass the strike (in case the swap has non-constant coupon).
     Function1D<NormalFunctionData, Double> func = NORMAL.getPriceFunction(option);
     double pv = func.evaluate(normalData) * ((expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0);
     return CurrencyAmount.of(fixedLeg.getCurrency(), pv);
-  }  
+  }
 
   //-------------------------------------------------------------------------
   /**
@@ -118,6 +122,7 @@ public class NormalSwaptionPhysicalProductPricer {
       Swaption swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
+
     return MultiCurrencyAmount.of(presentValue(swaption, ratesProvider, volatilityProvider));
   }
 
@@ -134,6 +139,7 @@ public class NormalSwaptionPhysicalProductPricer {
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
+
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
@@ -164,13 +170,14 @@ public class NormalSwaptionPhysicalProductPricer {
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
+
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
     double expiry = volatilityProvider.relativeTime(expiryDateTime);
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
-    if(expiry < 0.0d) { // Option has expired already
+    if (expiry < 0.0d) { // Option has expired already
       return PointSensitivityBuilder.none();
     }
     double forward = swapPricer.parRate(underlying, ratesProvider);
@@ -178,10 +185,10 @@ public class NormalSwaptionPhysicalProductPricer {
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
     double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
-    NormalFunctionData normalData = new NormalFunctionData(forward, 1.0d, volatility);
+    NormalFunctionData normalData = NormalFunctionData.of(forward, 1.0d, volatility);
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
-    EuropeanVanillaOption option = new EuropeanVanillaOption(strike, expiry, isCall);
+    EuropeanVanillaOption option = EuropeanVanillaOption.of(strike, expiry, isCall ? PutCall.CALL : PutCall.PUT);
     // option required to pass the strike (in case the swap has non-constant coupon).
     // Backward sweep
     PointSensitivityBuilder pvbpDr = swapPricer.getLegPricer().pvbpSensitivity(fixedLeg, ratesProvider);
@@ -208,6 +215,7 @@ public class NormalSwaptionPhysicalProductPricer {
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
+
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
     ZonedDateTime expiryDateTime = expanded.getExpiryDateTime();
@@ -217,16 +225,16 @@ public class NormalSwaptionPhysicalProductPricer {
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
     double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
-    if(expiry < 0.0d) { // Option has expired already
+    if (expiry < 0.0d) { // Option has expired already
       return SwaptionSensitivity.of(volatilityProvider.getConvention(), expiryDateTime, tenor, strike, 0.0d,
-        fixedLeg.getCurrency(), 0.0d);
+          fixedLeg.getCurrency(), 0.0d);
     }
     double forward = swapPricer.parRate(underlying, ratesProvider);
     double volatility = volatilityProvider.getVolatility(expiryDateTime, tenor, strike, forward);
-    NormalFunctionData normalData = new NormalFunctionData(forward, Math.abs(pvbp), volatility);
+    NormalFunctionData normalData = NormalFunctionData.of(forward, Math.abs(pvbp), volatility);
     boolean isCall = (fixedLeg.getPayReceive() == PayReceive.PAY);
     // Payer at strike is exercise when rate > strike, i.e. call on rate
-    EuropeanVanillaOption option = new EuropeanVanillaOption(strike, expiry, isCall);
+    EuropeanVanillaOption option = EuropeanVanillaOption.of(strike, expiry, isCall ? PutCall.CALL : PutCall.PUT);
     // option required to pass the strike (in case the swap has non-constant coupon).
     // Backward sweep
     double vega = NORMAL.getVega(option, normalData) * ((expanded.getLongShort() == LongShort.LONG) ? 1.0 : -1.0);
@@ -236,15 +244,15 @@ public class NormalSwaptionPhysicalProductPricer {
 
   // check that one leg is fixed and return it
   private ExpandedSwapLeg fixedLeg(ExpandedSwap swap) {
-  ArgChecker.isFalse(swap.isCrossCurrency(), "swap should be single currency");
-  // find fixed leg
-  List<ExpandedSwapLeg> fixedLegs = swap.getLegs(SwapLegType.FIXED);
-  if (fixedLegs.isEmpty()) {
-    throw new IllegalArgumentException("Swap must contain a fixed leg");
+    ArgChecker.isFalse(swap.isCrossCurrency(), "swap should be single currency");
+    // find fixed leg
+    List<ExpandedSwapLeg> fixedLegs = swap.getLegs(SwapLegType.FIXED);
+    if (fixedLegs.isEmpty()) {
+      throw new IllegalArgumentException("Swap must contain a fixed leg");
+    }
+    return fixedLegs.get(0);
   }
-  return fixedLegs.get(0);
-  }
-  
+
   // validate that the rates and volatilities providers are coherent
   private void validate(RatesProvider ratesProvider, ExpandedSwaption swaption,
       NormalVolatilitySwaptionProvider volatilityProvider) {

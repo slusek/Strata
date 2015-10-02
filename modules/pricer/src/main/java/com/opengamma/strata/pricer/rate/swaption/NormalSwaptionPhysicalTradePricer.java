@@ -58,10 +58,7 @@ public class NormalSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
     Swaption product = trade.getProduct();
     CurrencyAmount pvProduct = PRICER_PRODUCT.presentValue(product, ratesProvider, volatilityProvider);
     Payment premium = trade.getPremium();
@@ -82,10 +79,7 @@ public class NormalSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
     return MultiCurrencyAmount.of(presentValue(trade, ratesProvider, volatilityProvider));
   }
 
@@ -122,10 +116,7 @@ public class NormalSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
     Swaption product = trade.getProduct();
     PointSensitivityBuilder pvcsProduct =
         PRICER_PRODUCT.presentValueSensitivityStickyStrike(product, ratesProvider, volatilityProvider);
@@ -149,10 +140,7 @@ public class NormalSwaptionPhysicalTradePricer {
       SwaptionTrade trade,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalSwaptionPhysicalTradePricer.java
     Swaption product = trade.getProduct();
     return PRICER_PRODUCT.presentValueSensitivityNormalVolatility(product, ratesProvider, volatilityProvider);
   }

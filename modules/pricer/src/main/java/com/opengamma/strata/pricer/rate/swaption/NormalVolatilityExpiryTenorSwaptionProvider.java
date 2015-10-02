@@ -48,13 +48,8 @@ import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorN
  */
 @BeanDefinition(builderScope = "private")
 public final class NormalVolatilityExpiryTenorSwaptionProvider
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
-  implements  NormalVolatilitySwaptionProvider, ImmutableBean, Serializable { 
-  
-=======
     implements NormalVolatilitySwaptionProvider, ImmutableBean, Serializable {
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
   /** The normal volatility surface. 
    * <p>
    * The order of the dimensions is expiry/swap tenor 
@@ -96,10 +91,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
       FixedIborSwapConvention convention,
       DayCount dayCount,
       ZonedDateTime valuationDateTime) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
     return new NormalVolatilityExpiryTenorSwaptionProvider(surface, convention, dayCount, valuationDateTime);
   }
 
@@ -121,10 +113,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
       LocalDate valuationDate,
       LocalTime valuationTime,
       ZoneId valuationZone) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
     return of(surface, convention, dayCount, valuationDate.atTime(valuationTime).atZone(valuationZone));
   }
 
@@ -144,10 +133,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
       FixedIborSwapConvention convention,
       DayCount dayCount,
       LocalDate valuationDate) {
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
-=======
 
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
     return of(surface, convention, dayCount, valuationDate.atTime(LocalTime.NOON).atZone(ZoneOffset.UTC));
   }
 
@@ -276,11 +262,7 @@ public final class NormalVolatilityExpiryTenorSwaptionProvider
    * /
    * @BeanDefinition(builderScope = "private")
    * public final class NormalVolatilityExpiryTenorSwaptionProvider
-<<<<<<< HEAD:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
-   * implements  NormalVolatilitySwaptionProvider, ImmutableBean, Serializable {
-=======
    * implements NormalVolatilitySwaptionProvider, ImmutableBean, Serializable {
->>>>>>> master:modules/pricer/src/main/java/com/opengamma/strata/pricer/rate/swaption/NormalVolatilityExpiryTenorSwaptionProvider.java
    * 
    * /** The normal volatility surface.
    * <p>
