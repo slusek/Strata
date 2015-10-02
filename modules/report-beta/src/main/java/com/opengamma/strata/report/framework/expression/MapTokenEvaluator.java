@@ -5,17 +5,15 @@
  */
 package com.opengamma.strata.report.framework.expression;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.opengamma.strata.collect.result.Result;
-
 /**
  * Evaluates a token against a map.
  */
-public class MapTokenEvaluator
-    extends TokenEvaluator<Map<?, ?>> {
+public class MapTokenEvaluator implements TokenParser<Map<?, ?>> {
 
   @Override
   public Class<?> getTargetType() {
@@ -30,13 +28,11 @@ public class MapTokenEvaluator
   }
 
   @Override
-  public Result<?> evaluate(Map<?, ?> map, String token) {
-    for (Object key : map.keySet()) {
-      if (token.equals(key.toString().toLowerCase())) {
-        return Result.success(map.get(key));
-      }
-    }
-    return invalidTokenFailure(map, token);
+  public ParseResult parse(Map<?, ?> map, String firstToken, List<String> remainingTokens) {
+    return map.entrySet().stream()
+        .filter(e -> firstToken.equals(e.getKey().toString().toLowerCase()))
+        .findFirst()
+        .map(e -> ParseResult.success(e.getValue(), remainingTokens))
+        .orElse(invalidTokenFailure(map, firstToken));
   }
-
 }

@@ -5,20 +5,19 @@
  */
 package com.opengamma.strata.report.framework.expression;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.joda.beans.Bean;
 
-import com.opengamma.strata.collect.Messages;
-import com.opengamma.strata.collect.result.FailureReason;
-import com.opengamma.strata.collect.result.Result;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 /**
  * Evaluates a token against a bean to produce another object.
  */
-public class BeanTokenEvaluator
-    extends TokenEvaluator<Bean> {
+public class BeanTokenEvaluator implements TokenParser<Bean> {
 
   @Override
   public Class<Bean> getTargetType() {
@@ -31,18 +30,31 @@ public class BeanTokenEvaluator
   }
 
   @Override
-  public Result<?> evaluate(Bean bean, String token) {
+  public ParseResult parse(Bean bean, String firstToken, List<String> remainingTokens) {
     Optional<String> propertyName = bean.propertyNames().stream()
-        .filter(p -> p.toLowerCase().equals(token))
+        .filter(p -> p.toLowerCase().equals(firstToken))
         .findFirst();
 
     if (propertyName.isPresent()) {
       Object propertyValue = bean.property(propertyName.get()).get();
+
       return propertyValue != null ?
-          Result.success(propertyValue) :
-          Result.failure(FailureReason.INVALID_INPUT, Messages.format("No value available for property '{}'", token));
+          ParseResult.success(propertyValue, remainingTokens) :
+          ParseResult.failure("No value available for property '{}'", firstToken);
     }
-    return invalidTokenFailure(bean, token);
+    // The bean has a single property which doesn't match the token.
+    // Return the property value without consuming any tokens.
+    // This allows skipping over properties when the bean only has a single property.
+    if (bean.propertyNames().size() == 1) {
+      String singlePropertyName = Iterables.getOnlyElement(bean.propertyNames());
+      Object propertyValue = bean.property(singlePropertyName).get();
+      List<String> tokens = ImmutableList.<String>builder().add(firstToken).addAll(remainingTokens).build();
+
+      return propertyValue != null ?
+          ParseResult.success(propertyValue, tokens) :
+          ParseResult.failure("No value available for property '{}'", firstToken);
+    }
+    return invalidTokenFailure(bean, firstToken);
   }
 
 }

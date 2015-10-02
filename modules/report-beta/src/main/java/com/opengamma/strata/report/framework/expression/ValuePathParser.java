@@ -16,8 +16,10 @@ import java.util.stream.IntStream;
 import org.joda.beans.Bean;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.opengamma.strata.basics.index.IborIndex;
+import com.opengamma.strata.collect.Messages;
 import com.opengamma.strata.collect.result.FailureReason;
 import com.opengamma.strata.collect.result.Result;
 import com.opengamma.strata.engine.Column;
@@ -47,14 +49,14 @@ public class ValuePathParser {
   /** The separator used in the value path. */
   private static final String PATH_SEPARATOR = "\\.";
 
-  private static final ImmutableList<TokenParser<?>> PARSERS = ImmutableList.of();
-      //new CurrencyAmountTokenEvaluator(),
-      //new MapTokenEvaluator(),
-      //new CurveCurrencyParameterSensitivitiesTokenEvaluator(),
-      //new CurveCurrencyParameterSensitivityTokenEvaluator(),
-      //new TradeTokenEvaluator(),
-      //new BeanTokenEvaluator(),
-      //new IterableTokenEvaluator());
+  private static final ImmutableList<TokenParser<?>> PARSERS = ImmutableList.of(
+      new CurrencyAmountTokenEvaluator(),
+      new MapTokenEvaluator(),
+      new CurveCurrencyParameterSensitivitiesTokenEvaluator(),
+      new CurveCurrencyParameterSensitivityTokenEvaluator(),
+      new TradeTokenEvaluator(),
+      new BeanTokenEvaluator(),
+      new IterableTokenEvaluator());
 
   //-------------------------------------------------------------------------
   /**
@@ -98,7 +100,7 @@ public class ValuePathParser {
 
   // Tokens always has at least one token
   private static Result<?> parse(List<String> tokens, TokenParser<Object> parser, Object target) {
-    ParseResult parseResult = parser.parse(target, tokens);
+    ParseResult parseResult = parser.parse(target, tokens.get(0), ParserUtils.tail(tokens));
 
     if (parseResult.isComplete()) {
       return parseResult.getResult();
@@ -165,46 +167,6 @@ public class ValuePathParser {
    * @param tokens  the individual tokens making up the expression
    * @return the result of evaluating the expression against the object
    */
-  static private Result<?> evaluate(Result<?> rootObject, List<String> tokens) {
-    Result<?> result = rootObject;
-
-    for (String token : tokens) {
-      if (result.isFailure()) {
-        return result;
-      }
-      Object value = result.getValue();
-      Optional<TokenEvaluator<Object>> evaluator = getParser(value.getClass());
-
-      if (!evaluator.isPresent()) {
-        return Result.failure(
-            FailureReason.INVALID_INPUT,
-            "Failed to evaluate value. Path: {}. No evaluator found for type {}",
-            String.join(PATH_SEPARATOR, tokens),
-            value.getClass().getSimpleName());
-      }
-      // TODO This is a giant hack - move into the Bean parser
-      if (value instanceof Bean && !isTypeSpecificParser(evaluator)) {
-        Bean bean = (Bean) value;
-
-        if (bean.propertyNames().size() == 1 && !evaluator.get().tokens(bean).contains(token)) {
-          // Allow single properties to be skipped over in the value path
-          String singlePropertyName = Iterables.getOnlyElement(bean.propertyNames());
-          value = bean.property(singlePropertyName).get();
-          evaluator = getParser(value.getClass());
-
-          if (!evaluator.isPresent()) {
-            return Result.failure(
-                FailureReason.INVALID_INPUT,
-                "Failed to evaluate value. Path: {}. No evaluator found for type {}",
-                String.join(PATH_SEPARATOR, tokens),
-                value.getClass().getSimpleName());
-          }
-        }
-      }
-      result = evaluator.get().evaluate(value, token.toLowerCase());
-    }
-    return result;
-  }
 
   @SuppressWarnings("unchecked")
   private static Optional<TokenParser<Object>> getParser(Class<?> targetClass) {
@@ -223,9 +185,6 @@ public class ValuePathParser {
   private ValuePathParser() {
   }
 
-  static List<String> drop(List<String> list, int nItems) {
-    return list.subList(nItems, list.size());
-  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -234,10 +193,15 @@ interface TokenParser<T> {
 
   Class<?> getTargetType();
 
-  List<String> tokens(T target);
+  Set<String> tokens(T target);
 
   // tokens always has at least one element
-  ParseResult parse(T target, List<String> tokens);
+  ParseResult parse(T target, String firstToken, List<String> remainingTokens);
+
+  default ParseResult invalidTokenFailure(Object object, String token) {
+    // TODO Include list of valid tokens
+    return ParseResult.failure("");
+  }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -269,8 +233,9 @@ class ParseResult {
     return new ParseResult(Result.success(value), remainingTokens);
   }
 
-  static ParseResult failure(String message) {
-    return new ParseResult(Result.failure(FailureReason.INVALID_INPUT, message), ImmutableList.of());
+  static ParseResult failure(String message, Object... messageValues) {
+    String msg = Messages.format(message, messageValues);
+    return new ParseResult(Result.failure(FailureReason.INVALID_INPUT, msg), ImmutableList.of());
   }
 
   static ParseResult of(Result<?> result, List<String> remainingTokens) {
@@ -285,7 +250,7 @@ class RootParser implements TokenParser<ResultsRow> {
   /** The single shared instance of this class. */
   static final RootParser INSTANCE = new RootParser();
 
-  private static final ImmutableList<String> TOKENS = ImmutableList.of(
+  private static final ImmutableSet<String> TOKENS = ImmutableSet.of(
       ValueRootType.MEASURES.token(),
       ValueRootType.TRADE.token(),
       ValueRootType.PRODUCT.token());
@@ -297,23 +262,23 @@ class RootParser implements TokenParser<ResultsRow> {
   }
 
   @Override
-  public List<String> tokens(ResultsRow target) {
+  public Set<String> tokens(ResultsRow target) {
     return TOKENS;
   }
 
   @Override
-  public ParseResult parse(ResultsRow target, List<String> tokens) {
-    ValueRootType rootType = ValueRootType.parseToken(tokens.get(0));
+  public ParseResult parse(ResultsRow target, String firstToken, List<String> remainingTokens) {
+    ValueRootType rootType = ValueRootType.parseToken(firstToken);
 
     switch (rootType) {
       case MEASURES:
-        return tokens.size() > 1 ?
-            ParseResult.success(target.getResult(tokens.get(1)), ValuePathParser.drop(tokens, 2)) :
-            ParseResult.failure("At least two tokens are required to select a measure value");
+        return remainingTokens.isEmpty() ?
+            ParseResult.failure("At least two tokens are required to select a measure value") :
+            ParseResult.success(target.getResult(remainingTokens.get(1)), ParserUtils.tail(remainingTokens));
       case PRODUCT:
-        return ParseResult.of(target.getProduct(), ValuePathParser.drop(tokens, 1));
+        return ParseResult.of(target.getProduct(), remainingTokens);
       case TRADE:
-        return ParseResult.success(target.getTrade(), ValuePathParser.drop(tokens, 1));
+        return ParseResult.success(target.getTrade(), remainingTokens);
       default:
         throw new IllegalArgumentException("Unknown root token '" + rootType.token() + "'");
     }
@@ -361,3 +326,16 @@ class ResultsRow {
   }
 }
 
+class ParserUtils {
+
+  private ParserUtils() {
+  }
+
+  static List<String> tail(List<String> list) {
+    return drop(list, 1);
+  }
+
+  static List<String> drop(List<String> list, int nItems) {
+    return list.subList(nItems, list.size());
+  }
+}
