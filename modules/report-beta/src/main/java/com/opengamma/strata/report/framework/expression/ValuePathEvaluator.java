@@ -11,28 +11,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.IntFunction;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.joda.beans.Bean;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 import com.opengamma.strata.basics.index.IborIndex;
-import com.opengamma.strata.collect.Messages;
 import com.opengamma.strata.collect.result.FailureReason;
 import com.opengamma.strata.collect.result.Result;
-import com.opengamma.strata.collect.type.TypedString;
-import com.opengamma.strata.engine.Column;
 import com.opengamma.strata.engine.config.Measure;
-import com.opengamma.strata.finance.ProductTrade;
-import com.opengamma.strata.finance.SecurityTrade;
-import com.opengamma.strata.finance.Trade;
 import com.opengamma.strata.finance.rate.fra.Fra;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
-import com.opengamma.strata.function.StandardComponents;
 import com.opengamma.strata.report.ReportCalculationResults;
 
 /**
@@ -52,7 +43,7 @@ public class ValuePathEvaluator {
   /** The separator used in the value path. */
   private static final String PATH_SEPARATOR = "\\.";
 
-  private static final ImmutableList<TokenEvaluator<?>> EVALUATORS = ImmutableList.of(
+  private static final ImmutableList<TokenEvaluator<?>> PARSERS = ImmutableList.of(
       new CurrencyAmountTokenEvaluator(),
       new MapTokenEvaluator(),
       new CurveCurrencyParameterSensitivitiesTokenEvaluator(),
@@ -63,8 +54,8 @@ public class ValuePathEvaluator {
 
   //-------------------------------------------------------------------------
   /**
-   * Gets the measure encoded in a value path, if present. 
-   * 
+   * Gets the measure encoded in a value path, if present.
+   *
    * @param valuePath  the value path
    * @return the measure, if present
    */
@@ -85,50 +76,53 @@ public class ValuePathEvaluator {
 
   /**
    * Evaluates a value path against a set of results, returning the resolved result for each trade.
-   * 
+   *
    * @param valuePath  the value path
    * @param results  the calculation results
    * @return the list of resolved results for each trade
    */
+  @SuppressWarnings("unchecked")
   public static List<Result<?>> evaluate(String valuePath, ReportCalculationResults results) {
     List<String> tokens = tokenize(valuePath);
-    IntFunction<Result<?>> rootResultSupplier;
-    // The first token is Measure, Product or Trade. It is consumed by this method
-    List<String> remainingTokens = tokens.subList(1, tokens.size());
 
-    try {
-      ValueRootType rootType = ValueRootType.parseToken(tokens.get(0));
-
-      switch (rootType) {
-        case MEASURES:
-          rootResultSupplier = getMeasureSupplier(remainingTokens, results);
-          // The second token after "Measure" is the measure name which is consumed by the measure supplier
-          remainingTokens = remainingTokens.subList(1, remainingTokens.size());
-          break;
-        case PRODUCT:
-          rootResultSupplier = getProductSupplier(results);
-          break;
-        case TRADE:
-          rootResultSupplier = getTradeSupplier(results);
-          break;
-        default:
-          throw new IllegalArgumentException(Messages.format("Unsupported root: {}", rootType.token()));
-      }
-    } catch (Exception ex) {
-      rootResultSupplier = i -> Result.failure(FailureReason.INVALID_INPUT, ex.getMessage());
+    if (tokens.size() < 2) {
+      // TODO return failure - need the root token plus at least one more to select the value
     }
-    // This is necessary to make the compiler happy
-    List<String> finalRemainingTokens = remainingTokens;
+    TokenEvaluator rootEvaluator = RootEvaluator.INSTANCE;
 
-    return IntStream.range(0, results.getCalculationResults().getRowCount())
-        .mapToObj(rootResultSupplier)
-        .map(r -> evaluate(r, finalRemainingTokens))
-        .collect(toImmutableList());
+    int rowCount = results.getCalculationResults().getRowCount();
+    // javac won't compile this if the call to collect() is chained after the call to mapToObj()
+    // but it works fine if the intermediate stream is assigned to a local variable. Compiler bug?
+    Stream<Result<?>> resultStream = IntStream.range(0, rowCount)
+            .mapToObj(rowIndex -> evaluate(tokens, rootEvaluator, new ResultsRow(results, rowIndex)));
+    return resultStream.collect(toImmutableList());
+  }
+
+  // Tokens always has at least one token
+  private static Result<?> evaluate(List<String> tokens, TokenEvaluator<Object> parser, Object target) {
+    EvaluationResult evaluationResult = parser.evaluate(target, tokens.get(0), ParserUtils.tail(tokens));
+
+    if (evaluationResult.isComplete()) {
+      return evaluationResult.getResult();
+    }
+    Object value = evaluationResult.getResult().getValue();
+    Optional<TokenEvaluator<Object>> nextParser = getEvaluator(value.getClass());
+
+    return nextParser.isPresent() ?
+        evaluate(evaluationResult.getRemainingTokens(), nextParser.get(), value) :
+        noEvaluatorResult(value);
+  }
+
+  private static Result<?> noEvaluatorResult(Object value) {
+    return Result.failure(
+        FailureReason.INVALID_INPUT,
+        "No evaluator available for objects of type {}",
+        value.getClass().getName());
   }
 
   /**
    * Gets the supported tokens on the given object.
-   * 
+   *
    * @param object  the object for which to return the valid tokens
    * @return the tokens
    */
@@ -136,20 +130,20 @@ public class ValuePathEvaluator {
     // This must mirror the main evaluate method implementation
     Object evalObject = object;
     Set<String> tokens = new HashSet<>();
-    Optional<TokenEvaluator<Object>> evaluator = getEvaluator(evalObject.getClass());
+    Optional<TokenEvaluator<Object>> parser = getEvaluator(evalObject.getClass());
 
-    if (evalObject instanceof Bean && !isTypeSpecificEvaluator(evaluator)) {
+    if (evalObject instanceof Bean && !isTypeSpecificParser(parser)) {
       Bean bean = (Bean) evalObject;
 
       if (bean.propertyNames().size() == 1) {
         String onlyProperty = Iterables.getOnlyElement(bean.propertyNames());
         tokens.add(onlyProperty);
         evalObject = bean.property(onlyProperty).get();
-        evaluator = getEvaluator(evalObject.getClass());
+        parser = getEvaluator(evalObject.getClass());
       }
     }
-    if (evaluator.isPresent()) {
-      tokens.addAll(evaluator.get().tokens(evalObject));
+    if (parser.isPresent()) {
+      tokens.addAll(parser.get().tokens(evalObject));
     }
     return tokens;
   }
@@ -159,76 +153,6 @@ public class ValuePathEvaluator {
   private static List<String> tokenize(String valuePath) {
     String[] tokens = valuePath.split(PATH_SEPARATOR);
     return ImmutableList.copyOf(tokens);
-  }
-
-  /**
-   * Returns a function whose input is the index of a trade in the results and whose return value contains
-   * the trade's product.
-   * <p>
-   * If the trade is not a {@link ProductTrade} a failure result is returned.
-   *
-   * @param results  calculation results containing the trades for which the calculations were performed
-   * @return a function whose input is the index of a trade in the results and whose return value contains
-   *   the trade's product
-   */
-  private static IntFunction<Result<?>> getProductSupplier(ReportCalculationResults results) {
-    return i -> {
-      Trade trade = results.getTrades().get(i);
-      if (trade instanceof ProductTrade) {
-        return Result.success(((ProductTrade<?>) trade).getProduct());
-      }
-      if (trade instanceof SecurityTrade) {
-        return Result.success(((SecurityTrade<?>) trade).getProduct());
-      }
-      return Result.failure(FailureReason.INVALID_INPUT, "Trade does not contain a product");
-    };
-  }
-
-  /**
-   * Returns a function whose input is the index of a trade in the results and whose return value contains the trade.
-   *
-   * @param results  calculation results containing the trades for which the calculations were performed
-   * @return a function whose input is the index of a trade in the results and whose return value contains the trade
-   */
-  private static IntFunction<Result<?>> getTradeSupplier(ReportCalculationResults results) {
-    return i -> Result.success(results.getTrades().get(i));
-  }
-
-  /**
-   * Returns a function whose input is the index of a trade in the results and whose return value contains
-   * the calculated value for a measure.
-   *
-   * @param results  calculation results containing the trades for which the calculations were performed
-   * @return a function whose input is the index of a trade in the results and whose return value contains
-   *   the calculated value for a measure
-   */
-  private static IntFunction<Result<?>> getMeasureSupplier(List<String> tokens, ReportCalculationResults results) {
-    if (tokens.isEmpty() || Strings.nullToEmpty(tokens.get(0)).trim().isEmpty()) {
-      return i -> {
-        Trade trade = results.getTrades().get(i);
-        Set<Measure> validMeasures = StandardComponents.pricingRules().configuredMeasures(trade);
-        List<String> measureNames = validMeasures.stream()
-            .map(TypedString::toString)
-            .collect(toImmutableList());
-        measureNames.sort(Ordering.natural());
-        return Result.failure(FailureReason.INVALID_INPUT, "No measure specified. Use one of: {}", validMeasures);
-      };
-    }
-    String measureToken = tokens.get(0);
-    Measure measure;
-
-    try {
-      measure = Measure.of(measureToken);
-    } catch (Exception ex) {
-      return i -> Result.failure(FailureReason.INVALID_INPUT, "Invalid measure name: {}", measureToken);
-    }
-    Column requiredColumn = Column.of(measure);
-    int columnIdx = results.getColumns().indexOf(requiredColumn);
-
-    if (columnIdx == -1) {
-      return i -> Result.failure(FailureReason.INVALID_INPUT, "Measure not present: {}", measure);
-    }
-    return i -> results.getCalculationResults().get(i, columnIdx);
   }
 
   /**
@@ -246,60 +170,20 @@ public class ValuePathEvaluator {
    * @param tokens  the individual tokens making up the expression
    * @return the result of evaluating the expression against the object
    */
-  static private Result<?> evaluate(Result<?> rootObject, List<String> tokens) {
-    Result<?> result = rootObject;
-
-    for (String token : tokens) {
-      if (result.isFailure()) {
-        return result;
-      }
-      Object value = result.getValue();
-      Optional<TokenEvaluator<Object>> evaluator = getEvaluator(value.getClass());
-
-      if (!evaluator.isPresent()) {
-        return Result.failure(
-            FailureReason.INVALID_INPUT,
-            "Failed to evaluate value. Path: {}. No evaluator found for type {}",
-            String.join(PATH_SEPARATOR, tokens),
-            value.getClass().getSimpleName());
-      }
-      if (value instanceof Bean && !isTypeSpecificEvaluator(evaluator)) {
-        Bean bean = (Bean) value;
-
-        if (bean.propertyNames().size() == 1 && !evaluator.get().tokens(bean).contains(token)) {
-          // Allow single properties to be skipped over in the value path
-          String singlePropertyName = Iterables.getOnlyElement(bean.propertyNames());
-          value = bean.property(singlePropertyName).get();
-          evaluator = getEvaluator(value.getClass());
-
-          if (!evaluator.isPresent()) {
-            return Result.failure(
-                FailureReason.INVALID_INPUT,
-                "Failed to evaluate value. Path: {}. No evaluator found for type {}",
-                String.join(PATH_SEPARATOR, tokens),
-                value.getClass().getSimpleName());
-          }
-        }
-      }
-      result = evaluator.get().evaluate(value, token.toLowerCase());
-    }
-    return result;
-  }
 
   @SuppressWarnings("unchecked")
-  private static Optional<TokenEvaluator<Object>> getEvaluator(Class<?> targetClazz) {
-    return EVALUATORS.stream()
-        .filter(e -> e.getTargetType().isAssignableFrom(targetClazz))
+  private static Optional<TokenEvaluator<Object>> getEvaluator(Class<?> targetClass) {
+    return PARSERS.stream()
+        .filter(e -> e.getTargetType().isAssignableFrom(targetClass))
         .map(e -> (TokenEvaluator<Object>) e)
         .findFirst();
   }
 
-  private static boolean isTypeSpecificEvaluator(Optional<TokenEvaluator<Object>> evaluator) {
-    return evaluator.isPresent() && !Bean.class.equals(evaluator.get().getTargetType());
+  private static boolean isTypeSpecificParser(Optional<TokenEvaluator<Object>> parser) {
+    return parser.isPresent() && !Bean.class.equals(parser.get().getTargetType());
   }
 
   //-------------------------------------------------------------------------
-  // restricted constrctor
   private ValuePathEvaluator() {
   }
 

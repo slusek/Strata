@@ -17,7 +17,7 @@ import com.google.common.collect.Iterables;
 /**
  * Evaluates a token against a bean to produce another object.
  */
-public class BeanTokenEvaluator implements TokenParser<Bean> {
+public class BeanTokenEvaluator extends TokenEvaluator<Bean> {
 
   @Override
   public Class<Bean> getTargetType() {
@@ -30,7 +30,7 @@ public class BeanTokenEvaluator implements TokenParser<Bean> {
   }
 
   @Override
-  public ParseResult parse(Bean bean, String firstToken, List<String> remainingTokens) {
+  public EvaluationResult evaluate(Bean bean, String firstToken, List<String> remainingTokens) {
     Optional<String> propertyName = bean.propertyNames().stream()
         .filter(p -> p.toLowerCase().equals(firstToken))
         .findFirst();
@@ -39,8 +39,8 @@ public class BeanTokenEvaluator implements TokenParser<Bean> {
       Object propertyValue = bean.property(propertyName.get()).get();
 
       return propertyValue != null ?
-          ParseResult.success(propertyValue, remainingTokens) :
-          ParseResult.failure("No value available for property '{}'", firstToken);
+          EvaluationResult.success(propertyValue, remainingTokens) :
+          EvaluationResult.failure("No value available for property '{}'", firstToken);
     }
     // The bean has a single property which doesn't match the token.
     // Return the property value without consuming any tokens.
@@ -51,9 +51,10 @@ public class BeanTokenEvaluator implements TokenParser<Bean> {
       List<String> tokens = ImmutableList.<String>builder().add(firstToken).addAll(remainingTokens).build();
 
       return propertyValue != null ?
-          ParseResult.success(propertyValue, tokens) :
-          ParseResult.failure("No value available for property '{}'", firstToken);
+          EvaluationResult.success(propertyValue, tokens) :
+          EvaluationResult.failure("No value available for property '{}'", firstToken);
     }
+    // TODO Failure message includes all available property names?
     return invalidTokenFailure(bean, firstToken);
   }
 

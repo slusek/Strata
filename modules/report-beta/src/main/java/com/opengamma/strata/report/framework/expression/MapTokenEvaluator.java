@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Evaluates a token against a map.
  */
-public class MapTokenEvaluator implements TokenParser<Map<?, ?>> {
+public class MapTokenEvaluator extends TokenEvaluator<Map<?, ?>> {
 
   @Override
   public Class<?> getTargetType() {
@@ -28,11 +28,11 @@ public class MapTokenEvaluator implements TokenParser<Map<?, ?>> {
   }
 
   @Override
-  public ParseResult parse(Map<?, ?> map, String firstToken, List<String> remainingTokens) {
+  public EvaluationResult evaluate(Map<?, ?> map, String firstToken, List<String> remainingTokens) {
     return map.entrySet().stream()
         .filter(e -> firstToken.equals(e.getKey().toString().toLowerCase()))
         .findFirst()
-        .map(e -> ParseResult.success(e.getValue(), remainingTokens))
+        .map(e -> EvaluationResult.success(e.getValue(), remainingTokens))
         .orElse(invalidTokenFailure(map, firstToken));
   }
 }

@@ -13,7 +13,7 @@ import com.opengamma.strata.basics.currency.CurrencyAmount;
 /**
  * Evaluates a token against a currency amount.
  */
-public class CurrencyAmountTokenEvaluator implements TokenParser<CurrencyAmount> {
+public class CurrencyAmountTokenEvaluator extends TokenEvaluator<CurrencyAmount> {
 
   private final String CURRENCY_FIELD = "currency";
   private final String AMOUNT_FIELD = "amount";
@@ -29,13 +29,13 @@ public class CurrencyAmountTokenEvaluator implements TokenParser<CurrencyAmount>
   }
 
   @Override
-  public ParseResult parse(CurrencyAmount amount, String firstToken, List<String> remainingTokens) {
+  public EvaluationResult evaluate(CurrencyAmount amount, String firstToken, List<String> remainingTokens) {
     if (firstToken.equals(CURRENCY_FIELD)) {
-      return ParseResult.success(amount.getCurrency(), remainingTokens);
+      return EvaluationResult.success(amount.getCurrency(), remainingTokens);
     }
     if (firstToken.equals(AMOUNT_FIELD)) {
       // Can be rendered directly - retains the currency for formatting purposes
-      return ParseResult.success(amount, remainingTokens);
+      return EvaluationResult.success(amount, remainingTokens);
     }
     return invalidTokenFailure(amount, firstToken);
   }

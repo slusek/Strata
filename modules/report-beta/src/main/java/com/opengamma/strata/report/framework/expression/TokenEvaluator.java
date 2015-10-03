@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.opengamma.strata.basics.index.IborIndex;
-import com.opengamma.strata.collect.result.FailureReason;
-import com.opengamma.strata.collect.result.Result;
 import com.opengamma.strata.finance.rate.fra.Fra;
 
 /**
@@ -45,11 +43,12 @@ public abstract class TokenEvaluator<T> {
   /**
    * Evaluates a token against a given object.
    * 
-   * @param object  the object against which to evaluate the token
-   * @param token  the token
+   * @param target  the object against which to evaluate the token
+   * @param firstToken  the first token of the expression
+   * @param remainingTokens  the remaining tokens in the expression, possibly empty
    * @return the result of the evaluation
    */
-  public abstract Result<?> evaluate(T object, String token);
+  public abstract EvaluationResult evaluate(T target, String firstToken, List<String> remainingTokens);
 
   //-------------------------------------------------------------------------
   /**
@@ -59,7 +58,7 @@ public abstract class TokenEvaluator<T> {
    * @param token  the invalid token
    * @return the failure result
    */
-  protected Result<?> invalidTokenFailure(T object, String token) {
+  protected EvaluationResult invalidTokenFailure(T object, String token) {
     return tokenFailure("Invalid", object, token);
   }
 
@@ -70,15 +69,15 @@ public abstract class TokenEvaluator<T> {
    * @param token  the ambiguous token
    * @return the failure result
    */
-  protected Result<?> ambiguousTokenFailure(T object, String token) {
+  protected EvaluationResult ambiguousTokenFailure(T object, String token) {
     return tokenFailure("Ambiguous", object, token);
   }
 
   // produces a failure result
-  private Result<?> tokenFailure(String reason, T object, String token) {
+  private EvaluationResult tokenFailure(String reason, T object, String token) {
     List<String> orderedValidTokens = new ArrayList<String>(tokens(object));
     orderedValidTokens.sort(null);
-    return Result.failure(FailureReason.INVALID_INPUT, "{} field: {}. Use one of: {}", reason, token, tokens(object));
+    return EvaluationResult.failure("{} field: {}. Use one of: {}", reason, token, tokens(object));
   }
 
 }
