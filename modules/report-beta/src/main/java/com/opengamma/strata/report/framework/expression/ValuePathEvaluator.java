@@ -91,10 +91,10 @@ public class ValuePathEvaluator {
     TokenEvaluator rootEvaluator = RootEvaluator.INSTANCE;
 
     int rowCount = results.getCalculationResults().getRowCount();
-    // javac won't compile this if the call to collect() is chained after the call to mapToObj()
+    // javac 8u40 won't compile this if the call to collect() is chained after the call to mapToObj()
     // but it works fine if the intermediate stream is assigned to a local variable. Compiler bug?
     Stream<Result<?>> resultStream = IntStream.range(0, rowCount)
-            .mapToObj(rowIndex -> evaluate(tokens, rootEvaluator, new ResultsRow(results, rowIndex)));
+        .mapToObj(rowIndex -> evaluate(tokens, rootEvaluator, new ResultsRow(results, rowIndex)));
     return resultStream.collect(toImmutableList());
   }
 
