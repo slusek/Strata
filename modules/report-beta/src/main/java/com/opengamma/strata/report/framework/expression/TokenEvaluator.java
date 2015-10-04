@@ -5,7 +5,8 @@
  */
 package com.opengamma.strata.report.framework.expression;
 
-import java.util.ArrayList;
+import static com.opengamma.strata.collect.Guavate.toImmutableList;
+
 import java.util.List;
 import java.util.Set;
 
@@ -75,9 +76,13 @@ public abstract class TokenEvaluator<T> {
 
   // produces a failure result
   private EvaluationResult tokenFailure(String reason, T object, String token) {
-    List<String> orderedValidTokens = new ArrayList<String>(tokens(object));
-    orderedValidTokens.sort(null);
-    return EvaluationResult.failure("{} field: {}. Use one of: {}", reason, token, tokens(object));
+    List<String> orderedValidTokens = tokens(object).stream().sorted().collect(toImmutableList());
+    return EvaluationResult.failure(
+        "{} field '{}' in type {}. Use one of: {}",
+        reason,
+        token,
+        object.getClass().getName(),
+        orderedValidTokens);
   }
 
 }

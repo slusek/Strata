@@ -30,7 +30,7 @@ public class MapTokenEvaluator extends TokenEvaluator<Map<?, ?>> {
   @Override
   public EvaluationResult evaluate(Map<?, ?> map, String firstToken, List<String> remainingTokens) {
     return map.entrySet().stream()
-        .filter(e -> firstToken.equals(e.getKey().toString().toLowerCase()))
+        .filter(e -> firstToken.equalsIgnoreCase(e.getKey().toString()))
         .findFirst()
         .map(e -> EvaluationResult.success(e.getValue(), remainingTokens))
         .orElse(invalidTokenFailure(map, firstToken));

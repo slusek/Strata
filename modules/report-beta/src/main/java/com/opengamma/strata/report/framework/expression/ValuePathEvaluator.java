@@ -99,8 +99,8 @@ public class ValuePathEvaluator {
   }
 
   // Tokens always has at least one token
-  private static Result<?> evaluate(List<String> tokens, TokenEvaluator<Object> parser, Object target) {
-    EvaluationResult evaluationResult = parser.evaluate(target, tokens.get(0), ParserUtils.tail(tokens));
+  private static Result<?> evaluate(List<String> tokens, TokenEvaluator<Object> evaluator, Object target) {
+    EvaluationResult evaluationResult = evaluator.evaluate(target, tokens.get(0), ParserUtils.tail(tokens));
 
     if (evaluationResult.isComplete()) {
       return evaluationResult.getResult();
@@ -132,6 +132,7 @@ public class ValuePathEvaluator {
     Set<String> tokens = new HashSet<>();
     Optional<TokenEvaluator<Object>> parser = getEvaluator(evalObject.getClass());
 
+    // TODO This is a diabolical hack - put into the bean evaluator?
     if (evalObject instanceof Bean && !isTypeSpecificParser(parser)) {
       Bean bean = (Bean) evalObject;
 

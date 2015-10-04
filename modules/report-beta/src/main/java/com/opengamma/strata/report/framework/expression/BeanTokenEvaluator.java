@@ -32,7 +32,7 @@ public class BeanTokenEvaluator extends TokenEvaluator<Bean> {
   @Override
   public EvaluationResult evaluate(Bean bean, String firstToken, List<String> remainingTokens) {
     Optional<String> propertyName = bean.propertyNames().stream()
-        .filter(p -> p.toLowerCase().equals(firstToken))
+        .filter(p -> p.equalsIgnoreCase(firstToken))
         .findFirst();
 
     if (propertyName.isPresent()) {

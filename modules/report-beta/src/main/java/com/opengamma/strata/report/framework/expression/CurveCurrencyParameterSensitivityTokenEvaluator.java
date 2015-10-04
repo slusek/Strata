@@ -39,8 +39,8 @@ public class CurveCurrencyParameterSensitivityTokenEvaluator extends TokenEvalua
       String firstToken,
       List<String> remainingTokens) {
 
-    if (firstToken.equals(sensitivity.getCurrency().getCode().toLowerCase()) ||
-        firstToken.equals(sensitivity.getCurveName().toString().toLowerCase())) {
+    if (firstToken.equalsIgnoreCase(sensitivity.getCurrency().getCode()) ||
+        firstToken.equalsIgnoreCase(sensitivity.getCurveName().toString())) {
       return EvaluationResult.success(sensitivity, remainingTokens);
     } else {
       return invalidTokenFailure(sensitivity, firstToken);

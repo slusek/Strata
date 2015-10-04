@@ -30,10 +30,10 @@ public class CurrencyAmountTokenEvaluator extends TokenEvaluator<CurrencyAmount>
 
   @Override
   public EvaluationResult evaluate(CurrencyAmount amount, String firstToken, List<String> remainingTokens) {
-    if (firstToken.equals(CURRENCY_FIELD)) {
+    if (firstToken.equalsIgnoreCase(CURRENCY_FIELD)) {
       return EvaluationResult.success(amount.getCurrency(), remainingTokens);
     }
-    if (firstToken.equals(AMOUNT_FIELD)) {
+    if (firstToken.equalsIgnoreCase(AMOUNT_FIELD)) {
       // Can be rendered directly - retains the currency for formatting purposes
       return EvaluationResult.success(amount, remainingTokens);
     }

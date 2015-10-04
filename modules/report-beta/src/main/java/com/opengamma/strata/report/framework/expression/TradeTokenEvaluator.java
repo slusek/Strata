@@ -64,7 +64,6 @@ public class TradeTokenEvaluator extends TokenEvaluator<Trade> {
           EvaluationResult.success(propertyValue, remainingTokens) :
           EvaluationResult.failure("Property '{}' not set", firstToken);
     }
-    // TODO Failure message includes all available property names?
     return invalidTokenFailure(trade, firstToken);
   }
 

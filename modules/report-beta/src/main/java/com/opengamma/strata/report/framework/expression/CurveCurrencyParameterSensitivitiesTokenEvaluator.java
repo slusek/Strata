@@ -67,7 +67,7 @@ public class CurveCurrencyParameterSensitivitiesTokenEvaluator
   }
 
   private boolean matchesToken(CurveCurrencyParameterSensitivity sensitivity, String token) {
-    return token.equals(sensitivity.getCurrency().getCode().toLowerCase()) ||
-        token.equals(sensitivity.getCurveName().toString().toLowerCase());
+    return token.equalsIgnoreCase(sensitivity.getCurrency().getCode()) ||
+        token.equalsIgnoreCase(sensitivity.getCurveName().toString());
   }
 }

@@ -9,7 +9,6 @@ import static com.opengamma.strata.collect.Guavate.toImmutableSet;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.joda.beans.Bean;
 import org.joda.beans.Property;
@@ -72,32 +71,33 @@ public class IterableTokenEvaluator extends TokenEvaluator<Iterable<?>> {
     }
     return tokens.stream()
         .filter(token -> tokens.count(token) == 1)
-        .collect(Collectors.toSet());
+        .collect(toImmutableSet());
   }
 
   @Override
   public EvaluationResult evaluate(Iterable<?> iterable, String firstToken, List<String> remainingTokens) {
-    Integer index = Ints.tryParse(firstToken);
+    String token = firstToken.toLowerCase();
+    Integer index = Ints.tryParse(token);
 
     if (index != null) {
       try {
         return EvaluationResult.success(Iterables.get(iterable, index), remainingTokens);
       } catch (IndexOutOfBoundsException e) {
-        return invalidTokenFailure(iterable, firstToken);
+        return invalidTokenFailure(iterable, token);
       }
     }
     Set<String> tokens = tokens(iterable);
 
     for (Object item : iterable) {
-      if (!fieldValues(item).contains(firstToken)) {
+      if (!fieldValues(item).contains(token)) {
         continue;
       }
-      if (!tokens.contains(firstToken)) {
-        return ambiguousTokenFailure(iterable, firstToken);
+      if (!tokens.contains(token)) {
+        return ambiguousTokenFailure(iterable, token);
       }
       return EvaluationResult.success(item, remainingTokens);
     }
-    return invalidTokenFailure(iterable, firstToken);
+    return invalidTokenFailure(iterable, token);
   }
 
   //-------------------------------------------------------------------------
