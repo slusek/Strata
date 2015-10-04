@@ -12,6 +12,7 @@ import java.util.Set;
 import org.joda.beans.Bean;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
 /**
@@ -26,7 +27,18 @@ public class BeanTokenEvaluator extends TokenEvaluator<Bean> {
 
   @Override
   public Set<String> tokens(Bean bean) {
-    return bean.propertyNames();
+    if (bean.propertyNames().size() == 1) {
+      String singlePropertyName = Iterables.getOnlyElement(bean.propertyNames());
+      Object propertyValue = bean.property(singlePropertyName).get();
+      Set<String> valueTokens = ValuePathEvaluator.tokens(propertyValue);
+
+      return ImmutableSet.<String>builder()
+          .add(singlePropertyName)
+          .addAll(valueTokens)
+          .build();
+    } else {
+      return bean.propertyNames();
+    }
   }
 
   @Override
@@ -54,7 +66,6 @@ public class BeanTokenEvaluator extends TokenEvaluator<Bean> {
           EvaluationResult.success(propertyValue, tokens) :
           EvaluationResult.failure("No value available for property '{}'", firstToken);
     }
-    // TODO Failure message includes all available property names?
     return invalidTokenFailure(bean, firstToken);
   }
 

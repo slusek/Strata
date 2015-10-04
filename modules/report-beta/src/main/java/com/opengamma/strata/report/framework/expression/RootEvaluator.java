@@ -42,7 +42,7 @@ class RootEvaluator extends TokenEvaluator<ResultsRow> {
       case MEASURES:
         return remainingTokens.isEmpty() ?
             EvaluationResult.failure("A measure name must be specified when selecting a measure") :
-            EvaluationResult.of(resultsRow.getResult(remainingTokens.get(0)), ParserUtils.tail(remainingTokens));
+            EvaluationResult.of(resultsRow.getResult(remainingTokens.get(0)), EvaluatorUtils.tail(remainingTokens));
       case PRODUCT:
         return EvaluationResult.of(resultsRow.getProduct(), remainingTokens);
       case TRADE:

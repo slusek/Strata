@@ -10,9 +10,9 @@ import java.util.List;
 /**
  *
  */
-class ParserUtils {
+class EvaluatorUtils {
 
-  private ParserUtils() {
+  private EvaluatorUtils() {
   }
 
   static List<String> tail(List<String> list) {

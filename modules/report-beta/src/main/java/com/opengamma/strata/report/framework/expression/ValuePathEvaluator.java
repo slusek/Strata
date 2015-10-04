@@ -7,17 +7,14 @@ package com.opengamma.strata.report.framework.expression;
 
 import static com.opengamma.strata.collect.Guavate.toImmutableList;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.joda.beans.Bean;
-
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableSet;
 import com.opengamma.strata.basics.index.IborIndex;
 import com.opengamma.strata.collect.result.FailureReason;
 import com.opengamma.strata.collect.result.Result;
@@ -43,7 +40,7 @@ public class ValuePathEvaluator {
   /** The separator used in the value path. */
   private static final String PATH_SEPARATOR = "\\.";
 
-  private static final ImmutableList<TokenEvaluator<?>> PARSERS = ImmutableList.of(
+  private static final ImmutableList<TokenEvaluator<?>> EVALUATORS = ImmutableList.of(
       new CurrencyAmountTokenEvaluator(),
       new MapTokenEvaluator(),
       new CurveCurrencyParameterSensitivitiesTokenEvaluator(),
@@ -100,16 +97,16 @@ public class ValuePathEvaluator {
 
   // Tokens always has at least one token
   private static Result<?> evaluate(List<String> tokens, TokenEvaluator<Object> evaluator, Object target) {
-    EvaluationResult evaluationResult = evaluator.evaluate(target, tokens.get(0), ParserUtils.tail(tokens));
+    EvaluationResult evaluationResult = evaluator.evaluate(target, tokens.get(0), EvaluatorUtils.tail(tokens));
 
     if (evaluationResult.isComplete()) {
       return evaluationResult.getResult();
     }
     Object value = evaluationResult.getResult().getValue();
-    Optional<TokenEvaluator<Object>> nextParser = getEvaluator(value.getClass());
+    Optional<TokenEvaluator<Object>> nextEvaluator = getEvaluator(value.getClass());
 
-    return nextParser.isPresent() ?
-        evaluate(evaluationResult.getRemainingTokens(), nextParser.get(), value) :
+    return nextEvaluator.isPresent() ?
+        evaluate(evaluationResult.getRemainingTokens(), nextEvaluator.get(), value) :
         noEvaluatorResult(value);
   }
 
@@ -127,26 +124,7 @@ public class ValuePathEvaluator {
    * @return the tokens
    */
   public static Set<String> tokens(Object object) {
-    // This must mirror the main evaluate method implementation
-    Object evalObject = object;
-    Set<String> tokens = new HashSet<>();
-    Optional<TokenEvaluator<Object>> parser = getEvaluator(evalObject.getClass());
-
-    // TODO This is a diabolical hack - put into the bean evaluator?
-    if (evalObject instanceof Bean && !isTypeSpecificParser(parser)) {
-      Bean bean = (Bean) evalObject;
-
-      if (bean.propertyNames().size() == 1) {
-        String onlyProperty = Iterables.getOnlyElement(bean.propertyNames());
-        tokens.add(onlyProperty);
-        evalObject = bean.property(onlyProperty).get();
-        parser = getEvaluator(evalObject.getClass());
-      }
-    }
-    if (parser.isPresent()) {
-      tokens.addAll(parser.get().tokens(evalObject));
-    }
-    return tokens;
+    return getEvaluator(object.getClass()).map(evaluator -> evaluator.tokens(object)).orElse(ImmutableSet.of());
   }
 
   //-------------------------------------------------------------------------
@@ -156,32 +134,12 @@ public class ValuePathEvaluator {
     return ImmutableList.copyOf(tokens);
   }
 
-  /**
-   * Evaluates an expression to extract a value from an object.
-   * <p>
-   * For example, if the root value is a {@link Fra} and the expression is '{@code index.name}', the tokens will be
-   * {@code ['index', 'name']} and this method will call:
-   * <ul>
-   *   <li>{@code Fra.getIndex()}, returning an {@code IborIndex}</li>
-   *   <li>{@code IborIndex.getName()} returning the index name</li>
-   * </ul>
-   * The return value of this method will be the index name.
-   *
-   * @param rootObject  the object against which the expression is evaluated
-   * @param tokens  the individual tokens making up the expression
-   * @return the result of evaluating the expression against the object
-   */
-
   @SuppressWarnings("unchecked")
   private static Optional<TokenEvaluator<Object>> getEvaluator(Class<?> targetClass) {
-    return PARSERS.stream()
+    return EVALUATORS.stream()
         .filter(e -> e.getTargetType().isAssignableFrom(targetClass))
         .map(e -> (TokenEvaluator<Object>) e)
         .findFirst();
-  }
-
-  private static boolean isTypeSpecificParser(Optional<TokenEvaluator<Object>> parser) {
-    return parser.isPresent() && !Bean.class.equals(parser.get().getTargetType());
   }
 
   //-------------------------------------------------------------------------
