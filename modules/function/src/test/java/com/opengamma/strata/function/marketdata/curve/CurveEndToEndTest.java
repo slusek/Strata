@@ -39,6 +39,7 @@ import com.opengamma.strata.basics.index.Index;
 import com.opengamma.strata.basics.market.MarketDataKey;
 import com.opengamma.strata.basics.market.ObservableId;
 import com.opengamma.strata.basics.market.ObservableKey;
+import com.opengamma.strata.basics.market.ObservableValues;
 import com.opengamma.strata.collect.id.LinkResolver;
 import com.opengamma.strata.collect.result.Result;
 import com.opengamma.strata.collect.timeseries.LocalDateDoubleTimeSeries;
@@ -73,24 +74,28 @@ import com.opengamma.strata.finance.rate.fra.ExpandedFra;
 import com.opengamma.strata.finance.rate.fra.Fra;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
 import com.opengamma.strata.finance.rate.swap.SwapTrade;
-import com.opengamma.strata.function.MarketDataRatesProvider;
 import com.opengamma.strata.function.calculation.rate.swap.SwapPvFunction;
 import com.opengamma.strata.function.interpolator.CurveExtrapolators;
 import com.opengamma.strata.function.interpolator.CurveInterpolators;
+import com.opengamma.strata.function.marketdata.MarketDataRatesProvider;
 import com.opengamma.strata.function.marketdata.mapping.MarketDataMappingsBuilder;
 import com.opengamma.strata.market.curve.CurveGroupName;
 import com.opengamma.strata.market.curve.CurveName;
-import com.opengamma.strata.market.curve.config.CurveGroupConfig;
-import com.opengamma.strata.market.curve.config.CurveNode;
-import com.opengamma.strata.market.curve.config.FixedIborSwapCurveNode;
-import com.opengamma.strata.market.curve.config.FraCurveNode;
-import com.opengamma.strata.market.curve.config.InterpolatedCurveConfig;
+import com.opengamma.strata.market.curve.definition.CurveGroupDefinition;
+import com.opengamma.strata.market.curve.definition.CurveNode;
+import com.opengamma.strata.market.curve.definition.FixedIborSwapCurveNode;
+import com.opengamma.strata.market.curve.definition.FraCurveNode;
+import com.opengamma.strata.market.curve.definition.InterpolatedNodalCurveDefinition;
 import com.opengamma.strata.market.key.DiscountFactorsKey;
 import com.opengamma.strata.market.key.IndexRateKey;
 import com.opengamma.strata.market.key.MarketDataKeys;
 import com.opengamma.strata.market.value.ValueType;
+import com.opengamma.strata.pricer.calibration.CalibrationMeasures;
 import com.opengamma.strata.pricer.rate.fra.DiscountingFraProductPricer;
 
+/**
+ * Test curves.
+ */
 @Test
 public class CurveEndToEndTest {
 
@@ -134,8 +139,7 @@ public class CurveEndToEndTest {
     LocalDate valuationDate = date(2011, 3, 8);
 
     // Build the trades from the node instruments
-    Map<ObservableKey, Double> quotesMap = parRateData.entrySet().stream()
-        .collect(toImmutableMap(tp -> tp.getKey().toObservableKey(), tp -> tp.getValue()));
+    ObservableValues quotesMap = ObservableValues.ofIdMap(parRateData);
     Trade fra3x6Trade = fra3x6Node.trade(valuationDate, quotesMap);
     Trade fra6x9Trade = fra6x9Node.trade(valuationDate, quotesMap);
     Trade swap1yTrade = swap1yNode.trade(valuationDate, quotesMap);
@@ -148,23 +152,23 @@ public class CurveEndToEndTest {
     CurveGroupName groupName = CurveGroupName.of("Curve Group");
     CurveName curveName = CurveName.of("FRA and Fixed-Float Swap Curve");
 
-    InterpolatedCurveConfig curveConfig = InterpolatedCurveConfig.builder()
+    InterpolatedNodalCurveDefinition curveDefn = InterpolatedNodalCurveDefinition.builder()
         .name(curveName)
         .xValueType(ValueType.YEAR_FRACTION)
         .yValueType(ValueType.ZERO_RATE)
         .dayCount(DayCounts.ACT_ACT_ISDA)
         .nodes(nodes)
         .interpolator(CurveInterpolators.DOUBLE_QUADRATIC)
-        .leftExtrapolator(CurveExtrapolators.FLAT)
-        .rightExtrapolator(CurveExtrapolators.FLAT)
+        .extrapolatorLeft(CurveExtrapolators.FLAT)
+        .extrapolatorRight(CurveExtrapolators.FLAT)
         .build();
 
-    CurveGroupConfig groupConfig = CurveGroupConfig.builder()
+    CurveGroupDefinition groupDefn = CurveGroupDefinition.builder()
         .name(groupName)
-        .addCurve(curveConfig, Currency.USD, IborIndices.USD_LIBOR_3M)
+        .addCurve(curveDefn, Currency.USD, IborIndices.USD_LIBOR_3M)
         .build();
 
-    MarketDataConfig marketDataConfig = MarketDataConfig.builder().add(groupName, groupConfig).build();
+    MarketDataConfig marketDataConfig = MarketDataConfig.builder().add(groupName, groupDefn).build();
 
     // Rules for market data and calculations ---------------------------------
 
@@ -184,7 +188,8 @@ public class CurveEndToEndTest {
     // Market data functions --------------------------------------------------
 
     ParRatesMarketDataFunction parRatesFunction = new ParRatesMarketDataFunction();
-    CurveGroupMarketDataFunction curveGroupFunction = new CurveGroupMarketDataFunction(RootFinderConfig.defaults());
+    CurveGroupMarketDataFunction curveGroupFunction = new CurveGroupMarketDataFunction(
+        RootFinderConfig.defaults(), CalibrationMeasures.DEFAULT);
     DiscountCurveMarketDataFunction discountCurveFunction = new DiscountCurveMarketDataFunction();
     RateIndexCurveMarketDataFunction forwardCurveFunction = new RateIndexCurveMarketDataFunction();
     DiscountFactorsMarketDataFunction discountFactorsFunction = new DiscountFactorsMarketDataFunction();

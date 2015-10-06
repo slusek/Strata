@@ -62,13 +62,11 @@
     <module>engine</module>
     <module>source</module>
     <module>finance</module>
-    <module>finance-beta</module>
     <module>function</module>
-    <module>function-beta</module>
     <module>market</module>
+    <module>math</module>
     <module>pricer</module>
-    <module>pricer-beta</module>
-    <module>report-beta</module>
+    <module>report</module>
   </modules>
 
   <!-- ==================================================================== -->
@@ -194,12 +192,12 @@
       </dependency>
       <dependency>
         <groupId>com.opengamma.strata</groupId>
-        <artifactId>strata-finance</artifactId>
+        <artifactId>strata-math</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.opengamma.strata</groupId>
-        <artifactId>strata-finance-beta</artifactId>
+        <artifactId>strata-finance</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -219,34 +217,13 @@
       </dependency>
       <dependency>
         <groupId>com.opengamma.strata</groupId>
-        <artifactId>strata-pricer-beta</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.opengamma.strata</groupId>
-        <artifactId>strata-report-beta</artifactId>
+        <artifactId>strata-report</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.opengamma.strata</groupId>
         <artifactId>strata-function</artifactId>
         <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.opengamma.strata</groupId>
-        <artifactId>strata-function-beta</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.opengamma.analytics</groupId>
-        <artifactId>og-analytics</artifactId>
-        <version>${og-analytics.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <!-- Third party -->
       <dependency>
@@ -273,6 +250,11 @@
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-nop</artifactId>
         <version>${slf4j.version}</version>
       </dependency>
       <!-- Testing -->
@@ -310,19 +292,6 @@
         <version>${project.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.opengamma.analytics</groupId>
-        <artifactId>og-analytics</artifactId>
-        <version>${og-analytics.version}</version>
-        <type>test-jar</type>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>
@@ -505,7 +474,6 @@
     <joda-convert.version>1.7</joda-convert.version>
     <joda-beans.version>1.6</joda-beans.version>
     <jool.version>0.9.6</jool.version>
-    <og-analytics.version>3.0.0-SNAPSHOT</og-analytics.version>
     <slf4j.version>1.7.12</slf4j.version>
     <testng.version>6.9.4</testng.version>
     <!-- Properties for maven-javadoc-plugin -->

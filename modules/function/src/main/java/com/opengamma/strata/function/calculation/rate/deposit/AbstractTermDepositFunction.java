@@ -20,8 +20,8 @@ import com.opengamma.strata.engine.marketdata.FunctionRequirements;
 import com.opengamma.strata.finance.rate.deposit.ExpandedTermDeposit;
 import com.opengamma.strata.finance.rate.deposit.TermDeposit;
 import com.opengamma.strata.finance.rate.deposit.TermDepositTrade;
-import com.opengamma.strata.function.MarketDataRatesProvider;
 import com.opengamma.strata.function.calculation.AbstractCalculationFunction;
+import com.opengamma.strata.function.marketdata.MarketDataRatesProvider;
 import com.opengamma.strata.market.key.DiscountFactorsKey;
 import com.opengamma.strata.pricer.rate.RatesProvider;
 import com.opengamma.strata.pricer.rate.deposit.DiscountingTermDepositProductPricer;
@@ -52,8 +52,9 @@ public abstract class AbstractTermDepositFunction<T>
     super(convertCurrencies);
   }
 
+  //-------------------------------------------------------------------------
   /**
-   * Returns the Term Deposit pricer.
+   * Returns the pricer.
    * 
    * @return the pricer
    */
@@ -61,7 +62,6 @@ public abstract class AbstractTermDepositFunction<T>
     return DiscountingTermDepositProductPricer.DEFAULT;
   }
 
-  //-------------------------------------------------------------------------
   @Override
   public FunctionRequirements requirements(TermDepositTrade trade) {
     TermDeposit deposit = trade.getProduct();
@@ -86,12 +86,6 @@ public abstract class AbstractTermDepositFunction<T>
         .collect(toScenarioResult(isConvertCurrencies()));
   }
 
-  /**
-   * Returns the currency of the trade.
-   *
-   * @param target  the the target of the calculation
-   * @return the currency of the trade
-   */
   @Override
   public Optional<Currency> defaultReportingCurrency(TermDepositTrade target) {
     return Optional.of(target.getProduct().getCurrency());

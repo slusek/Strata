@@ -26,8 +26,8 @@ import com.opengamma.strata.engine.marketdata.FunctionRequirements;
 import com.opengamma.strata.finance.rate.fra.ExpandedFra;
 import com.opengamma.strata.finance.rate.fra.Fra;
 import com.opengamma.strata.finance.rate.fra.FraTrade;
-import com.opengamma.strata.function.MarketDataRatesProvider;
 import com.opengamma.strata.function.calculation.AbstractCalculationFunction;
+import com.opengamma.strata.function.marketdata.MarketDataRatesProvider;
 import com.opengamma.strata.market.key.DiscountFactorsKey;
 import com.opengamma.strata.market.key.IborIndexRatesKey;
 import com.opengamma.strata.market.key.IndexRateKey;
@@ -60,8 +60,9 @@ public abstract class AbstractFraFunction<T>
     super(convertCurrencies);
   }
 
+  //-------------------------------------------------------------------------
   /**
-   * Returns the Fra pricer.
+   * Returns the pricer.
    * 
    * @return the pricer
    */
@@ -69,7 +70,6 @@ public abstract class AbstractFraFunction<T>
     return DiscountingFraProductPricer.DEFAULT;
   }
 
-  //-------------------------------------------------------------------------
   @Override
   public FunctionRequirements requirements(FraTrade trade) {
     Fra fra = trade.getProduct();
@@ -114,12 +114,6 @@ public abstract class AbstractFraFunction<T>
   }
 
 
-  /**
-   * Returns the currency of the FRA.
-   *
-   * @param target  the FRA that is the target of the calculation
-   * @return the currency of the FRA
-   */
   @Override
   public Optional<Currency> defaultReportingCurrency(FraTrade target) {
     return Optional.of(target.getProduct().getCurrency());

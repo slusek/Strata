@@ -24,7 +24,6 @@ import java.time.YearMonth;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.basics.currency.CurrencyPair;
 import com.opengamma.strata.basics.currency.FxMatrix;
 import com.opengamma.strata.basics.interpolator.CurveInterpolator;
@@ -37,6 +36,7 @@ import com.opengamma.strata.market.value.DiscountFxForwardRates;
 import com.opengamma.strata.market.value.ForwardPriceIndexValues;
 import com.opengamma.strata.market.value.PriceIndexValues;
 import com.opengamma.strata.market.value.ZeroRateDiscountFactors;
+import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
 
 /**
  * Test {@link ImmutableRatesProvider}.
@@ -190,7 +190,6 @@ public class ImmutableRatesProviderTest {
     ImmutableRatesProvider test2 = ImmutableRatesProvider.builder()
         .valuationDate(LocalDate.of(2014, 6, 27))
         .discountCurves(ImmutableMap.of(GBP, DISCOUNT_CURVE_GBP))
-        .timeSeries(ImmutableMap.of(USD_LIBOR_3M, LocalDateDoubleTimeSeries.empty()))
         .build();
     coverBeanEquals(test, test2);
   }

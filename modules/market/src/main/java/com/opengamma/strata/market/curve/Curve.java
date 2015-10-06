@@ -7,6 +7,8 @@ package com.opengamma.strata.market.curve;
 
 import java.time.Period;
 
+import com.opengamma.strata.basics.market.Perturbation;
+import com.opengamma.strata.collect.Messages;
 import com.opengamma.strata.market.sensitivity.CurveUnitParameterSensitivity;
 
 /**
@@ -87,5 +89,33 @@ public interface Curve {
    * @throws RuntimeException if the derivative cannot be calculated
    */
   public abstract double firstDerivative(double x);
+
+  /**
+   * Applies the perturbation to this curve.
+   * <p>
+   * This returns a curve that has been changed by the {@link Perturbation} instance.
+   * 
+   * @param perturbation  the perturbation to apply
+   * @return the perturbed curve
+   * @throws RuntimeException if the perturbation cannot be applied
+   */
+  public default Curve applyPerturbation(Perturbation<Curve> perturbation) {
+    return perturbation.applyTo(this);
+  }
+
+  //-------------------------------------------------------------------------
+  /**
+   * Concerts this curve to a nodal curve.
+   * <p>
+   * A nodal curve is based on specific x-y values, typically with interpolation.
+   * See {@link InterpolatedNodalCurve} for more details.
+   * 
+   * @return the equivalent nodal curve
+   * @throws UnsupportedOperationException if the curve cannot be converted
+   */
+  public default NodalCurve toNodalCurve() {
+    throw new UnsupportedOperationException(Messages.format(
+        "Unable to convert curve '{}' to NodalCurve, type was: {}", getName(), getClass().getName()));
+  }
 
 }

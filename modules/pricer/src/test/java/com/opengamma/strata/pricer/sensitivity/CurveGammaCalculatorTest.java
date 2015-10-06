@@ -27,7 +27,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.opengamma.analytics.math.differentiation.FiniteDifferenceType;
 import com.opengamma.strata.basics.PayReceive;
 import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
@@ -52,6 +51,7 @@ import com.opengamma.strata.market.curve.NodalCurve;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivities;
 import com.opengamma.strata.market.sensitivity.CurveCurrencyParameterSensitivity;
 import com.opengamma.strata.market.sensitivity.PointSensitivities;
+import com.opengamma.strata.math.impl.differentiation.FiniteDifferenceType;
 import com.opengamma.strata.pricer.datasets.RatesProviderDataSets;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 import com.opengamma.strata.pricer.rate.RatesProvider;
@@ -79,7 +79,6 @@ public class CurveGammaCalculatorTest {
       .valuationDate(VAL_DATE_2015_04_27)
       .discountCurves(USD_SINGLE_CCY_MAP)
       .indexCurves(USD_SINGLE_IND_MAP)
-      .timeSeries(RatesProviderDataSets.TIME_SERIES)
       .build();
   private static final Currency SINGLE_CURRENCY = Currency.USD;
   // Conventions
@@ -99,7 +98,7 @@ public class CurveGammaCalculatorTest {
   //-------------------------------------------------------------------------
   public void semiParallelGammaValue() {
     ImmutableRatesProvider provider = SINGLE;
-    NodalCurve curve = (NodalCurve) Iterables.getOnlyElement(provider.getDiscountCurves().values());
+    NodalCurve curve = Iterables.getOnlyElement(provider.getDiscountCurves().values()).toNodalCurve();
     Currency curveCurrency = SINGLE_CURRENCY;
     double[] y = curve.getYValues();
     int nbNode = y.length;
@@ -140,7 +139,7 @@ public class CurveGammaCalculatorTest {
   // Checks that different finite difference types and shifts give similar results.
   public void semiParallelGammaCoherency() {
     ImmutableRatesProvider provider = SINGLE;
-    NodalCurve curve = (NodalCurve) Iterables.getOnlyElement(provider.getDiscountCurves().values());
+    NodalCurve curve = Iterables.getOnlyElement(provider.getDiscountCurves().values()).toNodalCurve();
     Currency curveCurrency = SINGLE_CURRENCY;
     double toleranceCoherency = 1.0E+5;
     CurveGammaCalculator calculatorForward5 = new CurveGammaCalculator(FiniteDifferenceType.FORWARD, FD_SHIFT);

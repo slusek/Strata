@@ -17,12 +17,12 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.opengamma.analytics.math.interpolation.GridInterpolator2D;
-import com.opengamma.analytics.math.interpolation.LinearInterpolator1D;
-import com.opengamma.analytics.math.interpolation.LogLinearInterpolator1D;
-import com.opengamma.analytics.math.interpolation.data.Interpolator1DDataBundle;
 import com.opengamma.strata.basics.value.ValueAdjustment;
 import com.opengamma.strata.collect.tuple.DoublesPair;
+import com.opengamma.strata.math.impl.interpolation.GridInterpolator2D;
+import com.opengamma.strata.math.impl.interpolation.LinearInterpolator1D;
+import com.opengamma.strata.math.impl.interpolation.LogLinearInterpolator1D;
+import com.opengamma.strata.math.impl.interpolation.data.Interpolator1DDataBundle;
 
 /**
  * Test {@link InterpolatedNodalSurface}.
@@ -203,6 +203,20 @@ public class InterpolatedNodalSurfaceTest {
     assertThat(test.getXValues()).containsExactly(XVALUES);
     assertThat(test.getYValues()).containsExactly(YVALUES);
     assertThat(test.getZValues()).containsExactly(bumped);
+  }
+
+  //-------------------------------------------------------------------------
+  public void test_applyPerturbation() {
+    InterpolatedNodalSurface base = InterpolatedNodalSurface.of(METADATA, XVALUES, YVALUES, ZVALUES, INTERPOLATOR);
+    ConstantNodalSurface result = ConstantNodalSurface.of(SURFACE_NAME, 7d);
+    Surface test = base.applyPerturbation(surface -> result);
+    assertThat(test).isSameAs(result);
+  }
+
+  public void test_toNodalSurface() {
+    InterpolatedNodalSurface base = InterpolatedNodalSurface.of(METADATA, XVALUES, YVALUES, ZVALUES, INTERPOLATOR);
+    NodalSurface test = base.toNodalSurface();
+    assertThat(test).isSameAs(base);
   }
 
   //-------------------------------------------------------------------------

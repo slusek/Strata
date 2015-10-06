@@ -20,16 +20,16 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.opengamma.analytics.math.interpolation.CombinedInterpolatorExtrapolator;
-import com.opengamma.analytics.math.interpolation.FlatExtrapolator1D;
-import com.opengamma.analytics.math.interpolation.Interpolator1D;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
-import com.opengamma.analytics.math.interpolation.LogLinearInterpolator1D;
-import com.opengamma.analytics.math.interpolation.data.Interpolator1DDataBundle;
 import com.opengamma.strata.basics.interpolator.CurveExtrapolator;
 import com.opengamma.strata.basics.interpolator.CurveInterpolator;
 import com.opengamma.strata.basics.value.ValueAdjustment;
 import com.opengamma.strata.market.sensitivity.CurveUnitParameterSensitivity;
+import com.opengamma.strata.math.impl.interpolation.CombinedInterpolatorExtrapolator;
+import com.opengamma.strata.math.impl.interpolation.FlatExtrapolator1D;
+import com.opengamma.strata.math.impl.interpolation.Interpolator1D;
+import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
+import com.opengamma.strata.math.impl.interpolation.LogLinearInterpolator1D;
+import com.opengamma.strata.math.impl.interpolation.data.Interpolator1DDataBundle;
 
 /**
  * Test {@link InterpolatedNodalCurve}.
@@ -214,6 +214,20 @@ public class InterpolatedNodalCurveTest {
     assertThat(test.getMetadata()).isEqualTo(METADATA);
     assertThat(test.getXValues()).containsExactly(x);
     assertThat(test.getYValues()).containsExactly(y);
+  }
+
+  //-------------------------------------------------------------------------
+  public void test_applyPerturbation() {
+    InterpolatedNodalCurve base = InterpolatedNodalCurve.of(METADATA, XVALUES, YVALUES, INTERPOLATOR);
+    ConstantNodalCurve result = ConstantNodalCurve.of(CURVE_NAME, 7d);
+    Curve test = base.applyPerturbation(curve -> result);
+    assertThat(test).isSameAs(result);
+  }
+
+  public void test_toNodalCurve() {
+    InterpolatedNodalCurve base = InterpolatedNodalCurve.of(METADATA, XVALUES, YVALUES, INTERPOLATOR);
+    NodalCurve test = base.toNodalCurve();
+    assertThat(test).isSameAs(base);
   }
 
   //-------------------------------------------------------------------------
