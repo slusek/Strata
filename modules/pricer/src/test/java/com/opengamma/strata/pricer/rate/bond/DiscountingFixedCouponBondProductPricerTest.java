@@ -21,7 +21,6 @@ import org.joda.beans.MetaProperty;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.date.BusinessDayAdjustment;
@@ -57,6 +56,7 @@ import com.opengamma.strata.market.value.DiscountFactors;
 import com.opengamma.strata.market.value.IssuerCurveDiscountFactors;
 import com.opengamma.strata.market.value.LegalEntityGroup;
 import com.opengamma.strata.market.value.ZeroRateDiscountFactors;
+import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.pricer.DiscountingPaymentPricer;
 import com.opengamma.strata.pricer.impl.bond.DiscountingFixedCouponBondPaymentPeriodPricer;
 import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;

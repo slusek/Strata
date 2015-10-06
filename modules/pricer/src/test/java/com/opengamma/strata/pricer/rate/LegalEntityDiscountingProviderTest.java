@@ -20,7 +20,6 @@ import java.time.LocalDate;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.opengamma.analytics.math.interpolation.Interpolator1DFactory;
 import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.interpolator.CurveInterpolator;
 import com.opengamma.strata.collect.id.StandardId;
@@ -40,6 +39,7 @@ import com.opengamma.strata.market.value.IssuerCurveDiscountFactors;
 import com.opengamma.strata.market.value.LegalEntityGroup;
 import com.opengamma.strata.market.value.RepoCurveDiscountFactors;
 import com.opengamma.strata.market.value.ZeroRateDiscountFactors;
+import com.opengamma.strata.math.impl.interpolation.Interpolator1DFactory;
 
 /**
  * Test {@link LegalEntityDiscountingProvider}.
