@@ -53,6 +53,10 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @return the present value of the period
    */
   public double presentValue(FixedCouponBondPaymentPeriod period, IssuerCurveDiscountFactors discountFactors) {
+
+    if (period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      return 0d;
+    }
     double df = discountFactors.discountFactor(period.getPaymentDate());
     return period.getFixedRate() * period.getNotional() * period.getYearFraction() * df;
   }
@@ -84,6 +88,9 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
       boolean periodic,
       int periodsPerYear) {
 
+    if (period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      return 0d;
+    }
     double df = discountFactors.getDiscountFactors()
         .discountFactorWithSpread(period.getPaymentDate(), zSpread, periodic, periodsPerYear);
     return period.getFixedRate() * period.getNotional() * period.getYearFraction() * df;
@@ -106,6 +113,10 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @return the present value of the period
    */
   public double futureValue(FixedCouponBondPaymentPeriod period, IssuerCurveDiscountFactors discountFactors) {
+
+    if (period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      return 0d;
+    }
     return period.getFixedRate() * period.getNotional() * period.getYearFraction();
   }
 
@@ -120,10 +131,13 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @param discountFactors  the discount factor provider
    * @return the present value curve sensitivity of the period
    */
-  public IssuerCurveZeroRateSensitivity presentValueSensitivity(
+  public PointSensitivityBuilder presentValueSensitivity(
       FixedCouponBondPaymentPeriod period,
       IssuerCurveDiscountFactors discountFactors) {
 
+    if (period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      return PointSensitivityBuilder.none();
+    }
     IssuerCurveZeroRateSensitivity dscSensi = discountFactors.zeroRatePointSensitivity(period.getPaymentDate());
     return dscSensi.multipliedBy(period.getFixedRate() * period.getNotional() * period.getYearFraction());
   }
@@ -145,13 +159,16 @@ public class DiscountingFixedCouponBondPaymentPeriodPricer {
    * @param periodsPerYear  the number of periods per year
    * @return the present value curve sensitivity of the period
    */
-  public IssuerCurveZeroRateSensitivity presentValueSensitivityWithSpread(
+  public PointSensitivityBuilder presentValueSensitivityWithSpread(
       FixedCouponBondPaymentPeriod period,
       IssuerCurveDiscountFactors discountFactors,
       double zSpread,
       boolean periodic,
       int periodsPerYear) {
 
+    if (period.getPaymentDate().isBefore(discountFactors.getValuationDate())) {
+      return PointSensitivityBuilder.none();
+    }
     ZeroRateSensitivity zeroSensi = discountFactors.getDiscountFactors().zeroRatePointSensitivityWithSpread(
         period.getPaymentDate(), zSpread, periodic, periodsPerYear);
     IssuerCurveZeroRateSensitivity dscSensi =

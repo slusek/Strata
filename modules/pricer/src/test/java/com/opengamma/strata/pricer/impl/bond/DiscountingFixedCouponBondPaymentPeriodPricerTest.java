@@ -99,6 +99,21 @@ public class DiscountingFixedCouponBondPaymentPeriodPricerTest {
     assertEquals(computed, expected);
   }
 
+  public void test_presentValue_past() {
+    double computed = PRICER.presentValue(PAYMENT_PERIOD, ISSUER_CURVE_AFTER);
+    assertEquals(computed, 0d);
+  }
+
+  public void test_presentValueWithSpread_past() {
+    double computed = PRICER.presentValueWithSpread(PAYMENT_PERIOD, ISSUER_CURVE_AFTER, Z_SPREAD, true, PERIOD_PER_YEAR);
+    assertEquals(computed, 0d);
+  }
+
+  public void test_futureValue_past() {
+    double computed = PRICER.futureValue(PAYMENT_PERIOD, ISSUER_CURVE_AFTER);
+    assertEquals(computed, 0d);
+  }
+
   //-------------------------------------------------------------------------
   public void test_presentValueSensitivity() {
     PointSensitivityBuilder computed = PRICER.presentValueSensitivity(PAYMENT_PERIOD, ISSUER_CURVE);
@@ -118,6 +133,17 @@ public class DiscountingFixedCouponBondPaymentPeriodPricerTest {
 
   public void test_futureValueSensitivity() {
     PointSensitivityBuilder computed = PRICER.futureValueSensitivity(PAYMENT_PERIOD, ISSUER_CURVE);
+    assertEquals(computed, PointSensitivityBuilder.none());
+  }
+
+  public void test_presentValueSensitivity_past() {
+    PointSensitivityBuilder computed = PRICER.presentValueSensitivity(PAYMENT_PERIOD, ISSUER_CURVE_AFTER);
+    assertEquals(computed, PointSensitivityBuilder.none());
+  }
+
+  public void test_presentValueSensitivityWithSpread_past() {
+    PointSensitivityBuilder computed =
+        PRICER.presentValueSensitivityWithSpread(PAYMENT_PERIOD, ISSUER_CURVE_AFTER, Z_SPREAD, true, PERIOD_PER_YEAR);
     assertEquals(computed, PointSensitivityBuilder.none());
   }
 
