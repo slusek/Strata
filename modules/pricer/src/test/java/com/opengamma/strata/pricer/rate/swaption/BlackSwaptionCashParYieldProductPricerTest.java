@@ -191,7 +191,8 @@ public class BlackSwaptionCashParYieldProductPricerTest {
   private static final Swap SWAP_PAY = Swap.of(FIXED_LEG_PAY, IBOR_LEG_REC);
   private static final CashSettlement PAR_YIELD = CashSettlement.builder()
       .cashSettlementMethod(CashSettlementMethod.PAR_YIELD)
-      .settlementDate(SETTLE).build();
+      .settlementDate(SETTLE)
+      .build();
   private static final Swaption SWAPTION_REC = Swaption
       .builder()
       .expiryDate(AdjustableDate.of(MATURITY, BDA_MF))
