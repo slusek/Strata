@@ -127,12 +127,12 @@ public class NormalSwaptionCashParYieldProductPricer {
 
   //-------------------------------------------------------------------------
   /**
-   * Computes the implied Black volatility of the swaption.
+   * Computes the implied normal volatility of the swaption.
    * 
    * @param swaption  the product to price
    * @param ratesProvider  the rates provider
    * @param volatilityProvider  the normal volatility provider
-   * @return the Black implied volatility associated to the swaption
+   * @return the normal implied volatility associated to the swaption
    */
   public double impliedVolatility(
       SwaptionProduct swaption,
@@ -201,14 +201,14 @@ public class NormalSwaptionCashParYieldProductPricer {
   /**
    * Calculates the present value sensitivity to the implied volatility of the swaption product.
    * <p>
-   * The sensitivity to the Black volatility is also called Black vega.
+   * The sensitivity to the normal volatility is also called normal vega.
    * 
    * @param swaption  the swaption product
    * @param ratesProvider  the rates provider
    * @param volatilityProvider  the normal volatility provider
-   * @return the point sensitivity to the Black volatility
+   * @return the point sensitivity to the normal volatility
    */
-  public SwaptionSensitivity presentValueSensitivityBlackVolatility(
+  public SwaptionSensitivity presentValueSensitivityNormalVolatility(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
       NormalVolatilitySwaptionProvider volatilityProvider) {

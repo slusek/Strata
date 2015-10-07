@@ -51,6 +51,7 @@ import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConvention;
 import com.opengamma.strata.finance.rate.swap.type.FixedIborSwapConventions;
 import com.opengamma.strata.finance.rate.swaption.CashSettlement;
 import com.opengamma.strata.finance.rate.swaption.CashSettlementMethod;
+import com.opengamma.strata.finance.rate.swaption.PhysicalSettlement;
 import com.opengamma.strata.finance.rate.swaption.Swaption;
 import com.opengamma.strata.market.curve.CurveMetadata;
 import com.opengamma.strata.market.curve.CurveName;
@@ -226,7 +227,6 @@ public class BlackSwaptionCashParYieldProductPricerTest {
       BlackVolatilityExpiryTenorSwaptionProvider.of(SURFACE, SWAP_CONVENTION, ACT_ACT_ISDA, MATURITY);
   private static final BlackVolatilityExpiryTenorSwaptionProvider VOL_PROVIDER_AFTER_MATURITY =
       BlackVolatilityExpiryTenorSwaptionProvider.of(SURFACE, SWAP_CONVENTION, ACT_ACT_ISDA, MATURITY.plusDays(1));
-
   // test parameters
   private static final double TOL = 1.0e-12;
   private static final double FD_EPS = 1.0e-7;
@@ -270,6 +270,19 @@ public class BlackSwaptionCashParYieldProductPricerTest {
     CurrencyAmount computedPay = PRICER.presentValue(SWAPTION_PAY, RATES_PROVIDER_AFTER_MATURITY, VOL_PROVIDER_AFTER_MATURITY);
     assertEquals(computedRec.getAmount(), 0d, NOTIONAL * TOL);
     assertEquals(computedPay.getAmount(), 0d, NOTIONAL * TOL);
+  }
+
+  public void test_physicalSettlement() {
+    Swaption swaption = Swaption
+        .builder()
+        .expiryDate(AdjustableDate.of(MATURITY, BDA_MF))
+        .expiryTime(LocalTime.NOON)
+        .expiryZone(ZoneOffset.UTC)
+        .swaptionSettlement(PhysicalSettlement.DEFAULT)
+        .longShort(LONG)
+        .underlying(SWAP_PAY)
+        .build();
+    assertThrowsIllegalArg(() -> PRICER.impliedVolatility(swaption, RATE_PROVIDER, VOL_PROVIDER));
   }
 
   public void test_noFixedLeg() {
