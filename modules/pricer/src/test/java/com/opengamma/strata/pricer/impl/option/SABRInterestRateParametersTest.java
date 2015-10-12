@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.opengamma.strata.basics.PutCall;
 import com.opengamma.strata.collect.tuple.DoublesPair;
+import com.opengamma.strata.market.surface.ConstantNodalSurface;
 import com.opengamma.strata.market.surface.DefaultSurfaceMetadata;
 import com.opengamma.strata.market.surface.InterpolatedNodalSurface;
 import com.opengamma.strata.market.surface.NodalSurface;
@@ -70,6 +71,12 @@ public class SABRInterestRateParametersTest {
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testNullShift() {
+    NodalSurface surface = null;
+    SABRInterestRateParameters.of(ALPHA_SURFACE, BETA_SURFACE, RHO_SURFACE, NU_SURFACE, FUNCTION, surface);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
   public void testNullFunction() {
     SABRInterestRateParameters.of(ALPHA_SURFACE, BETA_SURFACE, RHO_SURFACE, NU_SURFACE,
         (VolatilityFunctionProvider<SABRFormulaData>) null);
@@ -92,6 +99,7 @@ public class SABRInterestRateParametersTest {
     assertEquals(PARAMETERS.getRhoSurface(), RHO_SURFACE);
     assertEquals(PARAMETERS.getNuSurface(), NU_SURFACE);
     assertEquals(PARAMETERS.getSabrFunctionProvider(), FUNCTION);
+    assertEquals(PARAMETERS.getShiftSurface(), ConstantNodalSurface.of("zero shift", 0d));
     double expiry = 2.0;
     double tenor = 3.0;
     DoublesPair sample = DoublesPair.of(expiry, tenor);
@@ -107,6 +115,11 @@ public class SABRInterestRateParametersTest {
     assertEquals(PARAMETERS.getVolatility(expiry, tenor, strike, forward), FUNCTION.getVolatility(option, forward, data));
     assertEquals(PARAMETERS.getVolatility(new double[] {expiry, tenor, strike, forward }),
         FUNCTION.getVolatility(option, forward, data));
+    double[] adjCmp = PARAMETERS.getVolatilityModelAdjoint(expiry, tenor, strike, forward);
+    double[] adjExp = FUNCTION.getVolatilityModelAdjoint(option, forward, data);
+    for (int i = 0; i < 4; ++i) {
+      assertEquals(adjCmp[i], adjExp[i]);
+    }
     SABRInterestRateParameters other =
         SABRInterestRateParameters.of(ALPHA_SURFACE, BETA_SURFACE, RHO_SURFACE, NU_SURFACE, FUNCTION);
     assertEquals(PARAMETERS, other);
@@ -122,12 +135,41 @@ public class SABRInterestRateParametersTest {
     assertFalse(other.equals(PARAMETERS));
   }
 
+  @Test
+  public void negativeRates() {
+    double shift = 0.05;
+    NodalSurface surface = ConstantNodalSurface.of("shfit", shift);
+    SABRInterestRateParameters params =
+        SABRInterestRateParameters.of(ALPHA_SURFACE, BETA_SURFACE, RHO_SURFACE, NU_SURFACE, FUNCTION, surface);
+    double expiry = 2.0;
+    double tenor = 3.0;
+    DoublesPair sample = DoublesPair.of(expiry, tenor);
+    assertEquals(params.getAlpha(sample), ALPHA_SURFACE.zValue(sample));
+    assertEquals(params.getBeta(sample), BETA_SURFACE.zValue(sample));
+    assertEquals(params.getRho(sample), RHO_SURFACE.zValue(sample));
+    assertEquals(params.getNu(sample), NU_SURFACE.zValue(sample));
+    double strike = -0.02;
+    double forward = 0.015;
+    EuropeanVanillaOption option = EuropeanVanillaOption.of(strike + shift, expiry, PutCall.CALL);
+    SABRFormulaData data = SABRFormulaData.of(
+        ALPHA_SURFACE.zValue(sample), BETA_SURFACE.zValue(sample), RHO_SURFACE.zValue(sample), NU_SURFACE.zValue(sample));
+    assertEquals(params.getVolatility(expiry, tenor, strike, forward),
+        FUNCTION.getVolatility(option, forward + shift, data));
+    assertEquals(params.getVolatility(new double[] {expiry, tenor, strike, forward }),
+        FUNCTION.getVolatility(option, forward + shift, data));
+    double[] adjCmp = params.getVolatilityModelAdjoint(expiry, tenor, strike, forward);
+    double[] adjExp = FUNCTION.getVolatilityModelAdjoint(option, forward + shift, data);
+    for (int i = 0; i < 4; ++i) {
+      assertEquals(adjCmp[i], adjExp[i]);
+    }
+  }
+
   //-------------------------------------------------------------------------
   public void coverage() {
     coverImmutableBean(PARAMETERS);
     InterpolatedNodalSurface surface = InterpolatedNodalSurface.of(METADATA,
         new double[] {0.0, 5, 0.0, 5 }, new double[] {0, 0, 8, 8 }, new double[] {0.2, 0.3, 0.2, 0.3 }, GRID);
-    SABRInterestRateParameters other = SABRInterestRateParameters.of(surface, surface, surface, surface, FUNCTION);
+    SABRInterestRateParameters other = SABRInterestRateParameters.of(surface, surface, surface, surface, FUNCTION, surface);
     coverBeanEquals(PARAMETERS, other);
   }
 

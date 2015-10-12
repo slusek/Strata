@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 
+import com.opengamma.strata.basics.PutCall;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.math.impl.differentiation.VectorFieldFirstOrderDifferentiator;
 import com.opengamma.strata.math.impl.function.Function1D;
@@ -19,6 +20,7 @@ import com.opengamma.strata.math.impl.matrix.DoubleMatrix1D;
 import com.opengamma.strata.math.impl.matrix.DoubleMatrix2D;
 import com.opengamma.strata.math.impl.statistics.leastsquare.LeastSquareResults;
 import com.opengamma.strata.math.impl.statistics.leastsquare.LeastSquareResultsWithTransform;
+import com.opengamma.strata.pricer.impl.option.EuropeanVanillaOption;
 import com.opengamma.strata.pricer.impl.volatility.smile.function.SmileModelData;
 import com.opengamma.strata.pricer.impl.volatility.smile.function.VolatilityFunctionProvider;
 
@@ -58,9 +60,12 @@ public abstract class SmileModelFitterTest<T extends SmileModelData> {
     int n = strikes.length;
     _noisyVols = new double[n];
     _errors = new double[n];
-    _cleanVols = model.getVolatilityFunction(F, strikes, TIME_TO_EXPIRY).evaluate(data);
+    _cleanVols = new double[n];
     Arrays.fill(_errors, 1e-4);
     for (int i = 0; i < n; i++) {
+      PutCall putCall = strikes[i] >= F ? PutCall.CALL : PutCall.PUT;
+      EuropeanVanillaOption option = EuropeanVanillaOption.of(strikes[i], TIME_TO_EXPIRY, putCall);
+      _cleanVols[i] = model.getVolatility(option, F, data);
       _noisyVols[i] = _cleanVols[i] + UNIFORM.nextDouble() * _errors[i];
     }
     _fitter = getFitter(F, strikes, TIME_TO_EXPIRY, _cleanVols, _errors, model);
@@ -85,7 +90,7 @@ public abstract class SmileModelFitterTest<T extends SmileModelData> {
       T data = getModelData();
       assertEquals(data.getNumberOfParameters(), n);
       for (int i = 0; i < n; i++) {
-        assertEquals(data.getParameter(i), res.getEntry(i), _paramValueEps);
+        assertEquals(data.getParameter(i), res.get(i), _paramValueEps);
       }
     }
   }
@@ -104,7 +109,7 @@ public abstract class SmileModelFitterTest<T extends SmileModelData> {
       T data = getModelData();
       assertEquals(data.getNumberOfParameters(), n);
       for (int i = 0; i < n; i++) {
-        assertEquals(data.getParameter(i), res.getEntry(i), eps);
+        assertEquals(data.getParameter(i), res.get(i), eps);
       }
     }
   }
@@ -200,16 +205,16 @@ public abstract class SmileModelFitterTest<T extends SmileModelData> {
     Function1D<DoubleMatrix1D, DoubleMatrix2D> jacFuncFD = differ.differentiate(func);
     DoubleMatrix2D jac = jacFunc.evaluate(x);
     DoubleMatrix2D jacFD = jacFuncFD.evaluate(x);
-    int rows = jacFD.getNumberOfRows();
-    int cols = jacFD.getNumberOfColumns();
+    int rows = jacFD.rowCount();
+    int cols = jacFD.columnCount();
 
     assertEquals(_cleanVols.length, rows);
     assertEquals(n, cols);
-    assertEquals(rows, jac.getNumberOfRows());
-    assertEquals(cols, jac.getNumberOfColumns());
+    assertEquals(rows, jac.rowCount());
+    assertEquals(cols, jac.columnCount());
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-        assertEquals(jacFD.getEntry(i, j), jac.getEntry(i, j), 2e-2);
+        assertEquals(jacFD.get(i, j), jac.get(i, j), 2e-2);
       }
     }
   }
