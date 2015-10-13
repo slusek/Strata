@@ -135,8 +135,9 @@ public final class SABRInterestRateParameters
   //-------------------------------------------------------------------------
   /**
    * Return the alpha parameter for a pair of time to expiry and instrument tenor.
-   * @param expirytenor The expiry/tenor pair.
-   * @return The alpha parameter.
+   * 
+   * @param expirytenor The expiry/tenor pair
+   * @return The alpha parameter
    */
   public double getAlpha(final DoublesPair expirytenor) {
     return alphaSurface.zValue(expirytenor);
@@ -144,8 +145,9 @@ public final class SABRInterestRateParameters
 
   /**
    * Return the beta parameter for a pair of time to expiry and instrument tenor.
-   * @param expirytenor The expiry/tenor pair.
-   * @return The beta parameter.
+   * 
+   * @param expirytenor The expiry/tenor pair
+   * @return The beta parameter
    */
   public double getBeta(final DoublesPair expirytenor) {
     return betaSurface.zValue(expirytenor);
@@ -153,8 +155,9 @@ public final class SABRInterestRateParameters
 
   /**
    * Return the rho parameter for a pair of time to expiry and instrument tenor.
-   * @param expirytenor The expiry/tenor pair.
-   * @return The rho parameter.
+   * 
+   * @param expirytenor The expiry/tenor pair
+   * @return The rho parameter
    */
   public double getRho(final DoublesPair expirytenor) {
     return rhoSurface.zValue(expirytenor);
@@ -162,8 +165,9 @@ public final class SABRInterestRateParameters
 
   /**
    * Return the nu parameter for a pair of time to expiry and instrument tenor.
-   * @param expirytenor The expiry/tenor pair.
-   * @return The nu parameter.
+   * 
+   * @param expirytenor The expiry/tenor pair
+   * @return The nu parameter
    */
   public double getNu(final DoublesPair expirytenor) {
     return nuSurface.zValue(expirytenor);
@@ -171,8 +175,9 @@ public final class SABRInterestRateParameters
 
   /**
    * Return the nu parameter for a pair of time to expiry and instrument tenor.
-   * @param expirytenor The expiry/tenor pair.
-   * @return The nu parameter.
+   * 
+   * @param expirytenor The expiry/tenor pair
+   * @return The nu parameter
    */
   public double getShift(final DoublesPair expirytenor) {
     return shiftSurface.zValue(expirytenor);
@@ -215,7 +220,7 @@ public final class SABRInterestRateParameters
    * @param tenor  tenor
    * @param strike  the strike
    * @param forward  the forward
-   * @return the volatility
+   * @return the sensitivities
    */
   public double[] getVolatilityModelAdjoint(double expiryTime, double tenor, double strike, double forward) {
     DoublesPair expirytTenor = DoublesPair.of(expiryTime, tenor);
@@ -237,7 +242,7 @@ public final class SABRInterestRateParameters
    * @param tenor  tenor
    * @param strike  the strike
    * @param forward  the forward
-   * @return the volatility
+   * @return the sensitivities
    */
   public double[] getVolatilityAdjoint(double expiryTime, double tenor, double strike, double forward) {
     DoublesPair expirytTenor = DoublesPair.of(expiryTime, tenor);
