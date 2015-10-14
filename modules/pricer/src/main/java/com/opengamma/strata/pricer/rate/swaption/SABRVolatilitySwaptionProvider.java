@@ -221,11 +221,10 @@ public final class SABRVolatilitySwaptionProvider
   
   private SurfaceCurrencyParameterSensitivity surfaceCurrencyParameterSensitivity(
       NodalSurface surface, Currency currency, double factor, DoublesPair expiryTenor) {
-    Map<DoublesPair, Double> sensiMap = parameters.getAlphaSurface().zValueParameterSensitivity(expiryTenor);
+    Map<DoublesPair, Double> sensiMap = surface.zValueParameterSensitivity(expiryTenor);
     return SurfaceCurrencyParameterSensitivity.of(
-        updateSurfaceMetadata(parameters.getAlphaSurface().getMetadata(), sensiMap.keySet()), currency,
-        Doubles.toArray(sensiMap.values().parallelStream().map((p) -> (p) * factor)
-            .collect(Collectors.toList())));
+        updateSurfaceMetadata(surface.getMetadata(), sensiMap.keySet()), currency,
+        Doubles.toArray(sensiMap.values().parallelStream().map((p) -> (p) * factor).collect(Collectors.toList())));
   }
 
   private SurfaceMetadata updateSurfaceMetadata(SurfaceMetadata surfaceMetadata, Set<DoublesPair> pairs) {
