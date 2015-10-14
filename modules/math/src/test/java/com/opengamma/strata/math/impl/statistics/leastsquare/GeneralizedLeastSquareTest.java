@@ -80,8 +80,8 @@ public class GeneralizedLeastSquareTest {
       final Function1D<DoubleMatrix1D, Double> func = new Function1D<DoubleMatrix1D, Double>() {
         @Override
         public Double evaluate(final DoubleMatrix1D x) {
-          ArgChecker.isTrue(x.getNumberOfElements() == 2);
-          return Math.sin((2 * k + 1) * x.getEntry(0)) * Math.cos((2 * k + 1) * x.getEntry(1));
+          ArgChecker.isTrue(x.size() == 2);
+          return Math.sin((2 * k + 1) * x.get(0)) * Math.cos((2 * k + 1) * x.get(1));
         }
       };
       VECTOR_TRIG_FUNCTIONS.add(func);
@@ -140,7 +140,7 @@ public class GeneralizedLeastSquareTest {
     assertEquals(0.0, results.getChiSq(), 1e-8);
     final DoubleMatrix1D w = results.getFitParameters();
     for (int i = 0; i < WEIGHTS.length; i++) {
-      assertEquals(WEIGHTS[i], w.getEntry(i), 1e-8);
+      assertEquals(WEIGHTS[i], w.get(i), 1e-8);
     }
   }
 
@@ -150,7 +150,7 @@ public class GeneralizedLeastSquareTest {
     assertEquals(0.0, results.getChiSq(), 1e-8);
     final DoubleMatrix1D w = results.getFitParameters();
     for (int i = 0; i < WEIGHTS.length; i++) {
-      assertEquals(WEIGHTS[i], w.getEntry(i), 1e-8);
+      assertEquals(WEIGHTS[i], w.get(i), 1e-8);
     }
   }
 

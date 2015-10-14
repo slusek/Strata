@@ -18,13 +18,14 @@ import com.opengamma.strata.math.impl.function.Function1D;
  * @param <U> Type of the function inputs and integration bounds
  */
 public abstract class Integrator1D<T, U> implements Integrator<T, U, Function1D<U, T>> {
+
   private static final Logger s_logger = LoggerFactory.getLogger(Integrator1D.class);
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public T integrate(final Function1D<U, T> f, final U[] lower, final U[] upper) {
+  public T integrate(Function1D<U, T> f, U[] lower, U[] upper) {
     ArgChecker.notNull(f, "function was null");
     ArgChecker.notNull(lower, "lower bound array was null");
     ArgChecker.notNull(upper, "upper bound array was null");

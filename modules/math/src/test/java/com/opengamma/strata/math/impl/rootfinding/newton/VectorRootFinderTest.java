@@ -55,16 +55,16 @@ public abstract class VectorRootFinderTest {
 
     @Override
     public DoubleMatrix2D evaluate(final DoubleMatrix1D x) {
-      if (x.getNumberOfElements() != 2) {
+      if (x.size() != 2) {
         throw new IllegalArgumentException("This test is for 2-d vector only");
       }
       final double[][] res = new double[2][2];
-      final double temp = Math.exp(x.getEntry(0));
+      final double temp = Math.exp(x.get(0));
 
-      res[0][0] = x.getEntry(1) * temp;
+      res[0][0] = x.get(1) * temp;
       res[0][1] = temp;
       for (int i = 0; i < 2; i++) {
-        res[1][i] = 2 * x.getEntry(i);
+        res[1][i] = 2 * x.get(i);
       }
 
       return new DoubleMatrix2D(res);
@@ -76,12 +76,12 @@ public abstract class VectorRootFinderTest {
 
     @Override
     public DoubleMatrix1D evaluate(final DoubleMatrix1D x) {
-      if (x.getNumberOfElements() != 3) {
+      if (x.size() != 3) {
         throw new IllegalArgumentException("This test is for 3-d vector only");
       }
       final double[] res = new double[3];
-      res[0] = Math.exp(x.getEntry(0) + x.getEntry(1)) + x.getEntry(2) - Math.E + 1.0;
-      res[1] = x.getEntry(2) * Math.exp(x.getEntry(0) - x.getEntry(1)) + Math.E;
+      res[0] = Math.exp(x.get(0) + x.get(1)) + x.get(2) - Math.E + 1.0;
+      res[1] = x.get(2) * Math.exp(x.get(0) - x.get(1)) + Math.E;
       res[2] = OG_ALGEBRA.getInnerProduct(x, x) - 2.0;
       return new DoubleMatrix1D(res);
     }
@@ -90,19 +90,19 @@ public abstract class VectorRootFinderTest {
 
     @Override
     public DoubleMatrix2D evaluate(final DoubleMatrix1D x) {
-      if (x.getNumberOfElements() != 3) {
+      if (x.size() != 3) {
         throw new IllegalArgumentException("This test is for 3-d vector only");
       }
       final double[][] res = new double[3][3];
-      final double temp1 = Math.exp(x.getEntry(0) + x.getEntry(1));
-      final double temp2 = Math.exp(x.getEntry(0) - x.getEntry(1));
+      final double temp1 = Math.exp(x.get(0) + x.get(1));
+      final double temp2 = Math.exp(x.get(0) - x.get(1));
       res[0][0] = res[0][1] = temp1;
       res[0][2] = 1.0;
-      res[1][0] = x.getEntry(2) * temp2;
-      res[1][1] = -x.getEntry(2) * temp2;
+      res[1][0] = x.get(2) * temp2;
+      res[1][1] = -x.get(2) * temp2;
       res[1][2] = temp2;
       for (int i = 0; i < 3; i++) {
-        res[2][i] = 2 * x.getEntry(i);
+        res[2][i] = 2 * x.get(i);
       }
 
       return new DoubleMatrix2D(res);
@@ -191,8 +191,8 @@ public abstract class VectorRootFinderTest {
   protected void assertFunction2D(final NewtonVectorRootFinder rootFinder, final double eps) {
     final DoubleMatrix1D x0 = new DoubleMatrix1D(-0.0, 0.0);
     final DoubleMatrix1D x1 = rootFinder.getRoot(FUNCTION2D, JACOBIAN2D, x0);
-    assertEquals(1.0, x1.getEntry(0), eps);
-    assertEquals(1.0, x1.getEntry(1), eps);
+    assertEquals(1.0, x1.get(0), eps);
+    assertEquals(1.0, x1.get(1), eps);
   }
 
   protected void assertFunction3D(final NewtonVectorRootFinder rootFinder, final double eps) {
