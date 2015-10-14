@@ -48,7 +48,7 @@ public interface ObservableValues {
    * @param map  the map of key to value
    * @return the observable values
    */
-  public static ObservableValues ofIdMap(Map<? extends ObservableId, Double> map) {
+  public static ObservableValues ofIdMap(Map<? extends ObservableId<Double>, Double> map) {
     ArgChecker.notNull(map, "map");
     return ImmutableObservableValues.of(map.entrySet().stream()
         .collect(toImmutableMap(e -> e.getKey().toObservableKey(), e -> e.getValue())));

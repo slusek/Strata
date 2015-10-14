@@ -12,9 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import cern.jet.random.engine.MersenneTwister;
-import cern.jet.random.engine.MersenneTwister64;
-import cern.jet.random.engine.RandomEngine;
 import org.testng.annotations.Test;
 
 import com.opengamma.strata.collect.ArgChecker;
@@ -29,6 +26,10 @@ import com.opengamma.strata.math.impl.interpolation.PSplineFitter;
 import com.opengamma.strata.math.impl.interpolation.data.Interpolator1DDataBundle;
 import com.opengamma.strata.math.impl.matrix.DoubleMatrix1D;
 import com.opengamma.strata.math.impl.statistics.distribution.NormalDistribution;
+
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.MersenneTwister64;
+import cern.jet.random.engine.RandomEngine;
 
 /**
  * Test.
