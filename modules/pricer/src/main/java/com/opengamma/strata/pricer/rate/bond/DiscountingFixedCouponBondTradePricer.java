@@ -7,16 +7,19 @@ package com.opengamma.strata.pricer.rate.bond;
 
 import java.time.LocalDate;
 
+import com.opengamma.strata.basics.currency.Currency;
 import com.opengamma.strata.basics.currency.CurrencyAmount;
 import com.opengamma.strata.basics.currency.Payment;
 import com.opengamma.strata.collect.ArgChecker;
 import com.opengamma.strata.collect.id.StandardId;
 import com.opengamma.strata.finance.Security;
+import com.opengamma.strata.finance.rate.bond.ExpandedFixedCouponBond;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBond;
 import com.opengamma.strata.finance.rate.bond.FixedCouponBondTrade;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
 import com.opengamma.strata.market.sensitivity.RepoCurveZeroRateSensitivity;
 import com.opengamma.strata.market.sensitivity.ZeroRateSensitivity;
+import com.opengamma.strata.market.value.IssuerCurveDiscountFactors;
 import com.opengamma.strata.market.value.RepoCurveDiscountFactors;
 import com.opengamma.strata.pricer.DiscountingPaymentPricer;
 import com.opengamma.strata.pricer.rate.LegalEntityDiscountingProvider;
@@ -118,10 +121,12 @@ public class DiscountingFixedCouponBondTradePricer {
    * <p>
    * The present value of the trade is the value on the valuation date.
    * The result is expressed using the payment currency of the bond.
+   * <p>
+   * Coupon payments of the underlying product are considered based on the settlement date of the trade. 
    * 
    * @param trade  the trade to price
    * @param provider  the rates provider
-   * @param cleanPrice  the clean price.
+   * @param cleanPrice  the clean price
    * @return the present value of the fixed coupon bond trade
    */
   public CurrencyAmount presentValueFromCleanPrice(
@@ -130,13 +135,86 @@ public class DiscountingFixedCouponBondTradePricer {
       double cleanPrice) {
     Security<FixedCouponBond> security = trade.getSecurity();
     FixedCouponBond product = security.getProduct();
-    LocalDate settlementDate = trade.getTradeInfo().getSettlementDate().get();
+    LocalDate standardSettlementDate = product.getSettlementDateOffset().adjust(provider.getValuationDate());
+    LocalDate tradeSettlementDate = trade.getTradeInfo().getSettlementDate().get();
     StandardId securityId = security.getStandardId();
     StandardId legalEntityId = product.getLegalEntityId();
-    double df = provider.repoCurveDiscountFactors(
-        securityId, legalEntityId, product.getCurrency()).discountFactor(settlementDate);
-    double pvPrice = (cleanPrice * product.getNotional() + productPricer.accruedInterest(product, settlementDate)) * df;
-    return CurrencyAmount.of(product.getCurrency(), pvPrice);
+    Currency currency = product.getCurrency();
+    double df = provider.repoCurveDiscountFactors(securityId, legalEntityId, currency).discountFactor(standardSettlementDate);
+    double pvStandard =
+        (cleanPrice * product.getNotional() + productPricer.accruedInterest(product, standardSettlementDate)) * df;
+    if (standardSettlementDate.isEqual(tradeSettlementDate)) {
+      return CurrencyAmount.of(currency, pvStandard);
+    }
+    // check coupon payment between two settlement dates
+    IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(legalEntityId, currency);
+    ExpandedFixedCouponBond expanded = product.expand();
+    boolean exCoupon = product.getExCouponPeriod().getDays() != 0;
+    double pvDiff = 0d;
+    if (standardSettlementDate.isAfter(tradeSettlementDate)) {
+      pvDiff = productPricer.presentValueCoupon(
+          expanded, discountFactors, tradeSettlementDate, standardSettlementDate, exCoupon);
+    } else {
+      pvDiff = -productPricer.presentValueCoupon(
+          expanded, discountFactors, standardSettlementDate, tradeSettlementDate, exCoupon);
+    }
+    return CurrencyAmount.of(currency, pvStandard + pvDiff);
+  }
+
+  /**
+   * Calculates the present value of the fixed coupon bond trade with z-spread from the clean price of the underlying product.
+   * <p>
+   * The present value of the trade is the value on the valuation date.
+   * The result is expressed using the payment currency of the bond.
+   * <p>
+   * The z-spread is a parallel shift applied to continuously compounded rates or periodic
+   * compounded rates of the discounting curve.
+   * <p>
+   * Coupon payments of the underlying product are considered based on the settlement date of the trade. 
+   * 
+   * @param trade  the trade to price
+   * @param provider  the rates provider
+   * @param cleanPrice  the clean price
+   * @param zSpread  the z-spread
+   * @param periodic  if true, the spread is added to periodic compounded rates,
+   *  if false, the spread is added to continuously compounded rates
+   * @param periodsPerYear  the number of periods per year
+   * @return the present value of the fixed coupon bond trade
+   */
+  public CurrencyAmount presentValueFromCleanPriceWithZSpread(
+      FixedCouponBondTrade trade,
+      LegalEntityDiscountingProvider provider,
+      double cleanPrice,
+      double zSpread,
+      boolean periodic,
+      int periodsPerYear) {
+    Security<FixedCouponBond> security = trade.getSecurity();
+    FixedCouponBond product = security.getProduct();
+    LocalDate standardSettlementDate = product.getSettlementDateOffset().adjust(provider.getValuationDate());
+    LocalDate tradeSettlementDate = trade.getTradeInfo().getSettlementDate().get();
+    StandardId securityId = security.getStandardId();
+    StandardId legalEntityId = product.getLegalEntityId();
+    Currency currency = product.getCurrency();
+    double df = provider.repoCurveDiscountFactors(securityId, legalEntityId, currency).discountFactor(
+        standardSettlementDate);
+    double pvStandard =
+        (cleanPrice * product.getNotional() + productPricer.accruedInterest(product, standardSettlementDate)) * df;
+    if (standardSettlementDate.isEqual(tradeSettlementDate)) {
+      return CurrencyAmount.of(currency, pvStandard);
+    }
+    // check coupon payment between two settlement dates
+    IssuerCurveDiscountFactors discountFactors = provider.issuerCurveDiscountFactors(legalEntityId, currency);
+    ExpandedFixedCouponBond expanded = product.expand();
+    boolean exCoupon = product.getExCouponPeriod().getDays() != 0;
+    double pvDiff = 0d;
+    if (standardSettlementDate.isAfter(tradeSettlementDate)) {
+      pvDiff = productPricer.presentValueCouponWithZSpread(
+          expanded, discountFactors, tradeSettlementDate, standardSettlementDate, zSpread, periodic, periodsPerYear, exCoupon);
+    } else {
+      pvDiff = -productPricer.presentValueCouponWithZSpread(
+          expanded, discountFactors, standardSettlementDate, tradeSettlementDate, zSpread, periodic, periodsPerYear, exCoupon);
+    }
+    return CurrencyAmount.of(currency, pvStandard + pvDiff);
   }
 
   //-------------------------------------------------------------------------

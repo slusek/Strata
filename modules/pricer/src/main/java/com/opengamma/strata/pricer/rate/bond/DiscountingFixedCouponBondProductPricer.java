@@ -891,4 +891,42 @@ public class DiscountingFixedCouponBondProductPricer {
     return pt; // NoPointSensitivity
   }
 
+  //-------------------------------------------------------------------------
+  // compute pv of coupon payment(s) s.t. referenceDate1 < coupon <= referenceDate2
+  double presentValueCoupon(
+      ExpandedFixedCouponBond product, 
+      IssuerCurveDiscountFactors discountFactors, 
+      LocalDate referenceDate1, 
+      LocalDate referenceDate2, 
+      boolean exCoupon) {
+    double pvDiff = 0d;
+    for (FixedCouponBondPaymentPeriod period : product.getPeriodicPayments()) {
+      if ((exCoupon && period.getDetachmentDate().isAfter(referenceDate1) && !period.getDetachmentDate().isAfter(referenceDate2)) ||
+          (!exCoupon && period.getPaymentDate().isAfter(referenceDate1) && !period.getPaymentDate().isAfter(referenceDate2))) {
+        pvDiff += periodPricer.presentValue(period, discountFactors);
+      }
+    }
+    return pvDiff;
+  }
+
+  // compute pv of coupon payment(s) s.t. referenceDate1 < coupon <= referenceDate2
+  double presentValueCouponWithZSpread(
+      ExpandedFixedCouponBond expanded,
+      IssuerCurveDiscountFactors discountFactors, 
+      LocalDate referenceDate1, 
+      LocalDate referenceDate2, 
+      double zSpread, 
+      boolean periodic,
+      int periodsPerYear,
+      boolean exCoupon) {
+    double pvDiff = 0d;
+    for (FixedCouponBondPaymentPeriod period : expanded.getPeriodicPayments()) {
+      if ((exCoupon && period.getDetachmentDate().isAfter(referenceDate1) && !period.getDetachmentDate().isAfter(referenceDate2)) ||
+          (!exCoupon && period.getPaymentDate().isAfter(referenceDate1) && !period.getPaymentDate().isAfter(referenceDate2))) {
+        pvDiff += periodPricer.presentValueWithSpread(
+            period, discountFactors, zSpread, periodic, periodsPerYear);
+      }
+    }
+    return pvDiff;
+  }
 }
