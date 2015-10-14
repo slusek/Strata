@@ -37,5 +37,5 @@ public interface FeedIdMapping {
    *   the ID argument
    * @return an observable ID that can be used for looking up the market data in a market data feed
    */
-  public abstract Optional<ObservableId> idForFeed(ObservableId id);
+  public abstract Optional<ObservableId<?>> idForFeed(ObservableId<?> id);
 }

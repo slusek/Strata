@@ -38,16 +38,16 @@ public final class MarketDataRequirements implements ImmutableBean {
   private static final MarketDataRequirements EMPTY = MarketDataRequirements.builder().build();
 
   /** Keys identifying the market data values required for the calculations. */
-  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId>")
-  private final ImmutableSet<ObservableId> observables;
+  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId<Double>>")
+  private final ImmutableSet<ObservableId<Double>> observables;
 
   /** Keys identifying the market data values required for the calculations. */
   @PropertyDefinition(validate = "notNull", builderType = "Set<? extends MarketDataId<?>>")
   private final ImmutableSet<MarketDataId<?>> nonObservables;
 
   /** Keys identifying the time series of market data values required for the calculations. */
-  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId>")
-  private final ImmutableSet<ObservableId> timeSeries;
+  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId<Double>>")
+  private final ImmutableSet<ObservableId<Double>> timeSeries;
 
   /**
    * Returns an empty mutable builder for building up a set of requirements.
@@ -88,9 +88,9 @@ public final class MarketDataRequirements implements ImmutableBean {
    * @param timeSeries  the value of the property, not null
    */
   MarketDataRequirements(
-      Set<? extends ObservableId> observables,
+      Set<? extends ObservableId<Double>> observables,
       Set<? extends MarketDataId<?>> nonObservables,
-      Set<? extends ObservableId> timeSeries) {
+      Set<? extends ObservableId<Double>> timeSeries) {
     JodaBeanUtils.notNull(observables, "observables");
     JodaBeanUtils.notNull(nonObservables, "nonObservables");
     JodaBeanUtils.notNull(timeSeries, "timeSeries");
@@ -119,7 +119,7 @@ public final class MarketDataRequirements implements ImmutableBean {
    * Gets keys identifying the market data values required for the calculations.
    * @return the value of the property, not null
    */
-  public ImmutableSet<ObservableId> getObservables() {
+  public ImmutableSet<ObservableId<Double>> getObservables() {
     return observables;
   }
 
@@ -137,7 +137,7 @@ public final class MarketDataRequirements implements ImmutableBean {
    * Gets keys identifying the time series of market data values required for the calculations.
    * @return the value of the property, not null
    */
-  public ImmutableSet<ObservableId> getTimeSeries() {
+  public ImmutableSet<ObservableId<Double>> getTimeSeries() {
     return timeSeries;
   }
 
@@ -190,7 +190,7 @@ public final class MarketDataRequirements implements ImmutableBean {
      * The meta-property for the {@code observables} property.
      */
     @SuppressWarnings({"unchecked", "rawtypes" })
-    private final MetaProperty<ImmutableSet<ObservableId>> observables = DirectMetaProperty.ofImmutable(
+    private final MetaProperty<ImmutableSet<ObservableId<Double>>> observables = DirectMetaProperty.ofImmutable(
         this, "observables", MarketDataRequirements.class, (Class) ImmutableSet.class);
     /**
      * The meta-property for the {@code nonObservables} property.
@@ -202,7 +202,7 @@ public final class MarketDataRequirements implements ImmutableBean {
      * The meta-property for the {@code timeSeries} property.
      */
     @SuppressWarnings({"unchecked", "rawtypes" })
-    private final MetaProperty<ImmutableSet<ObservableId>> timeSeries = DirectMetaProperty.ofImmutable(
+    private final MetaProperty<ImmutableSet<ObservableId<Double>>> timeSeries = DirectMetaProperty.ofImmutable(
         this, "timeSeries", MarketDataRequirements.class, (Class) ImmutableSet.class);
     /**
      * The meta-properties.
@@ -252,7 +252,7 @@ public final class MarketDataRequirements implements ImmutableBean {
      * The meta-property for the {@code observables} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ImmutableSet<ObservableId>> observables() {
+    public MetaProperty<ImmutableSet<ObservableId<Double>>> observables() {
       return observables;
     }
 
@@ -268,7 +268,7 @@ public final class MarketDataRequirements implements ImmutableBean {
      * The meta-property for the {@code timeSeries} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ImmutableSet<ObservableId>> timeSeries() {
+    public MetaProperty<ImmutableSet<ObservableId<Double>>> timeSeries() {
       return timeSeries;
     }
 
@@ -303,9 +303,9 @@ public final class MarketDataRequirements implements ImmutableBean {
    */
   private static final class Builder extends DirectFieldsBeanBuilder<MarketDataRequirements> {
 
-    private Set<? extends ObservableId> observables = ImmutableSet.of();
+    private Set<? extends ObservableId<Double>> observables = ImmutableSet.of();
     private Set<? extends MarketDataId<?>> nonObservables = ImmutableSet.of();
-    private Set<? extends ObservableId> timeSeries = ImmutableSet.of();
+    private Set<? extends ObservableId<Double>> timeSeries = ImmutableSet.of();
 
     /**
      * Restricted constructor.
@@ -333,13 +333,13 @@ public final class MarketDataRequirements implements ImmutableBean {
     public Builder set(String propertyName, Object newValue) {
       switch (propertyName.hashCode()) {
         case 121811856:  // observables
-          this.observables = (Set<? extends ObservableId>) newValue;
+          this.observables = (Set<? extends ObservableId<Double>>) newValue;
           break;
         case 824041091:  // nonObservables
           this.nonObservables = (Set<? extends MarketDataId<?>>) newValue;
           break;
         case 779431844:  // timeSeries
-          this.timeSeries = (Set<? extends ObservableId>) newValue;
+          this.timeSeries = (Set<? extends ObservableId<Double>>) newValue;
           break;
         default:
           throw new NoSuchElementException("Unknown property: " + propertyName);
@@ -395,4 +395,4 @@ public final class MarketDataRequirements implements ImmutableBean {
 
   ///CLOVER:ON
   //-------------------------- AUTOGENERATED END --------------------------
-}
+  }

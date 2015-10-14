@@ -36,7 +36,7 @@ public class MissingDataAwareObservableBuilderTest {
     TestObservableId id3 = TestObservableId.of("3", MarketDataFeed.NO_RULE);
     TestObservableId id4 = TestObservableId.of("4", MarketDataFeed.NO_RULE);
     ImmutableSet<TestObservableId> requirements = ImmutableSet.of(id3, id4, ID1, ID2);
-    Map<ObservableId, Result<Double>> marketData = builder.build(requirements);
+    Map<ObservableId<?>, Result<?>> marketData = builder.build(requirements);
 
     assertThat(marketData.get(ID1)).hasValue(1d);
     assertThat(marketData.get(ID2)).hasValue(3d);
@@ -52,7 +52,7 @@ public class MissingDataAwareObservableBuilderTest {
             ID2, Result.success(3d));
 
     @Override
-    public Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements) {
+    public Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements) {
       return requirements.stream()
           .filter(marketData::containsKey)
           .collect(toImmutableMap(id -> id, marketData::get));

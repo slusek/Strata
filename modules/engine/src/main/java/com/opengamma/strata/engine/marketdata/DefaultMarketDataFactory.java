@@ -200,12 +200,12 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
       // Single values of observable data -----------------------------------------------------------
 
       // Filter out IDs for the data that is already present in the built data
-      Set<ObservableId> observableIds = leafRequirements.getObservables().stream()
+      Set<ObservableId<?>> observableIds = leafRequirements.getObservables().stream()
           .filter(not(builtData::containsValue))
           .collect(toImmutableSet());
 
       // Observable data is built in bulk so it can be efficiently requested from data provider in one operation
-      Map<ObservableId, Result<Double>> observableResults = buildObservableData(observableIds);
+      Map<ObservableId<?>, Result<?>> observableResults = buildObservableData(observableIds);
       dataBuilder.addResults(observableResults);
 
       // Non-observable data -----------------------------------------------------------------------
@@ -293,13 +293,13 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
       // Single values of observable data -----------------------------------------------------------
 
       // Filter out IDs for the data that is already available
-      Set<ObservableId> observableIds = leafRequirements.getObservables().stream()
+      Set<ObservableId<?>> observableIds = leafRequirements.getObservables().stream()
           .filter(not(marketData::containsValues))
           .filter(not(suppliedData::containsValue))
           .collect(toImmutableSet());
 
       // Observable data is built in bulk so it can be efficiently requested from data provider in one operation
-      Map<ObservableId, Result<Double>> observableResults = buildObservableData(observableIds);
+      Map<ObservableId<?>, Result<?>> observableResults = buildObservableData(observableIds);
       observableResults.entrySet().stream()
           .forEach(tp -> addObservableResult(tp.getKey(), tp.getValue(), scenarioDefinition, dataBuilder));
 
@@ -395,13 +395,13 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
    * @param builder  the value or failure details are added to this builder
    */
   private void addObservableResult(
-      ObservableId id,
-      Result<Double> valueResult,
+      ObservableId<?> id,
+      Result<?> valueResult,
       ScenarioDefinition scenarioDefinition,
       ScenarioCalculationEnvironmentBuilder builder) {
 
     if (valueResult.isFailure()) {
-      builder.addSharedResult(id, valueResult);
+      builder.addSharedResultUnsafe(id, valueResult);
     } else {
       addObservableValue(id, valueResult.getValue(), scenarioDefinition, builder);
     }
@@ -420,8 +420,8 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
    * @param builder  the market data is added to this builder
    */
   private void addObservableValue(
-      ObservableId id,
-      double value,
+      ObservableId<?> id,
+      Object value,
       ScenarioDefinition scenarioDefinition,
       ScenarioCalculationEnvironmentBuilder builder) {
 
@@ -435,11 +435,11 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
         // This is definitely safe because the filter matched the value and the types of the filter and perturbation
         // are compatible
         @SuppressWarnings("unchecked")
-        PerturbationMapping<Double> mapping = (PerturbationMapping<Double>) optionalMapping.get();
-        List<Double> values = mapping.applyPerturbations(value);
-        builder.addValues(id, values);
+        PerturbationMapping<Object> mapping = (PerturbationMapping<Object>) optionalMapping.get();
+        List<Object> values = mapping.applyPerturbations(value);
+        builder.addValuesUnsafe(id, values);
       } else {
-        builder.addSharedValue(id, value);
+        builder.addSharedValueUnsafe(id, value);
       }
     } catch (RuntimeException e) {
       builder.addResult(id, Result.failure(e));
@@ -451,16 +451,16 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
    *
    * @param ids  IDs of the market data that should be built
    */
-  private Map<ObservableId, Result<Double>> buildObservableData(Set<ObservableId> ids) {
+  private Map<ObservableId<?>, Result<?>> buildObservableData(Set<ObservableId<?>> ids) {
     // We need to convert between the input IDs from the requirements and the feed IDs
     // which are passed to the builder and used to request the data.
-    Map<ObservableId, ObservableId> feedIdToRequirementId = new HashMap<>();
+    Map<ObservableId<?>, ObservableId<?>> feedIdToRequirementId = new HashMap<>();
     // IDs that are in the requirements but have no mapping to an ID the data provider understands
     Set<ObservableId> unmappedIds = new HashSet<>();
 
     // TODO Mapping of IDs should probably go inside the ObservableMarketDataBuilder
-    for (ObservableId id : ids) {
-      Optional<ObservableId> feedId = feedIdMapping.idForFeed(id);
+    for (ObservableId<?> id : ids) {
+      Optional<ObservableId<?>> feedId = feedIdMapping.idForFeed(id);
 
       if (feedId.isPresent()) {
         feedIdToRequirementId.put(feedId.get(), id);
@@ -468,8 +468,8 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
         unmappedIds.add(id);
       }
     }
-    Map<ObservableId, Result<Double>> builtValues = observablesBuilder.build(feedIdToRequirementId.keySet());
-    ImmutableMap.Builder<ObservableId, Result<Double>> builder = ImmutableMap.builder();
+    Map<ObservableId<?>, Result<?>> builtValues = observablesBuilder.build(feedIdToRequirementId.keySet());
+    ImmutableMap.Builder<ObservableId<?>, Result<?>> builder = ImmutableMap.builder();
     // Put the built data into the results, mapping the feed ID to the ID that was passed in
     builtValues.keySet().stream().forEach(id -> builder.put(feedIdToRequirementId.get(id), builtValues.get(id)));
     // Add failures for IDs that don't have mappings to market data feed IDs
@@ -666,11 +666,11 @@ public final class DefaultMarketDataFactory implements MarketDataFactory {
    *
    * @param id  the ID of the data in the time series
    */
-  private Result<LocalDateDoubleTimeSeries> findTimeSeries(ObservableId id) {
+  private Result<LocalDateDoubleTimeSeries> findTimeSeries(ObservableId<?> id) {
     // TODO Should this go in the time series provider?
     // Need to convert between the input ID from the requirements and the feed ID
     // which is used to store and retrieve the data.
-    Optional<ObservableId> feedId = feedIdMapping.idForFeed(id);
+    Optional<ObservableId<?>> feedId = feedIdMapping.idForFeed(id);
 
     if (feedId.isPresent()) {
       return timeSeriesProvider.timeSeries(feedId.get());

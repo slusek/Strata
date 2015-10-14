@@ -54,7 +54,7 @@ public final class ParRatesMarketDataFunction implements MarketDataFunction<ParR
       return MarketDataRequirements.empty();
     }
     InterpolatedNodalCurveDefinition curveDefn = (InterpolatedNodalCurveDefinition) entry.getCurveDefinition();
-    Set<ObservableId> requirements = nodeRequirements(id.getMarketDataFeed(), curveDefn);
+    Set<ObservableId<Double>> requirements = nodeRequirements(id.getMarketDataFeed(), curveDefn);
     return MarketDataRequirements.builder().addValues(requirements).build();
   }
 
@@ -75,7 +75,7 @@ public final class ParRatesMarketDataFunction implements MarketDataFunction<ParR
     }
     CurveGroupEntry entry = optionalEntry.get();
     NodalCurveDefinition curveDefn = entry.getCurveDefinition();
-    Set<ObservableId> requirements = nodeRequirements(id.getMarketDataFeed(), curveDefn);
+    Set<ObservableId<Double>> requirements = nodeRequirements(id.getMarketDataFeed(), curveDefn);
 
     if (!marketData.containsValues(requirements)) {
       Set<ObservableId> missingRequirements = requirements.stream()
@@ -83,7 +83,7 @@ public final class ParRatesMarketDataFunction implements MarketDataFunction<ParR
           .collect(toImmutableSet());
       return Result.failure(FailureReason.MISSING_DATA, "No market data available for '{}'", missingRequirements);
     }
-    Map<ObservableId, Double> rates = marketData.getObservableValues(requirements);
+    Map<ObservableId<Double>, Double> rates = marketData.getObservableValues(requirements);
     CurveMetadata curveMetadata = curveDefn.metadata(marketData.getValuationDate());
     ParRates parRates = ParRates.of(rates, curveMetadata);
     return Result.success(parRates);
@@ -101,7 +101,7 @@ public final class ParRatesMarketDataFunction implements MarketDataFunction<ParR
    * @param curveDefn  the curve definition containing the nodes
    * @return requirements for the market data needed by the nodes to build trades
    */
-  private static Set<ObservableId> nodeRequirements(MarketDataFeed feed, NodalCurveDefinition curveDefn) {
+  private static Set<ObservableId<Double>> nodeRequirements(MarketDataFeed feed, NodalCurveDefinition curveDefn) {
     return curveDefn.getNodes().stream()
         .flatMap(node -> node.requirements().stream())
         .map(key -> key.toObservableId(feed))

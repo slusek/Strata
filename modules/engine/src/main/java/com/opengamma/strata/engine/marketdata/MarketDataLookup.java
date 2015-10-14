@@ -10,6 +10,7 @@ import static com.opengamma.strata.collect.Guavate.toImmutableMap;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.opengamma.strata.basics.market.MarketDataId;
 import com.opengamma.strata.basics.market.ObservableId;
@@ -75,8 +76,10 @@ public interface MarketDataLookup {
    * @return a map of market data values for the IDs
    * @throws IllegalArgumentException if there is no value for any of the IDs
    */
-  public default Map<ObservableId, Double> getObservableValues(Set<? extends ObservableId> ids) {
-    return ids.stream().collect(toImmutableMap(id -> id, this::getValue));
+  public default <T> Map<ObservableId<T>, T> getObservableValues(Set<? extends ObservableId<T>> ids) {
+    Function<ObservableId<T>, ObservableId<T>> idMapper = id -> id;
+    Function<ObservableId<T>, T> valueMapper = id -> getValue(id);
+    return ids.stream().collect(toImmutableMap(idMapper, valueMapper));
   }
 
   /**

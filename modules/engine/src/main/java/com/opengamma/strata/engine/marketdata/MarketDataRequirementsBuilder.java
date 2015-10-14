@@ -20,13 +20,13 @@ import com.opengamma.strata.collect.ArgChecker;
 public final class MarketDataRequirementsBuilder {
 
   /** IDs identifying the observable market data values required for the calculations. */
-  private final Set<ObservableId> observables = new HashSet<>();
+  private final Set<ObservableId<Double>> observables = new HashSet<>();
 
   /** IDs identifying the non-observable market data values required for the calculations. */
   private final Set<MarketDataId<?>> nonObservables = new HashSet<>();
 
   /** IDs identifying the time series of market data values required for the calculations. */
-  private final Set<ObservableId> timeSeries = new HashSet<>();
+  private final Set<ObservableId<Double>> timeSeries = new HashSet<>();
 
   /**
    * Adds requirements for time series of observable market data.
@@ -34,7 +34,7 @@ public final class MarketDataRequirementsBuilder {
    * @param ids  IDs of the data
    * @return this builder
    */
-  public MarketDataRequirementsBuilder addTimeSeries(Collection<? extends ObservableId> ids) {
+  public MarketDataRequirementsBuilder addTimeSeries(Collection<? extends ObservableId<Double>> ids) {
     ArgChecker.notNull(ids, "ids");
     timeSeries.addAll(ids);
     return this;
@@ -46,7 +46,7 @@ public final class MarketDataRequirementsBuilder {
    * @param ids  IDs of the data
    * @return this builder
    */
-  public MarketDataRequirementsBuilder addTimeSeries(ObservableId... ids) {
+  public MarketDataRequirementsBuilder addTimeSeries(ObservableId<Double>... ids) {
     return addTimeSeries(Arrays.asList(ids));
   }
 
@@ -56,12 +56,13 @@ public final class MarketDataRequirementsBuilder {
    * @param ids  IDs of the data
    * @return this builder
    */
+  @SuppressWarnings("unchecked")
   public MarketDataRequirementsBuilder addValues(Collection<? extends MarketDataId<?>> ids) {
     ArgChecker.notNull(ids, "ids");
 
     for (MarketDataId<?> id : ids) {
       if (id instanceof ObservableId) {
-        observables.add((ObservableId) id);
+        observables.add((ObservableId<Double>) id);
       } else {
         nonObservables.add(id);
       }

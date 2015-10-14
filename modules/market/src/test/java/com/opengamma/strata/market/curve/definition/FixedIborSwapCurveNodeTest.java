@@ -70,8 +70,8 @@ public class FixedIborSwapCurveNodeTest {
 
   public void test_requirements() {
     FixedIborSwapCurveNode test = FixedIborSwapCurveNode.of(TEMPLATE, QUOTE_KEY, SPREAD);
-    Set<ObservableKey> set = test.requirements();
-    Iterator<ObservableKey> itr = set.iterator();
+    Set<ObservableKey<Double>> set = test.requirements();
+    Iterator<ObservableKey<Double>> itr = set.iterator();
     assertEquals(itr.next(), QUOTE_KEY);
     assertFalse(itr.hasNext());
   }

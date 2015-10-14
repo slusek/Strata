@@ -13,8 +13,8 @@ import com.opengamma.strata.collect.id.StandardIdentifiable;
  * <p>
  * Observable data can be requested from an external data provider, for example Bloomberg or Reuters.
  */
-public interface ObservableKey
-    extends MarketDataKey<Double>, StandardIdentifiable {
+public interface ObservableKey<T>
+    extends MarketDataKey<T>, StandardIdentifiable {
 
   /**
    * Gets the standard identifier identifying the data.
@@ -38,11 +38,6 @@ public interface ObservableKey
    */
   public abstract FieldName getFieldName();
 
-  @Override
-  public default Class<Double> getMarketDataType() {
-    return Double.class;
-  }
-
   /**
    * Converts this key to the matching identifier.
    * <p>
@@ -60,6 +55,6 @@ public interface ObservableKey
    * @param marketDataFeed  the market data feed that is the source of the observable market data
    * @return the identifier corresponding to this key
    */
-  ObservableId toObservableId(MarketDataFeed marketDataFeed);
+  ObservableId<T> toObservableId(MarketDataFeed marketDataFeed);
 
 }

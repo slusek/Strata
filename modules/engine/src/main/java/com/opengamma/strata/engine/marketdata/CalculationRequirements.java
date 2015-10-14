@@ -38,16 +38,16 @@ public final class CalculationRequirements implements ImmutableBean {
   private static final CalculationRequirements EMPTY = CalculationRequirements.builder().build();
 
   /** Keys identifying the market data values required for the calculations. */
-  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId>")
-  private final ImmutableSet<ObservableId> observables;
+  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId<?>>")
+  private final ImmutableSet<ObservableId<?>> observables;
 
   /** Keys identifying the market data values required for the calculations. */
   @PropertyDefinition(validate = "notNull", builderType = "Set<? extends MarketDataId<?>>")
   private final ImmutableSet<MarketDataId<?>> nonObservables;
 
   /** Keys identifying the time series of market data values required for the calculations. */
-  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId>")
-  private final ImmutableSet<ObservableId> timeSeries;
+  @PropertyDefinition(validate = "notNull", builderType = "Set<? extends ObservableId<?>>")
+  private final ImmutableSet<ObservableId<?>> timeSeries;
 
   /**
    * The currencies in the calculation results. The market data must include FX rates in the
@@ -96,9 +96,9 @@ public final class CalculationRequirements implements ImmutableBean {
    * @return a single set of requirements containing all the requirements from the input sets
    */
   public static CalculationRequirements combine(List<CalculationRequirements> requirements) {
-    ImmutableSet.Builder<ObservableId> observablesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<ObservableId<?>> observablesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<MarketDataId<?>> nonObservablesBuilder = ImmutableSet.builder();
-    ImmutableSet.Builder<ObservableId> timeSeriesBuilder = ImmutableSet.builder();
+    ImmutableSet.Builder<ObservableId<?>> timeSeriesBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<Currency> outputCurrenciesBuilder = ImmutableSet.builder();
 
     for (CalculationRequirements req : requirements) {
@@ -136,9 +136,9 @@ public final class CalculationRequirements implements ImmutableBean {
    * @param outputCurrencies  the value of the property, not null
    */
   CalculationRequirements(
-      Set<? extends ObservableId> observables,
+      Set<? extends ObservableId<?>> observables,
       Set<? extends MarketDataId<?>> nonObservables,
-      Set<? extends ObservableId> timeSeries,
+      Set<? extends ObservableId<?>> timeSeries,
       Set<Currency> outputCurrencies) {
     JodaBeanUtils.notNull(observables, "observables");
     JodaBeanUtils.notNull(nonObservables, "nonObservables");
@@ -170,7 +170,7 @@ public final class CalculationRequirements implements ImmutableBean {
    * Gets keys identifying the market data values required for the calculations.
    * @return the value of the property, not null
    */
-  public ImmutableSet<ObservableId> getObservables() {
+  public ImmutableSet<ObservableId<?>> getObservables() {
     return observables;
   }
 
@@ -188,7 +188,7 @@ public final class CalculationRequirements implements ImmutableBean {
    * Gets keys identifying the time series of market data values required for the calculations.
    * @return the value of the property, not null
    */
-  public ImmutableSet<ObservableId> getTimeSeries() {
+  public ImmutableSet<ObservableId<?>> getTimeSeries() {
     return timeSeries;
   }
 
@@ -255,7 +255,7 @@ public final class CalculationRequirements implements ImmutableBean {
      * The meta-property for the {@code observables} property.
      */
     @SuppressWarnings({"unchecked", "rawtypes" })
-    private final MetaProperty<ImmutableSet<ObservableId>> observables = DirectMetaProperty.ofImmutable(
+    private final MetaProperty<ImmutableSet<ObservableId<?>>> observables = DirectMetaProperty.ofImmutable(
         this, "observables", CalculationRequirements.class, (Class) ImmutableSet.class);
     /**
      * The meta-property for the {@code nonObservables} property.
@@ -267,7 +267,7 @@ public final class CalculationRequirements implements ImmutableBean {
      * The meta-property for the {@code timeSeries} property.
      */
     @SuppressWarnings({"unchecked", "rawtypes" })
-    private final MetaProperty<ImmutableSet<ObservableId>> timeSeries = DirectMetaProperty.ofImmutable(
+    private final MetaProperty<ImmutableSet<ObservableId<?>>> timeSeries = DirectMetaProperty.ofImmutable(
         this, "timeSeries", CalculationRequirements.class, (Class) ImmutableSet.class);
     /**
      * The meta-property for the {@code outputCurrencies} property.
@@ -326,7 +326,7 @@ public final class CalculationRequirements implements ImmutableBean {
      * The meta-property for the {@code observables} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ImmutableSet<ObservableId>> observables() {
+    public MetaProperty<ImmutableSet<ObservableId<?>>> observables() {
       return observables;
     }
 
@@ -342,7 +342,7 @@ public final class CalculationRequirements implements ImmutableBean {
      * The meta-property for the {@code timeSeries} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ImmutableSet<ObservableId>> timeSeries() {
+    public MetaProperty<ImmutableSet<ObservableId<?>>> timeSeries() {
       return timeSeries;
     }
 
@@ -387,9 +387,9 @@ public final class CalculationRequirements implements ImmutableBean {
    */
   private static final class Builder extends DirectFieldsBeanBuilder<CalculationRequirements> {
 
-    private Set<? extends ObservableId> observables = ImmutableSet.of();
+    private Set<? extends ObservableId<?>> observables = ImmutableSet.of();
     private Set<? extends MarketDataId<?>> nonObservables = ImmutableSet.of();
-    private Set<? extends ObservableId> timeSeries = ImmutableSet.of();
+    private Set<? extends ObservableId<?>> timeSeries = ImmutableSet.of();
     private Set<Currency> outputCurrencies = ImmutableSet.of();
 
     /**
@@ -420,13 +420,13 @@ public final class CalculationRequirements implements ImmutableBean {
     public Builder set(String propertyName, Object newValue) {
       switch (propertyName.hashCode()) {
         case 121811856:  // observables
-          this.observables = (Set<? extends ObservableId>) newValue;
+          this.observables = (Set<? extends ObservableId<?>>) newValue;
           break;
         case 824041091:  // nonObservables
           this.nonObservables = (Set<? extends MarketDataId<?>>) newValue;
           break;
         case 779431844:  // timeSeries
-          this.timeSeries = (Set<? extends ObservableId>) newValue;
+          this.timeSeries = (Set<? extends ObservableId<?>>) newValue;
           break;
         case -1022597040:  // outputCurrencies
           this.outputCurrencies = (Set<Currency>) newValue;

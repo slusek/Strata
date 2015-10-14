@@ -28,8 +28,8 @@ import com.opengamma.strata.collect.id.StandardIdentifiable;
  *   into an ID that can be used to look up the data in the feed.</li>
  * </ul>
  */
-public interface ObservableId
-    extends MarketDataId<Double>, StandardIdentifiable {
+public interface ObservableId<T>
+    extends MarketDataId<T>, StandardIdentifiable {
 
   /**
    * Gets the standard identifier identifying the data.
@@ -67,11 +67,6 @@ public interface ObservableId
    *
    * @return the key associated with this ID
    */
-  public abstract ObservableKey toObservableKey();
-
-  @Override
-  public default Class<Double> getMarketDataType() {
-    return Double.class;
-  }
+  public abstract ObservableKey<T> toObservableKey();
 
 }

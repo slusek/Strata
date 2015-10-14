@@ -8,7 +8,6 @@ package com.opengamma.strata.engine.calculation;
 import static com.opengamma.strata.collect.CollectProjectAssertions.assertThat;
 import static com.opengamma.strata.collect.Guavate.toImmutableList;
 import static com.opengamma.strata.collect.TestHelper.date;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +61,7 @@ public class CalculationTaskTest {
     CalculationRequirements requirements = task.requirements();
     Set<? extends MarketDataId<?>> nonObservables = requirements.getNonObservables();
     ImmutableSet<? extends ObservableId> observables = requirements.getObservables();
-    ImmutableSet<ObservableId> timeSeries = requirements.getTimeSeries();
+    ImmutableSet<ObservableId<?>> timeSeries = requirements.getTimeSeries();
 
     MarketDataId<?> timeSeriesId = TestObservableKey.of("3").toObservableId(marketDataFeed);
     assertThat(timeSeries).hasSize(1);

@@ -229,7 +229,7 @@ public class DefaultMarketDataFactoryTest {
     TestObservableId id3 = TestObservableId.of("3", MarketDataFeed.NO_RULE);
     TestObservableId id4 = TestObservableId.of("4", MarketDataFeed.NO_RULE);
 
-    Set<ObservableId> requirements = ImmutableSet.of(id3, id4, ID1, ID2);
+    Set<ObservableId<?>> requirements = ImmutableSet.of(id3, id4, ID1, ID2);
 
     DefaultMarketDataFactory factory =
         new DefaultMarketDataFactory(
@@ -283,7 +283,7 @@ public class DefaultMarketDataFactoryTest {
   public void noMatchingMarketDataRuleTimeSeries() {
     TestObservableId id3 = TestObservableId.of("3", MarketDataFeed.NO_RULE);
     TestObservableId id4 = TestObservableId.of("4", MarketDataFeed.NO_RULE);
-    Set<ObservableId> requirements = ImmutableSet.of(id3, id4, ID1, ID2);
+    Set<ObservableId<Double>> requirements = ImmutableSet.of(id3, id4, ID1, ID2);
 
     LocalDateDoubleTimeSeries libor1mTimeSeries =
         LocalDateDoubleTimeSeries.builder()
@@ -1238,7 +1238,7 @@ public class DefaultMarketDataFactoryTest {
             ID2, Result.success(3d));
 
     @Override
-    public Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements) {
+    public Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements) {
       return requirements.stream()
           .filter(marketData::containsKey)
           .collect(toImmutableMap(id -> id, marketData::get));
@@ -1257,7 +1257,7 @@ public class DefaultMarketDataFactoryTest {
     }
 
     @Override
-    public Result<LocalDateDoubleTimeSeries> timeSeries(ObservableId id) {
+    public Result<LocalDateDoubleTimeSeries> timeSeries(ObservableId<?> id) {
       LocalDateDoubleTimeSeries series = timeSeries.get(id);
       return Result.ofNullable(series, FailureReason.MISSING_DATA, "No time series found for ID {}", id);
     }
@@ -1269,11 +1269,11 @@ public class DefaultMarketDataFactoryTest {
   private static final class TestObservableMarketDataFunction implements ObservableMarketDataFunction {
 
     @Override
-    public Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements) {
+    public Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements) {
       return requirements.stream().collect(toImmutableMap(id -> id, this::buildResult));
     }
 
-    private Result<Double> buildResult(ObservableId id) {
+    private Result<Double> buildResult(ObservableId<?> id) {
       return Result.success(Double.parseDouble(id.getStandardId().getValue()));
     }
   }
@@ -1487,7 +1487,7 @@ public class DefaultMarketDataFactoryTest {
       if (!marketData.containsValue(idC)) {
         return Result.failure(FailureReason.MISSING_DATA, "No value for {}", idC);
       }
-      Double value = marketData.getValue(idA);
+      Double value = (Double) marketData.getValue(idA);
       TestMarketDataC marketDataC = marketData.getValue(idC);
       return Result.success(new TestMarketDataB(value, marketDataC));
     }

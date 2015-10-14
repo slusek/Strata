@@ -13,7 +13,6 @@ import static com.opengamma.strata.engine.calculation.function.FunctionUtils.toF
 import static com.opengamma.strata.function.marketdata.curve.CurveTestUtils.fixedIborSwapNode;
 import static com.opengamma.strata.function.marketdata.curve.CurveTestUtils.fraNode;
 import static com.opengamma.strata.function.marketdata.curve.CurveTestUtils.id;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 import java.time.LocalDate;
@@ -128,7 +127,7 @@ public class CurveEndToEndTest {
     FixedIborSwapCurveNode swap2yNode = fixedIborSwapNode(Tenor.TENOR_2Y, swap2y);
     FixedIborSwapCurveNode swap3yNode = fixedIborSwapNode(Tenor.TENOR_3Y, swap3y);
 
-    Map<ObservableId, Double> parRateData = ImmutableMap.<ObservableId, Double>builder()
+    Map<ObservableId<Double>, Double> parRateData = ImmutableMap.<ObservableId<Double>, Double>builder()
         .put(id(fra3x6), 0.0037)
         .put(id(fra6x9), 0.0054)
         .put(id(swap1y), 0.005)
@@ -261,14 +260,14 @@ public class CurveEndToEndTest {
    */
   private static final class MapObservableMarketDataFunction implements ObservableMarketDataFunction {
 
-    private final Map<ObservableId, Double> marketData;
+    private final Map<? extends ObservableId<?>, ?> marketData;
 
-    private MapObservableMarketDataFunction(Map<ObservableId, Double> marketData) {
+    private MapObservableMarketDataFunction(Map<? extends ObservableId<?>, ?> marketData) {
       this.marketData = marketData;
     }
 
     @Override
-    public Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements) {
+    public Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements) {
       return requirements.stream()
           .filter(marketData::containsKey)
           .collect(toImmutableMap(id -> id, (ObservableId id) -> Result.success(marketData.get(id))));

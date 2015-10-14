@@ -28,7 +28,7 @@ public final class MissingDataAwareFeedIdMapping implements FeedIdMapping {
   }
 
   @Override
-  public Optional<ObservableId> idForFeed(ObservableId id) {
+  public Optional<ObservableId<?>> idForFeed(ObservableId<?> id) {
     return id.getMarketDataFeed().equals(MarketDataFeed.NO_RULE) ?
         Optional.of(id) :
         delegate.idForFeed(id);

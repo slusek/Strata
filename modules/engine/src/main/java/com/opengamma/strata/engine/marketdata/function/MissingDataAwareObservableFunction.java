@@ -39,25 +39,25 @@ public final class MissingDataAwareObservableFunction implements ObservableMarke
   }
 
   @Override
-  public Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements) {
+  public Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements) {
     // Results for IDs with a market data feed of NO_RULE.
     // These IDs can't be used to look up market data because there was no market data rule to specify the
     // market data feed.
-    Map<ObservableId, Result<Double>> failures =
+    Map<ObservableId<?>, Result<?>> failures =
         requirements.stream()
             .filter(id -> id.getMarketDataFeed().equals(MarketDataFeed.NO_RULE))
             .collect(toImmutableMap(id -> id, this::createFailure));
 
     // The requirements that have a real market data feed and can be resolved into market data
-    Set<? extends ObservableId> ids = Sets.difference(requirements, failures.keySet());
-    Map<ObservableId, Result<Double>> marketData = delegate.build(ids);
-    return ImmutableMap.<ObservableId, Result<Double>>builder()
+    Set<? extends ObservableId<?>> ids = Sets.difference(requirements, failures.keySet());
+    Map<ObservableId<?>, Result<?>> marketData = delegate.build(ids);
+    return ImmutableMap.<ObservableId<?>, Result<?>>builder()
         .putAll(failures)
         .putAll(marketData)
         .build();
   }
 
-  private Result<Double> createFailure(ObservableId id) {
+  private Result<?> createFailure(ObservableId id) {
     return Result.failure(
         FailureReason.MISSING_DATA,
         "No market data rule specifying market data feed for {}",

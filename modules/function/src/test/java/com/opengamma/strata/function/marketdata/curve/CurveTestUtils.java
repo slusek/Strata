@@ -134,11 +134,11 @@ final class CurveTestUtils {
     return FixedIborSwapCurveNode.of(template, quoteKey);
   }
 
-  static ObservableId id(String nodeName) {
+  static ObservableId<Double> id(String nodeName) {
     return QuoteId.of(StandardId.of(TEST_SCHEME, nodeName));
   }
 
-  static ObservableId id(CurveNode node) {
+  static ObservableId<Double> id(CurveNode node) {
     if (node instanceof FraCurveNode) {
       return ((FraCurveNode) node).getRateKey().toObservableId(MarketDataFeed.NONE);
     } else if (node instanceof FixedIborSwapCurveNode) {

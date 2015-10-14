@@ -35,6 +35,6 @@ public interface TimeSeriesProvider {
    * @return a time series of market data for the specified ID
    * @throws IllegalArgumentException if there is no time series available for the specified ID
    */
-  public abstract Result<LocalDateDoubleTimeSeries> timeSeries(ObservableId id);
+  public abstract Result<LocalDateDoubleTimeSeries> timeSeries(ObservableId<?> id);
 
 }

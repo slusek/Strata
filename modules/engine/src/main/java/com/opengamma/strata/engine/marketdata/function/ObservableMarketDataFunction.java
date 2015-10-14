@@ -36,5 +36,5 @@ public interface ObservableMarketDataFunction {
    * @param requirements  the market data that should be built
    * @return the market data values or details of the reason the values couldn't be built
    */
-  public abstract Map<ObservableId, Result<Double>> build(Set<? extends ObservableId> requirements);
+  public abstract Map<ObservableId<?>, Result<?>> build(Set<? extends ObservableId<?>> requirements);
 }

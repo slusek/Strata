@@ -52,7 +52,7 @@ public interface ObservableValues {
    * @param map  the map of key to value
    * @return the observable values
    */
-  public static ObservableValues ofIdMap(Map<ObservableId, Double> map) {
+  public static ObservableValues ofIdMap(Map<ObservableId<Double>, Double> map) {
     ArgChecker.notNull(map, "map");
     return new ObservableValues() {
       @Override
@@ -67,7 +67,7 @@ public interface ObservableValues {
 
       @Override
       public double getValue(ObservableKey marketDataKey) {
-        for (Entry<ObservableId, Double> entry : map.entrySet()) {
+        for (Entry<ObservableId<Double>, Double> entry : map.entrySet()) {
           if (entry.getKey().toObservableKey().equals(marketDataKey)) {
             return entry.getValue();
           }

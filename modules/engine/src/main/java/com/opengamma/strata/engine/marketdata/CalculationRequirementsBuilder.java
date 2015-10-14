@@ -21,13 +21,13 @@ import com.opengamma.strata.collect.ArgChecker;
 public final class CalculationRequirementsBuilder {
 
   /** IDs identifying the observable market data values required for the calculations. */
-  private final Set<ObservableId> observables = new HashSet<>();
+  private final Set<ObservableId<?>> observables = new HashSet<>();
 
   /** IDs identifying the non-observable market data values required for the calculations. */
   private final Set<MarketDataId<?>> nonObservables = new HashSet<>();
 
   /** IDs identifying the time series of market data values required for the calculations. */
-  private final Set<ObservableId> timeSeries = new HashSet<>();
+  private final Set<ObservableId<?>> timeSeries = new HashSet<>();
 
   /** The currencies used in the outputs of the calculations. */
   private final Set<Currency> outputCurrencies = new HashSet<>();
@@ -38,7 +38,7 @@ public final class CalculationRequirementsBuilder {
    * @param ids  IDs of the data
    * @return this builder
    */
-  public CalculationRequirementsBuilder addTimeSeries(Collection<? extends ObservableId> ids) {
+  public CalculationRequirementsBuilder addTimeSeries(Collection<? extends ObservableId<Double>> ids) {
     ArgChecker.notNull(ids, "ids");
     timeSeries.addAll(ids);
     return this;

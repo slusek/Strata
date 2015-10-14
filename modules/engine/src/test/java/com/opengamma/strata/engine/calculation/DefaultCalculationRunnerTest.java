@@ -7,7 +7,6 @@ package com.opengamma.strata.engine.calculation;
 
 import static com.opengamma.strata.collect.CollectProjectAssertions.assertThat;
 import static com.opengamma.strata.collect.TestHelper.date;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -136,7 +135,7 @@ public class DefaultCalculationRunnerTest {
     CalculationRequirements requirements = calculationTasks.getRequirements();
     Set<? extends MarketDataId<?>> nonObservables = requirements.getNonObservables();
     ImmutableSet<? extends ObservableId> observables = requirements.getObservables();
-    ImmutableSet<ObservableId> timeSeries = requirements.getTimeSeries();
+    ImmutableSet<ObservableId<?>> timeSeries = requirements.getTimeSeries();
 
     NoMatchingRuleId nonObservableId = NoMatchingRuleId.of(TestKey.of("1"));
     assertThat(nonObservables).hasSize(1);

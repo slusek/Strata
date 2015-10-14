@@ -51,7 +51,7 @@ public final class FraCurveNode
    * The key identifying the market data value which provides the rate.
    */
   @PropertyDefinition(validate = "notNull")
-  private final ObservableKey rateKey;
+  private final ObservableKey<Double> rateKey;
   /**
    * The spread added to the rate.
    */
@@ -84,7 +84,7 @@ public final class FraCurveNode
 
   //-------------------------------------------------------------------------
   @Override
-  public Set<ObservableKey> requirements() {
+  public Set<ObservableKey<Double>> requirements() {
     return ImmutableSet.of(rateKey);
   }
 
@@ -138,7 +138,7 @@ public final class FraCurveNode
 
   private FraCurveNode(
       FraTemplate template,
-      ObservableKey rateKey,
+      ObservableKey<Double> rateKey,
       double spread) {
     JodaBeanUtils.notNull(template, "template");
     JodaBeanUtils.notNull(rateKey, "rateKey");
@@ -176,7 +176,7 @@ public final class FraCurveNode
    * Gets the key identifying the market data value which provides the rate.
    * @return the value of the property, not null
    */
-  public ObservableKey getRateKey() {
+  public ObservableKey<Double> getRateKey() {
     return rateKey;
   }
 
@@ -250,8 +250,9 @@ public final class FraCurveNode
     /**
      * The meta-property for the {@code rateKey} property.
      */
-    private final MetaProperty<ObservableKey> rateKey = DirectMetaProperty.ofImmutable(
-        this, "rateKey", FraCurveNode.class, ObservableKey.class);
+    @SuppressWarnings({"unchecked", "rawtypes" })
+    private final MetaProperty<ObservableKey<Double>> rateKey = DirectMetaProperty.ofImmutable(
+        this, "rateKey", FraCurveNode.class, (Class) ObservableKey.class);
     /**
      * The meta-property for the {@code spread} property.
      */
@@ -313,7 +314,7 @@ public final class FraCurveNode
      * The meta-property for the {@code rateKey} property.
      * @return the meta-property, not null
      */
-    public MetaProperty<ObservableKey> rateKey() {
+    public MetaProperty<ObservableKey<Double>> rateKey() {
       return rateKey;
     }
 
@@ -357,7 +358,7 @@ public final class FraCurveNode
   public static final class Builder extends DirectFieldsBeanBuilder<FraCurveNode> {
 
     private FraTemplate template;
-    private ObservableKey rateKey;
+    private ObservableKey<Double> rateKey;
     private double spread;
 
     /**
@@ -391,6 +392,7 @@ public final class FraCurveNode
       }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Builder set(String propertyName, Object newValue) {
       switch (propertyName.hashCode()) {
@@ -398,7 +400,7 @@ public final class FraCurveNode
           this.template = (FraTemplate) newValue;
           break;
         case 983444831:  // rateKey
-          this.rateKey = (ObservableKey) newValue;
+          this.rateKey = (ObservableKey<Double>) newValue;
           break;
         case -895684237:  // spread
           this.spread = (Double) newValue;
@@ -458,7 +460,7 @@ public final class FraCurveNode
      * @param rateKey  the new value, not null
      * @return this, for chaining, not null
      */
-    public Builder rateKey(ObservableKey rateKey) {
+    public Builder rateKey(ObservableKey<Double> rateKey) {
       JodaBeanUtils.notNull(rateKey, "rateKey");
       this.rateKey = rateKey;
       return this;

@@ -28,7 +28,7 @@ public interface CurveNode {
    *
    * @return requirements for the market data needed to build a trade representing the instrument at the node
    */
-  public abstract Set<ObservableKey> requirements();
+  public abstract Set<ObservableKey<Double>> requirements();
 
   /**
    * Returns metadata for the node.

@@ -299,7 +299,7 @@ public class MarketDataNodeTest {
     return MarketDataNode.leaf(id, MarketDataNode.DataType.TIME_SERIES);
   }
 
-  class TestIdA implements ObservableId {
+  class TestIdA implements ObservableId<Double> {
 
     private final StandardId id;
 
@@ -328,7 +328,7 @@ public class MarketDataNodeTest {
     }
 
     @Override
-    public ObservableKey toObservableKey() {
+    public ObservableKey<Double> toObservableKey() {
       throw new UnsupportedOperationException("toObservableKey not implemented");
     }
 
