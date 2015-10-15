@@ -160,30 +160,6 @@ public final class SABRVolatilitySwaptionProvider
     return Math.round((endDate.toEpochDay() - startDate.toEpochDay()) / 365.25 * 12) / 12;
   }
 
-  //  public SurfaceCurrencyParameterSensitivities surfaceCurrencyParameterSensitivity(SwaptionSensitivity point) {
-  //    SwaptionSABRSensitivity sabrSensitivity = swaptionSABRSensitivity(point);
-  //    return surfaceCurrencyParameterSensitivity(sabrSensitivity);
-  //  }
-  //
-  //  public SwaptionSABRSensitivity swaptionSABRSensitivity(SwaptionSensitivity point) {
-  //    ArgChecker.isTrue(point.getConvention().equals(convention),
-  //        "Swap convention of provider should be the same as swap convention of swaption sensitivity");
-  //    double expiry = relativeTime(point.getExpiry());
-  //    double tenor = point.getTenor();
-  //    double[] volAdj = parameters.getVolatilityModelAdjoint(expiry, tenor, point.getStrike(), point.getForward());
-  //    return SwaptionSABRSensitivity.of(
-  //        point.getConvention(),
-  //        point.getExpiry(),
-  //        point.getTenor(),
-  //        point.getStrike(),
-  //        point.getForward(),
-  //        point.getCurrency(),
-  //        volAdj[0] * point.getSensitivity(),
-  //        volAdj[1] * point.getSensitivity(),
-  //        volAdj[2] * point.getSensitivity(),
-  //        volAdj[3] * point.getSensitivity());
-  //  }
-
   public SurfaceCurrencyParameterSensitivities surfaceCurrencyParameterSensitivity(SwaptionSABRSensitivity point) {
     ArgChecker.isTrue(point.getConvention().equals(convention),
         "Swap convention of provider should be the same as swap convention of swaption sensitivity");
@@ -200,24 +176,6 @@ public final class SABRVolatilitySwaptionProvider
         parameters.getNuSurface(), point.getCurrency(), point.getNuSensitivity(), expiryTenor);
     return SurfaceCurrencyParameterSensitivities.of(alphaSensi, betaSensi, rhoSensi, nuSensi);
   }
-
-  //  public SurfaceCurrencyParameterSensitivities surfaceCurrencyParameterSensitivities(SwaptionSensitivity point) {
-  //    ArgChecker.isTrue(point.getConvention().equals(convention),
-  //        "Swap convention of provider should be the same as swap convention of swaption sensitivity");
-  //    double expiry = relativeTime(point.getExpiry());
-  //    double tenor = point.getTenor();
-  //    double[] volAdj = parameters.getVolatilityModelAdjoint(expiry, tenor, point.getStrike(), point.getForward());
-  //    DoublesPair expiryTenor = DoublesPair.of(expiry, tenor);
-  //    SurfaceCurrencyParameterSensitivity alpha = surfaceCurrencyParameterSensitivity(
-  //        parameters.getAlphaSurface(), point.getCurrency(), volAdj[0] * point.getSensitivity(), expiryTenor);
-  //    SurfaceCurrencyParameterSensitivity beta = surfaceCurrencyParameterSensitivity(
-  //        parameters.getBetaSurface(), point.getCurrency(), volAdj[1] * point.getSensitivity(), expiryTenor);
-  //    SurfaceCurrencyParameterSensitivity rho = surfaceCurrencyParameterSensitivity(
-  //        parameters.getRhoSurface(), point.getCurrency(), volAdj[2] * point.getSensitivity(), expiryTenor);
-  //    SurfaceCurrencyParameterSensitivity nu = surfaceCurrencyParameterSensitivity(
-  //        parameters.getNuSurface(), point.getCurrency(), volAdj[3] * point.getSensitivity(), expiryTenor);
-  //    return SurfaceCurrencyParameterSensitivities.of(alpha, beta, rho, nu);
-  //  }
   
   private SurfaceCurrencyParameterSensitivity surfaceCurrencyParameterSensitivity(
       NodalSurface surface, Currency currency, double factor, DoublesPair expiryTenor) {
