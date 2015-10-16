@@ -1,6 +1,10 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ * 
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.pricer.rate.swaption;
 
-import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -38,12 +42,16 @@ import com.opengamma.strata.market.sensitivity.SwaptionSABRSensitivity;
 import com.opengamma.strata.market.surface.NodalSurface;
 import com.opengamma.strata.market.surface.SurfaceMetadata;
 import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
-import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorNodeMetadata;
+import com.opengamma.strata.market.surface.SwaptionSurfaceExpiryTenorNodeMetadata;
 import com.opengamma.strata.pricer.impl.option.SABRInterestRateParameters;
 
+/**
+ * Volatility environment for swaptions in SABR model. 
+ * <p>
+ * The volatility is represented in terms of SABR model parameters.
+ */
 @BeanDefinition(builderScope = "private")
-public final class SABRVolatilitySwaptionProvider
-    implements  ImmutableBean, Serializable {
+public final class SABRVolatilitySwaptionProvider implements ImmutableBean {
 
   /** 
    * The SABR model parameters. 
@@ -134,16 +142,46 @@ public final class SABRVolatilitySwaptionProvider
   }
 
   //-------------------------------------------------------------------------
+  /**
+   * Returns the Black volatility.
+   * 
+   * @param expiryDate  the option expiry
+   * @param tenor  the swaption tenor in years
+   * @param strike  the option strike rate
+   * @param forwardRate  the forward rate of the underlying swap
+   * @return the volatility
+   */
   public double getVolatility(ZonedDateTime expiryDate, double tenor, double strike, double forwardRate) {
     double expiryTime = relativeTime(expiryDate);
     return parameters.getVolatility(expiryTime, tenor, strike, forwardRate);
   }
 
+  /**
+   * Returns the Black volatility sensitivity to forward, strike and the SABR model parameters.
+   * <p>
+   * This returns an array with [0] the volatility, [1] Derivative w.r.t the forward, [2] the derivative w.r.t the strike, 
+   * [3] the derivative w.r.t. to alpha, [4] the derivative w.r.t. to beta, [5] the derivative w.r.t. to rho, and 
+   * [6] the derivative w.r.t. to nu.
+   * 
+   * @param expiryDate  the option expiry
+   * @param tenor  the swaption tenor in years
+   * @param strike  the option strike rate
+   * @param forwardRate  the forward rate of the underlying swap
+   * @return the sensitivities
+   */
   public double[] getVolatilityAdjoint(ZonedDateTime expiryDate, double tenor, double strike, double forwardRate) {
     double expiryTime = relativeTime(expiryDate);
     return parameters.getVolatilityAdjoint(expiryTime, tenor, strike, forwardRate);
   }
 
+  /**
+   * Converts a time and date to a relative year fraction. 
+   * <p>
+   * When the date is after the valuation date (and potentially time), the returned number is negative.
+   * 
+   * @param dateTime  the date/time to find the relative year fraction of
+   * @return the relative year fraction
+   */
   public double relativeTime(ZonedDateTime dateTime) {
     ArgChecker.notNull(dateTime, "dateTime");
     LocalDate valuationDate = valuationDateTime.toLocalDate();
@@ -155,25 +193,40 @@ public final class SABRVolatilitySwaptionProvider
     return dayCount.yearFraction(valuationDate, date);
   }
 
+  /**
+   * Returns the tenor of the swap based on its start date and end date.
+   * 
+   * @param startDate  the start date
+   * @param endDate  the end date
+   * @return the tenor
+   */
   public double tenor(LocalDate startDate, LocalDate endDate) {
     // rounded number of months. the rounding is to ensure that an integer number of year even with holidays/leap year
     return Math.round((endDate.toEpochDay() - startDate.toEpochDay()) / 365.25 * 12) / 12;
   }
 
-  public SurfaceCurrencyParameterSensitivities surfaceCurrencyParameterSensitivity(SwaptionSABRSensitivity point) {
-    ArgChecker.isTrue(point.getConvention().equals(convention),
+  /**
+   * Computes the sensitivity to the nodes of the underlying volatility objects 
+   * <p>
+   * The underlying object is typically curve, surface or cube. 
+   * 
+   * @param sensitivity  the point sensitivity
+   * @return the node sensitivity
+   */
+  public SurfaceCurrencyParameterSensitivities surfaceCurrencyParameterSensitivity(SwaptionSABRSensitivity sensitivity) {
+    ArgChecker.isTrue(sensitivity.getConvention().equals(convention),
         "Swap convention of provider should be the same as swap convention of swaption sensitivity");
-    double expiry = relativeTime(point.getExpiry());
-    double tenor = point.getTenor();
+    double expiry = relativeTime(sensitivity.getExpiry());
+    double tenor = sensitivity.getTenor();
     DoublesPair expiryTenor = DoublesPair.of(expiry, tenor);
     SurfaceCurrencyParameterSensitivity alphaSensi = surfaceCurrencyParameterSensitivity(
-        parameters.getAlphaSurface(), point.getCurrency(), point.getAlphaSensitivity(), expiryTenor);
+        parameters.getAlphaSurface(), sensitivity.getCurrency(), sensitivity.getAlphaSensitivity(), expiryTenor);
     SurfaceCurrencyParameterSensitivity betaSensi = surfaceCurrencyParameterSensitivity(
-        parameters.getBetaSurface(), point.getCurrency(), point.getBetaSensitivity(), expiryTenor);
+        parameters.getBetaSurface(), sensitivity.getCurrency(), sensitivity.getBetaSensitivity(), expiryTenor);
     SurfaceCurrencyParameterSensitivity rhoSensi = surfaceCurrencyParameterSensitivity(
-        parameters.getRhoSurface(), point.getCurrency(), point.getRhoSensitivity(), expiryTenor);
+        parameters.getRhoSurface(), sensitivity.getCurrency(), sensitivity.getRhoSensitivity(), expiryTenor);
     SurfaceCurrencyParameterSensitivity nuSensi = surfaceCurrencyParameterSensitivity(
-        parameters.getNuSurface(), point.getCurrency(), point.getNuSensitivity(), expiryTenor);
+        parameters.getNuSurface(), sensitivity.getCurrency(), sensitivity.getNuSensitivity(), expiryTenor);
     return SurfaceCurrencyParameterSensitivities.of(alphaSensi, betaSensi, rhoSensi, nuSensi);
   }
   
@@ -193,10 +246,10 @@ public final class SABRVolatilitySwaptionProvider
       for (DoublesPair pair : pairs) {
         metadataLoop:
         for (SurfaceParameterMetadata parameterMetadata : metaList) {
-          ArgChecker.isTrue(parameterMetadata instanceof SwaptionVolatilitySurfaceExpiryTenorNodeMetadata,
+          ArgChecker.isTrue(parameterMetadata instanceof SwaptionSurfaceExpiryTenorNodeMetadata,
               "surface parameter metadata must be instance of SwaptionVolatilitySurfaceExpiryTenorNodeMetadata");
-          SwaptionVolatilitySurfaceExpiryTenorNodeMetadata casted =
-              (SwaptionVolatilitySurfaceExpiryTenorNodeMetadata) parameterMetadata;
+          SwaptionSurfaceExpiryTenorNodeMetadata casted =
+              (SwaptionSurfaceExpiryTenorNodeMetadata) parameterMetadata;
           if (pair.getFirst() == casted.getYearFraction() && pair.getSecond() == casted.getTenor()) {
             sortedMetaList.add(casted);
             metaList.remove(parameterMetadata);
@@ -207,8 +260,8 @@ public final class SABRVolatilitySwaptionProvider
       ArgChecker.isTrue(metaList.size() == 0, "mismatch between surface parameter metadata list and doubles pair list");
     } else {
       for (DoublesPair pair : pairs) {
-        SwaptionVolatilitySurfaceExpiryTenorNodeMetadata parameterMetadata =
-            SwaptionVolatilitySurfaceExpiryTenorNodeMetadata.of(pair.getFirst(), pair.getSecond());
+        SwaptionSurfaceExpiryTenorNodeMetadata parameterMetadata =
+            SwaptionSurfaceExpiryTenorNodeMetadata.of(pair.getFirst(), pair.getSecond());
         sortedMetaList.add(parameterMetadata);
       }
     }
@@ -228,11 +281,6 @@ public final class SABRVolatilitySwaptionProvider
   static {
     JodaBeanUtils.registerMetaBean(SABRVolatilitySwaptionProvider.Meta.INSTANCE);
   }
-
-  /**
-   * The serialization version id.
-   */
-  private static final long serialVersionUID = 1L;
 
   private SABRVolatilitySwaptionProvider(
       SABRInterestRateParameters parameters,

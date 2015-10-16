@@ -70,7 +70,6 @@ public class SABRSwaptionPhysicalProductPricer {
       return CurrencyAmount.of(fixedLeg.getCurrency(), 0d);
     }
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    //    double tenor = 7.00018713975597;
     double shift = volatilityProvider.getParameters().getShift(DoublesPair.of(expiry, tenor));
     double forward = swapPricer.parRate(underlying, ratesProvider);
     double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
@@ -198,7 +197,6 @@ public class SABRSwaptionPhysicalProductPricer {
     ExpandedSwap underlying = expanded.getUnderlying();
     ExpandedSwapLeg fixedLeg = fixedLeg(underlying);
     double tenor = volatilityProvider.tenor(fixedLeg.getStartDate(), fixedLeg.getEndDate());
-    //    double tenor = 7.00018713975597;
     double shift = volatilityProvider.getParameters().getShift(DoublesPair.of(expiry, tenor));
     double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);

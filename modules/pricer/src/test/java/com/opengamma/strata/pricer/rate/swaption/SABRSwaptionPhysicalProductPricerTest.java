@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2015 - present by OpenGamma Inc. and the OpenGamma group of companies
+ * 
+ * Please see distribution for license.
+ */
 package com.opengamma.strata.pricer.rate.swaption;
 
 import static com.opengamma.strata.basics.currency.Currency.USD;
@@ -41,17 +46,17 @@ import com.opengamma.strata.market.sensitivity.SurfaceCurrencyParameterSensitivi
 import com.opengamma.strata.market.sensitivity.SwaptionSABRSensitivity;
 import com.opengamma.strata.market.surface.SurfaceMetadata;
 import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
-import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorNodeMetadata;
+import com.opengamma.strata.market.surface.SwaptionSurfaceExpiryTenorNodeMetadata;
 import com.opengamma.strata.pricer.impl.option.BlackFormulaRepository;
 import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 import com.opengamma.strata.pricer.sensitivity.RatesFiniteDifferenceSensitivityCalculator;
 
+/**
+ * Test {@link SABRSwaptionPhysicalProductPricer}.
+ */
 @Test
 public class SABRSwaptionPhysicalProductPricerTest {
-
-  // TODO shifted case
-
   private static final LocalDate VALUATION = LocalDate.of(2014, 1, 22);
   // swaptions
   private static final double NOTIONAL = 100000000; //100m
@@ -128,11 +133,13 @@ public class SABRSwaptionPhysicalProductPricerTest {
   private static final ImmutableRatesProvider RATE_PROVIDER_AFTER_MATURITY =
       SwaptionSABRRateVolatilityDataSet.getRatesProvider(MATURITY_DATE.toLocalDate().plusDays(1));
   private static final SABRVolatilitySwaptionProvider VOL_PROVIDER =
-      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(VALUATION);
+      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(VALUATION, true);
   private static final SABRVolatilitySwaptionProvider VOL_PROVIDER_AT_MATURITY =
-      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(MATURITY_DATE.toLocalDate());
+      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(MATURITY_DATE.toLocalDate(), true);
   private static final SABRVolatilitySwaptionProvider VOL_PROVIDER_AFTER_MATURITY =
-      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(MATURITY_DATE.toLocalDate().plusDays(1));
+      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(MATURITY_DATE.toLocalDate().plusDays(1), true);
+  private static final SABRVolatilitySwaptionProvider VOL_PROVIDER_REGRESSION =
+      SwaptionSABRRateVolatilityDataSet.getVolatilityProvider(VALUATION, false);
   // test parameters and calculator
   private static final double TOL = 1.0e-13;
   private static final double FD_EPS = 1.0e-6;
@@ -160,8 +167,10 @@ public class SABRSwaptionPhysicalProductPricerTest {
     double volatility = VOL_PROVIDER.getVolatility(SWAPTION_REC_LONG.getExpiryDateTime(),
         TENOR_YEAR, RATE, forward);
     double maturity = VOL_PROVIDER.relativeTime(SWAPTION_REC_LONG.getExpiryDateTime());
-    double expectedRec = pvbp * BlackFormulaRepository.price(forward, RATE, maturity, volatility, false);
-    double expectedPay = -pvbp * BlackFormulaRepository.price(forward, RATE, maturity, volatility, true);
+    double expectedRec = pvbp * BlackFormulaRepository.price(forward + SwaptionSABRRateVolatilityDataSet.SHIFT,
+        RATE + SwaptionSABRRateVolatilityDataSet.SHIFT, maturity, volatility, false);
+    double expectedPay = -pvbp * BlackFormulaRepository.price(forward + SwaptionSABRRateVolatilityDataSet.SHIFT,
+        RATE + SwaptionSABRRateVolatilityDataSet.SHIFT, maturity, volatility, true);
     assertEquals(computedRec.getCurrency(), USD);
     assertEquals(computedRec.getAmount(), expectedRec, NOTIONAL * TOL);
     assertEquals(computedPay.getCurrency(), USD);
@@ -367,8 +376,10 @@ public class SABRSwaptionPhysicalProductPricerTest {
         TENOR_YEAR, RATE, forward);
     double maturity = VOL_PROVIDER.relativeTime(SWAPTION_REC_LONG.getExpiryDateTime());
     double[] volSensi = VOL_PROVIDER.getVolatilityAdjoint(MATURITY_DATE, TENOR_YEAR, RATE, forward);
-    double vegaRec = pvbp * BlackFormulaRepository.vega(forward, RATE, maturity, volatility);
-    double vegaPay = -pvbp * BlackFormulaRepository.vega(forward, RATE, maturity, volatility);
+    double vegaRec = pvbp * BlackFormulaRepository.vega(forward + SwaptionSABRRateVolatilityDataSet.SHIFT,
+        RATE + SwaptionSABRRateVolatilityDataSet.SHIFT, maturity, volatility);
+    double vegaPay = -pvbp * BlackFormulaRepository.vega(forward + SwaptionSABRRateVolatilityDataSet.SHIFT,
+        RATE + SwaptionSABRRateVolatilityDataSet.SHIFT, maturity, volatility);
     assertEquals(sensiRec.getCurrency(), USD);
     assertEquals(sensiRec.getAlphaSensitivity(), vegaRec * volSensi[3], NOTIONAL * TOL);
     assertEquals(sensiRec.getBetaSensitivity(), vegaRec * volSensi[4], NOTIONAL * TOL);
@@ -450,13 +461,13 @@ public class SABRSwaptionPhysicalProductPricerTest {
 
   //-------------------------------------------------------------------------
   public void regressionPv() {
-    CurrencyAmount pvComputed = SWAPTION_PRICER.presentValue(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER);
+    CurrencyAmount pvComputed = SWAPTION_PRICER.presentValue(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER_REGRESSION);
     assertEquals(pvComputed.getAmount(), 3156216.489577751, REGRESSION_TOL * NOTIONAL);
   }
 
   public void regressionPvCurveSensi() {
     PointSensitivityBuilder point =
-        SWAPTION_PRICER.presentValueSensitivity(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER);
+        SWAPTION_PRICER.presentValueSensitivity(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER_REGRESSION);
     CurveCurrencyParameterSensitivities sensiComputed = RATE_PROVIDER.curveParameterSensitivity(point.build());
     final double[] deltaDsc = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 109037.92080563342, 637123.4570377409,
       -931862.187003511, -2556192.7520530378, -4233440.216336116, -5686205.439275854, -6160338.898970505,
@@ -471,12 +482,13 @@ public class SABRSwaptionPhysicalProductPricerTest {
 
   public void regressionPvSurfaceSensi() {
     SwaptionSABRSensitivity pointComputed =
-        SWAPTION_PRICER.presentValueSABRParameterSensitivity(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER);
+        SWAPTION_PRICER.presentValueSABRParameterSensitivity(SWAPTION_PAY_LONG, RATE_PROVIDER, VOL_PROVIDER_REGRESSION);
     assertEquals(pointComputed.getAlphaSensitivity(), 6.5786313367554754E7, REGRESSION_TOL * NOTIONAL);
     assertEquals(pointComputed.getBetaSensitivity(), -1.2044275797229866E7, REGRESSION_TOL * NOTIONAL);
     assertEquals(pointComputed.getRhoSensitivity(), 266223.51118849067, REGRESSION_TOL * NOTIONAL);
     assertEquals(pointComputed.getNuSensitivity(), 400285.55052713456, REGRESSION_TOL * NOTIONAL);
-    SurfaceCurrencyParameterSensitivities sensiComputed = VOL_PROVIDER.surfaceCurrencyParameterSensitivity(pointComputed);
+    SurfaceCurrencyParameterSensitivities sensiComputed =
+        VOL_PROVIDER_REGRESSION.surfaceCurrencyParameterSensitivity(pointComputed);
     double[][] alphaExp = new double[][] { {10.0, 10.0, 0.0 }, {5.0, 5.0, 0.0 }, {1.0, 1.0, 0.0 }, {2.0, 1.0, 0.0 },
       {2.0, 10.0, 2.631285063205345E7 }, {10.0, 1.0, 0.0 }, {1.0, 10.0, 4136.961894403858 }, {0.5, 5.0, 0.0 },
       {0.0, 1.0, 0.0 }, {0.0, 10.0, 0.0 }, {0.5, 10.0, 0.0 }, {0.5, 1.0, 0.0 }, {10.0, 5.0, 0.0 }, {5.0, 10.0, 0.0 },
@@ -504,7 +516,7 @@ public class SABRSwaptionPhysicalProductPricerTest {
       List<SurfaceParameterMetadata> paramMetadata = new ArrayList<SurfaceParameterMetadata>(size);
       List<Double> sensi = new ArrayList<Double>(size);
       for (int j = 0; j < size; ++j) {
-        paramMetadata.add(SwaptionVolatilitySurfaceExpiryTenorNodeMetadata.of(exps[i][j][0], exps[i][j][1]));
+        paramMetadata.add(SwaptionSurfaceExpiryTenorNodeMetadata.of(exps[i][j][0], exps[i][j][1]));
         sensi.add(exps[i][j][2]);
       }
       SurfaceMetadata surfaceMetadata = metadata[i].withParameterMetadata(paramMetadata);
@@ -528,12 +540,12 @@ public class SABRSwaptionPhysicalProductPricerTest {
       int nSens = sensExpected.getParameterCount();
       assertEquals(sensComputed.getParameterCount(), nSens);
       for (int i = 0; i < nSens; ++i) {
-        SwaptionVolatilitySurfaceExpiryTenorNodeMetadata metaExpected =
-            (SwaptionVolatilitySurfaceExpiryTenorNodeMetadata) sensExpected.getMetadata().getParameterMetadata().get().get(i);
+        SwaptionSurfaceExpiryTenorNodeMetadata metaExpected =
+            (SwaptionSurfaceExpiryTenorNodeMetadata) sensExpected.getMetadata().getParameterMetadata().get().get(i);
         boolean test = false;
         for (int j = 0; j < nSens; ++j) {
-          SwaptionVolatilitySurfaceExpiryTenorNodeMetadata metaComputed =
-              (SwaptionVolatilitySurfaceExpiryTenorNodeMetadata) sensComputed.getMetadata().getParameterMetadata().get().get(j);
+          SwaptionSurfaceExpiryTenorNodeMetadata metaComputed =
+              (SwaptionSurfaceExpiryTenorNodeMetadata) sensComputed.getMetadata().getParameterMetadata().get().get(j);
           if (metaExpected.getYearFraction() == metaComputed.getYearFraction() &&
               metaExpected.getTenor() == metaComputed.getTenor()) {
             assertEquals(sensComputed.getSensitivity()[j], sensExpected.getSensitivity()[i], tol);

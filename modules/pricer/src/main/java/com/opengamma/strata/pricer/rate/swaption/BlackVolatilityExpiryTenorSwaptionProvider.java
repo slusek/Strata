@@ -40,7 +40,7 @@ import com.opengamma.strata.market.sensitivity.SwaptionSensitivity;
 import com.opengamma.strata.market.surface.NodalSurface;
 import com.opengamma.strata.market.surface.SurfaceMetadata;
 import com.opengamma.strata.market.surface.SurfaceParameterMetadata;
-import com.opengamma.strata.market.surface.SwaptionVolatilitySurfaceExpiryTenorNodeMetadata;
+import com.opengamma.strata.market.surface.SwaptionSurfaceExpiryTenorNodeMetadata;
 
 /**
  * Volatility environment for swaptions in the log-normal or Black model. 
@@ -184,10 +184,10 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
       for (DoublesPair pair : pairs) {
         metadataLoop:
         for (SurfaceParameterMetadata parameterMetadata : metaList) {
-          ArgChecker.isTrue(parameterMetadata instanceof SwaptionVolatilitySurfaceExpiryTenorNodeMetadata,
+          ArgChecker.isTrue(parameterMetadata instanceof SwaptionSurfaceExpiryTenorNodeMetadata,
               "surface parameter metadata must be instance of SwaptionVolatilitySurfaceExpiryTenorNodeMetadata");
-          SwaptionVolatilitySurfaceExpiryTenorNodeMetadata casted =
-              (SwaptionVolatilitySurfaceExpiryTenorNodeMetadata) parameterMetadata;
+          SwaptionSurfaceExpiryTenorNodeMetadata casted =
+              (SwaptionSurfaceExpiryTenorNodeMetadata) parameterMetadata;
           if (pair.getFirst() == casted.getYearFraction() && pair.getSecond() == casted.getTenor()) {
             sortedMetaList.add(casted);
             metaList.remove(parameterMetadata);
@@ -198,8 +198,8 @@ public final class BlackVolatilityExpiryTenorSwaptionProvider
       ArgChecker.isTrue(metaList.size() == 0, "mismatch between surface parameter metadata list and doubles pair list");
     } else {
       for (DoublesPair pair : pairs) {
-        SwaptionVolatilitySurfaceExpiryTenorNodeMetadata parameterMetadata =
-            SwaptionVolatilitySurfaceExpiryTenorNodeMetadata.of(pair.getFirst(), pair.getSecond());
+        SwaptionSurfaceExpiryTenorNodeMetadata parameterMetadata =
+            SwaptionSurfaceExpiryTenorNodeMetadata.of(pair.getFirst(), pair.getSecond());
         sortedMetaList.add(parameterMetadata);
       }
     }
