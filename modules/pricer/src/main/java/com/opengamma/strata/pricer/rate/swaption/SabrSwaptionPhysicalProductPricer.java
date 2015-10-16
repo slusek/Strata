@@ -18,18 +18,18 @@ import com.opengamma.strata.finance.rate.swaption.ExpandedSwaption;
 import com.opengamma.strata.finance.rate.swaption.SettlementType;
 import com.opengamma.strata.finance.rate.swaption.SwaptionProduct;
 import com.opengamma.strata.market.sensitivity.PointSensitivityBuilder;
-import com.opengamma.strata.market.sensitivity.SwaptionSABRSensitivity;
+import com.opengamma.strata.market.sensitivity.SwaptionSabrSensitivity;
 import com.opengamma.strata.pricer.impl.option.BlackFormulaRepository;
 import com.opengamma.strata.pricer.rate.RatesProvider;
 import com.opengamma.strata.pricer.rate.swap.DiscountingSwapProductPricer;
 
-public class SABRSwaptionPhysicalProductPricer {
+public class SabrSwaptionPhysicalProductPricer {
 
   /**
    * Default implementation.
    */
-  public static final SABRSwaptionPhysicalProductPricer DEFAULT =
-      new SABRSwaptionPhysicalProductPricer(DiscountingSwapProductPricer.DEFAULT);
+  public static final SabrSwaptionPhysicalProductPricer DEFAULT =
+      new SabrSwaptionPhysicalProductPricer(DiscountingSwapProductPricer.DEFAULT);
   /** 
    * Pricer for {@link SwapProduct}. 
    */
@@ -40,7 +40,7 @@ public class SABRSwaptionPhysicalProductPricer {
    * 
    * @param swapPricer  the pricer for {@link Swap}
    */
-  public SABRSwaptionPhysicalProductPricer(DiscountingSwapProductPricer swapPricer) {
+  public SabrSwaptionPhysicalProductPricer(DiscountingSwapProductPricer swapPricer) {
     this.swapPricer = ArgChecker.notNull(swapPricer, "swap pricer");
   }
 
@@ -58,7 +58,7 @@ public class SABRSwaptionPhysicalProductPricer {
   public CurrencyAmount presentValue(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
 
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
@@ -95,7 +95,7 @@ public class SABRSwaptionPhysicalProductPricer {
   public MultiCurrencyAmount currencyExposure(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
     return MultiCurrencyAmount.of(presentValue(swaption, ratesProvider, volatilityProvider));
   }
 
@@ -111,7 +111,7 @@ public class SABRSwaptionPhysicalProductPricer {
   public double impliedVolatility(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
 
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
@@ -142,7 +142,7 @@ public class SABRSwaptionPhysicalProductPricer {
   public PointSensitivityBuilder presentValueSensitivity(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
 
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
@@ -185,10 +185,10 @@ public class SABRSwaptionPhysicalProductPricer {
    * @param volatilityProvider  the Black volatility provider
    * @return the point sensitivity to the Black volatility
    */
-  public SwaptionSABRSensitivity presentValueSABRParameterSensitivity(
+  public SwaptionSabrSensitivity presentValueSabrParameterSensitivity(
       SwaptionProduct swaption,
       RatesProvider ratesProvider,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
 
     ExpandedSwaption expanded = swaption.expand();
     validate(ratesProvider, expanded, volatilityProvider);
@@ -201,7 +201,7 @@ public class SABRSwaptionPhysicalProductPricer {
     double pvbp = swapPricer.getLegPricer().pvbp(fixedLeg, ratesProvider);
     double strike = swapPricer.getLegPricer().couponEquivalent(fixedLeg, ratesProvider, pvbp);
     if (expiry < 0d) { // Option has expired already
-      return SwaptionSABRSensitivity.of(volatilityProvider.getConvention(),
+      return SwaptionSabrSensitivity.of(volatilityProvider.getConvention(),
           expiryDateTime, tenor, strike, 0d, fixedLeg.getCurrency(), 0d, 0d, 0d, 0d);
     }
     double forward = swapPricer.parRate(underlying, ratesProvider);
@@ -211,7 +211,7 @@ public class SABRSwaptionPhysicalProductPricer {
     // Backward sweep
     double vega = Math.abs(pvbp) * BlackFormulaRepository.vega(forward + shift, strike + shift, expiry, volatility)
         * ((expanded.getLongShort() == LongShort.LONG) ? 1d : -1d);
-    return SwaptionSABRSensitivity.of(volatilityProvider.getConvention(), expiryDateTime, tenor, strike, forward,
+    return SwaptionSabrSensitivity.of(volatilityProvider.getConvention(), expiryDateTime, tenor, strike, forward,
         fixedLeg.getCurrency(), vega * volatilityModelAdj[0], vega * volatilityModelAdj[1],
         vega * volatilityModelAdj[2], vega * volatilityModelAdj[3]);
   }
@@ -229,7 +229,7 @@ public class SABRSwaptionPhysicalProductPricer {
 
   // validate that the rates and volatilities providers are coherent
   private void validate(RatesProvider ratesProvider, ExpandedSwaption swaption,
-      SABRVolatilitySwaptionProvider volatilityProvider) {
+      SabrVolatilitySwaptionProvider volatilityProvider) {
     ArgChecker.isTrue(volatilityProvider.getValuationDateTime().toLocalDate().equals(ratesProvider.getValuationDate()),
         "volatility and rate data should be for the same date");
     ArgChecker.isFalse(swaption.getUnderlying().isCrossCurrency(), "underlying swap should be single currency");

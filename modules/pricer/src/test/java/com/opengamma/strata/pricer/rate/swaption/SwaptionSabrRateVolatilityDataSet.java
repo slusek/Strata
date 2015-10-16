@@ -41,7 +41,7 @@ import com.opengamma.strata.pricer.rate.ImmutableRatesProvider;
 /**
  * Data sets for testing SABR model for swaptions.
  */
-public class SwaptionSABRRateVolatilityDataSet {
+public class SwaptionSabrRateVolatilityDataSet {
 
   /*
    * Data set used to test the pricers for physical delivery swaption. 
@@ -166,9 +166,9 @@ public class SwaptionSABRRateVolatilityDataSet {
    * @param shift  nonzero shift if true, zero shift otherwise
    * @return the volatility provider
    */
-  public static SABRVolatilitySwaptionProvider getVolatilityProvider(LocalDate valuationDate, boolean shift) {
+  public static SabrVolatilitySwaptionProvider getVolatilityProvider(LocalDate valuationDate, boolean shift) {
     return shift ?
-        SABRVolatilitySwaptionProvider.of(SABR_PARAM_SHIFT, SWAP_CONVENTION, ACT_ACT_ISDA, valuationDate) :
-        SABRVolatilitySwaptionProvider.of(SABR_PARAM, SWAP_CONVENTION, ACT_ACT_ISDA, valuationDate);
+        SabrVolatilitySwaptionProvider.of(SABR_PARAM_SHIFT, SWAP_CONVENTION, ACT_ACT_ISDA, valuationDate) :
+        SabrVolatilitySwaptionProvider.of(SABR_PARAM, SWAP_CONVENTION, ACT_ACT_ISDA, valuationDate);
   }
 }
